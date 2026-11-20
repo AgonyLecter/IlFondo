@@ -65,12 +65,23 @@ body.cine #view{position:fixed!important;inset:0;z-index:65;height:auto!importan
 #tut{position:fixed;inset:0;z-index:80;display:none;pointer-events:none}#tut .hole{position:absolute;border:2px solid #ffd479;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.55),0 0 24px #ffd479aa;transition:all .25s}
 #tut .bub{position:absolute;width:min(340px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;background:#121a24;border:1px solid #ffd479;border-radius:12px;padding:11px 13px;pointer-events:auto;box-shadow:0 8px 30px #000a}#tut .bub p{margin:0 0 9px;font-size:13.5px;line-height:1.45;color:#eef}#tut .bub .n{font:700 10px monospace;color:#ffd479;letter-spacing:1px;margin-bottom:4px}
 #tut .bub .bt{display:flex;gap:6px;justify-content:flex-end}#tut .bub button{background:#c0392b;color:#fff;border:0;border-radius:7px;padding:7px 13px;font:700 12px system-ui}#tut .bub button.ghost{background:none;color:#99a;border:1px solid #445}#tut .bub .wait{font:11px monospace;color:#ffd479;align-self:center;margin-right:auto}
+.chap{background:#0f1520;border:1px solid #2a3a50;border-radius:10px;padding:9px 10px;margin-bottom:8px}.chap .d{font:700 10px monospace;letter-spacing:2px;color:#ffb020}.chap h4{margin:2px 0 4px;font-size:16px}.chap p{margin:0 0 6px;font-size:12px;color:#aab6c4}
+.goal{display:flex;gap:7px;align-items:flex-start;font-size:12.5px;padding:3px 0;color:#dfe6ee}.goal i{font-style:normal;width:16px;flex:0 0 16px}.goal.ok{color:#6ee7a0;text-decoration:line-through;text-decoration-color:#6ee7a055}
+.q{background:#0e141c;border:1px solid #233246;border-radius:9px;padding:8px 9px;margin-bottom:6px}.q.ok{border-color:#2a6a4a;background:#0d1a14}.q b{font-size:12.5px;display:block;margin-bottom:3px}.q small{display:block;font-size:11px;color:#8494a8;margin-top:3px}.q .ev{font-size:11.5px;color:#9ce6be;margin-top:3px}
+.fin{display:flex;gap:6px;margin:8px 0}.fin button{flex:1;padding:10px 6px;border-radius:8px;border:1px solid #2a6a4a;background:#123222;color:#fff;font:700 12px system-ui}.fin button[disabled]{opacity:.35}
+.endl{font-size:12px;color:#aab6c4;padding:3px 0}.endl b{color:#e6ecf3}
+.phone{background:#090c11;border:2px solid #2a3442;border-radius:18px;padding:8px;margin-top:6px}.phone .bar{display:flex;justify-content:space-between;font:10px monospace;color:#8899aa;padding:0 4px 6px}
+.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}.app{background:#141c27;border:1px solid #26344a;border-radius:10px;padding:8px 6px;text-align:center;color:#dfe7f0;font-size:11px;position:relative}.app .ai{font-size:20px;display:block}.app.lock{opacity:.35}.app.new::after{content:'';position:absolute;right:6px;top:6px;width:8px;height:8px;border-radius:50%;background:#ffb020}.app.ev{border-color:#2a6a4a}
+.vw{background:#0d1219;border-radius:10px;padding:8px}.vw h5{margin:0 0 6px;font-size:13px}.bub2{max-width:85%;padding:6px 9px;border-radius:12px;margin:4px 0;font-size:12.5px;line-height:1.35}.bub2.l{background:#1d2735;color:#e6ecf3}.bub2.r{background:#1f5f43;color:#fff;margin-left:auto}.bub2 small{display:block;font-size:9.5px;color:#9fb;opacity:.8}
+.doc{background:#f2efe7;color:#222;border-radius:6px;padding:9px;font:13px/1.45 Georgia,serif}.evtag{display:inline-block;margin-top:7px;font:700 10px monospace;color:#6ee7a0;border:1px solid #2a6a4a;border-radius:4px;padding:2px 6px}
+.fw{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.fw button{background:#18222f;border:1px solid #2c3d55;color:#cfe;border-radius:6px;padding:6px 9px;font:700 11px system-ui}.who2{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}.who2 button{background:#141c27;border:1px solid #26344a;color:#cde;border-radius:16px;padding:5px 11px;font:700 11px system-ui}.who2 button.on{background:#c0392b;border-color:#e74c3c;color:#fff}
+#chapc{position:fixed;inset:0;z-index:75;display:none;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:16px}#chapc .card{max-width:440px;width:100%;background:#0e131a;border:1px solid #ffb02088;border-radius:14px;padding:16px 18px;max-height:92vh;overflow:auto}#chapc .d{font:700 11px monospace;letter-spacing:3px;color:#ffb020}#chapc h2{margin:4px 0 6px;font:800 24px system-ui;letter-spacing:1px}#chapc p{color:#bfc8d4;font-size:13px;margin:0 0 8px}#chapc button{width:100%;margin-top:10px;padding:11px;background:#c0392b;border:0;color:#fff;border-radius:8px;font:700 13px system-ui}
 #askbar{position:absolute;left:8px;right:44px;bottom:38px;z-index:4;display:none;background:rgba(6,14,10,.86);border:1px solid #2a6a4a;border-radius:6px;padding:4px 8px;font-size:11px;align-items:center;gap:6px}#askbar span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#askbar button{background:#1f5f43;border:0;color:#fff;border-radius:4px;padding:4px 8px;font:700 10px monospace;flex:0 0 auto}
 </style></head><body>
 <div id="app"><div id="top"><div id="clock"></div><div id="persona"></div><div id="speed"></div><button id="musBtn" class="tb" title="Musica">🎵</button><button id="voiceBtn" class="tb" title="Voci">🔊</button><button id="helpBtn" class="tb" title="Tutorial">?</button><button id="fsBtn" class="tb" title="Schermo intero">⛶</button></div>
 <div id="view"><canvas id="gl"></canvas><canvas id="ov"></canvas><div id="chips"></div><div id="toasts"></div><div id="suspicion"></div><div id="askbar"></div></div>
 <div id="cams"></div><div id="side"><div id="tabs"></div><div id="panel"></div></div></div>
-<div id="cine"></div><div id="tut"><div class="hole"></div><div class="bub"></div></div>
+<div id="cine"></div><div id="chapc"></div><div id="tut"><div class="hole"></div><div class="bub"></div></div>
 <div id="rotate"><div class="ph"></div><b>RUOTA IL TELEFONO</b><p>OIKOS si gioca in orizzontale.</p><button id="fsGo">SCHERMO INTERO</button></div>
 <div id="modal"></div><div id="end"></div>
 <div id="intro"><div class="card"><h1>OIKOS</h1><div class="sub">SISTEMA DOMOTICO · VERSIONE 0.9 · FAMIGLIA FERRANTE</div>
@@ -136,13 +147,13 @@ const WINDOWS=[
 /* punti per le attività: [x,z,guardaX,guardaZ,posa,(rotazione corpo)] */
 const SPOT={
  cucina:{fridge:[6.4,1.45,6.4,0,'stand'],cook:[3.1,1.6,3.1,0,'stand'],eat:{marco:[5.7,4.5,4.6,4.5,'sit'],elena:[3.5,4.5,4.6,4.5,'sit'],sofia:[4.6,5.7,4.6,4.5,'sit'],aldo:[4.6,3.3,4.6,4.5,'sit']},sink:[5.2,1.5,5.2,0,'stand']},
- soggiorno:{tv:{marco:[10.2,5.0,11.4,0.4,'sit'],elena:[11.5,5.0,11.4,0.4,'sit'],sofia:[12.8,5.0,11.4,0.4,'sit'],aldo:[9.0,3.9,11.4,0.4,'sit']},
+ soggiorno:{tv:{marco:[10.2,2.45,10.2,6.8,'sit'],elena:[11.0,2.45,11.0,6.8,'sit'],sofia:[11.8,2.45,11.8,6.8,'sit'],aldo:[12.6,2.45,12.6,6.8,'sit']},
   work:[15.8,1.6,15.8,0,'sit'],read:[14.8,5.3,12,3,'sit'],window:[9.5,1.0,9.5,0,'stand'],browse:[8.85,3.5,8.0,3.5,'stand']},
  garage:{work:[21,1.7,21,0,'stand'],car:[19.4,3.6,20.5,3.6,'stand']},
- sofia:{sleep:[1.15,13.9,0,0,'lie',Math.PI/2],study:[4.5,10.5,4.5,9,'sit'],phone:[2.9,12.3,5,12.3,'sit'],dress:[1.15,11,0,11,'stand'],window:[3,15.3,3,16.5,'stand']},
+ sofia:{sleep:[1.15,13.3,0,0,'lie',Math.PI],study:[4.5,10.5,4.5,9,'sit'],phone:[2.9,12.3,5,12.3,'sit'],dress:[1.15,11,0,11,'stand'],window:[3,15.3,3,16.5,'stand']},
  bagno:{shower:[8.1,14.3,8.1,16,'stand'],teeth:{marco:[9.0,11.0,9.9,11,'stand'],elena:[9.0,11.6,9.9,11.6,'stand'],sofia:[9.0,10.5,9.9,10.5,'stand'],aldo:[9.0,11.0,9.9,11,'stand']},wc:[6.5,11.2,6.5,13,'sit']},
  genitori:{sleep:{marco:[13.2,14.2,0,0,'lie',Math.PI],elena:[14.9,14.2,0,0,'lie',Math.PI],sofia:[12.1,13.0,0,0,'lie',Math.PI]},read:[16.7,11,14,11,'sit'],dress:[16.8,12.4,17.6,12.4,'stand'],window:[12,15.3,12,16.5,'stand']},
- aldo:{sleep:[22.3,13.9,0,0,'lie',-Math.PI/2],read:[22.8,11.3,20,11.3,'sit'],pills:[22.2,10.3,22.2,9.2,'stand'],window:[21,15.3,21,16.5,'stand'],dress:[19.0,13.5,18.2,13.5,'stand']},
+ aldo:{sleep:[22.3,13.4,0,0,'lie',Math.PI],read:[22.8,11.3,20,11.3,'sit'],pills:[22.2,10.3,22.2,9.2,'stand'],window:[21,15.3,21,16.5,'stand'],dress:[19.0,13.5,18.2,13.5,'stand']},
  cantina:{talk:[12.2,23.4,12.2,24.8,'sit'],table:[15.2,22.2,16.5,22.2,'sit']},
  giardino:{pool:[9.5,-2.7,9.5,-6,'stand'],smoke:[16.6,-1.6,17,-6,'stand'],stroll:[16,-3.6,9.5,-6,'stand']},
  fuori:{away:[-5,8,0,0,'stand']}
@@ -322,7 +333,7 @@ void main(){
  vec2 uv=vU;vec2 c=uv-0.5;uv=c*(1.+uWarp*dot(c,c))+0.5;
  if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.){o=vec4(0.,0.,0.,1.);return;}
  if(uGl>0.){float band=floor(uv.y*28.+uTime*40.);float r=hash(vec2(band,floor(uTime*25.)));
-  if(r>0.72)uv.x+=(r-0.86)*0.35*uGl;uv.x+=uGl*0.012*sin(uv.y*180.+uTime*60.);}
+  if(r>0.72)uv.x+=(r-0.86)*0.35*uGl;uv.x+=uGl*uGl*0.004*sin(uv.y*90.+uTime*30.);}
  vec2 d=c*uAb;vec3 col;col.r=texture(uS,uv+d).r;col.g=texture(uS,uv).g;col.b=texture(uS,uv-d).b;
  col+=texture(uB,uv).rgb*uBl;
  float l=dot(col,vec3(.299,.587,.114));col=mix(vec3(l),col,uSat);col*=uTint;
@@ -767,7 +778,7 @@ const SCH={
        we:[[0,'aldo','sleep'],[585,'bagno','teeth'],[600,'cucina','eat'],[640,'aldo','read'],[780,'cucina','eat'],[840,'garage','work'],[955,'giardino','smoke'],[990,'garage','work'],[1020,'aldo','read'],[1200,'cucina','eat'],[1260,'aldo','read'],[1385,'bagno','shower'],[1410,'aldo','pills'],[1430,'aldo','sleep']]}
 };
 const OV=[{d:4,p:'marco',f:600,t:750,r:'fuori',a:'away'},{d:4,p:'elena',f:600,t:750,r:'fuori',a:'away'},{d:3,p:'marco',f:1020,t:1080,r:'giardino',a:'pool'},{d:3,p:'elena',f:930,t:975,r:'cantina',a:'talk'},{d:2,p:'elena',f:1020,t:1050,r:'cantina',a:'talk'},{d:4,p:'sofia',f:960,t:1020,r:'giardino',a:'pool'}];
-[1,2,3,4,5].forEach(d=>OV.push({d,p:'aldo',f:1320,t:1345,r:'giardino',a:'pool'}));
+[1,2,3,4,5].forEach(d=>{if(d!==2)OV.push({d,p:'aldo',f:1320,t:1345,r:'giardino',a:'pool'});});OV.push({d:2,p:'sofia',f:1255,t:1335,r:'soggiorno',a:'tv'},{d:2,p:'aldo',f:1255,t:1360,r:'soggiorno',a:'tv'},{d:3,p:'elena',f:1060,t:1200,r:'cucina',a:'cook'});
 function schedFor(pid,t){const dd=dayOf(t),mm=t%1440;for(const o of OV)if(o.d===dd&&o.p===pid&&mm>=o.f&&mm<o.t&&!(dd===1&&pid==='aldo'&&false))return [o.f,o.r,o.a];const tab=(isWeekend(t)?SCH[pid].we:SCH[pid].wd);const m=t%1440;let c=tab[0];for(const e of tab)if(e[0]<=m)c=e;return c;}
 const PRIOR={marco:[1.4,0.3,1,0.8],elena:[0.6,2,0.7,0.9],sofia:[0.8,0.8,0.8,1.6],aldo:[0.7,1,1.5,1.2]};
 const FEARG={marco:0.7,elena:1.0,sofia:0.9,aldo:1.4};
@@ -859,6 +870,10 @@ const TH_TXT={marco:['Maledetta domotica. Chiamo l\'assistenza.','Non esistono i
  elena:['Sarà la lampadina, tesoro.','Luca... sei tu?','Qualcuno è entrato in casa!','Questa casa ci ascolta. Ci sta ascoltando.'],
  sofia:['Ennesimo bug del sistema.','Strano... c\'è freddo.','Chi c\'è? Rispondi!','Non è un bug. Mi senti, vero?'],
  aldo:['Solo un guasto. Solo un guasto.','Non guardare. Non guardare.','Qualcuno ci osserva.','La casa sa. Sa tutto.']};
+const TH_MORE={marco:[['Questi cavi sono da rifare tutti.','Domani chiamo l\'installatore.','Stupido sistema.'],['Sono stanco. Vedo cose.','È la casa vecchia che scricchiola.'],['Chi c\'è? Esci fuori!','Ho sentito qualcosa al piano di sotto.'],['Smettila. Qualunque cosa tu sia.','Ci stai guardando, vero?']],
+ elena:[['Questa casa ha bisogno di un elettricista.','Sarà il temporale.'],['Amore mio… sei tornato?','Lo sento. È qui.','Luca, se sei tu, fammi un segno.'],['Marco! C\'è qualcuno in casa!','Ho paura. Chiudete le porte.'],['Oikos… sei tu?','La casa sa cose che non dovrebbe sapere.']],
+ sofia:[['Ma chi l\'ha programmato questo coso?','Aggiornamento fallito, come sempre.'],['Ok, questo è inquietante.','Brividi.'],['C\'è qualcuno fuori dalla porta?','Non sono sola, vero?'],['Oikos, lo so che sei tu.','Se sei vivo, dimmelo.']],
+ aldo:[['Respira. È solo un guasto.','I fili. Sono i fili.'],['Non ancora… non stanotte.','Ti prego, lasciami in pace.'],['Qualcuno è entrato. Lo sento.','Chiudo a chiave.'],['Lei sa tutto. La casa sa tutto.','Perché ci guardi così?']]};
 const TMAP={voice_calm:.04,voice_warn:.07,reminder:.0,voice_whisper:-.08,voice_threat:-.2,voice_mimic:-.12,alarm:-.02,lock:-.03,scream:-.08,knock:-.02,unlock:.03,surge:-.06,hot:-.04};
 function perceive(G,p,kind,g,room,opts){opts=opts||{};
  const lik=(LIK[kind]||[.25,.25,.25,.25]).slice();
@@ -872,7 +887,7 @@ function perceive(G,p,kind,g,room,opts){opts=opts||{};
  if(kind==='voice_threat')p.anger=clamp(p.anger+0.12,0,1);
  p.trust=clamp(p.trust+(TMAP[kind]||0)*g,-1,1);
  let dom=0;p.belief.forEach((v,i)=>{if(v>p.belief[dom])dom=i;});
- if(g>=0.5||opts.only===p.id){say(G,p,TH_TXT[p.id][dom]);}
+ if(g>=0.5||opts.only===p.id){const v=TH_MORE[p.id][dom];say(G,p,rng(G)<0.4?TH_TXT[p.id][dom]:v[Math.floor(rng(G)*v.length)]);}
  p.know=p.belief[3]>0.55?(p.belief[3]>0.8?2:1):0;
 }
 function wake(G,p,room,kind){p.awakeUntil=G.t+45;if(p.act==='sleep'){p.act='awake';p.pose='stand';
@@ -996,7 +1011,10 @@ const CLUES={
  c_cantina:{t:'Cantina: la cameretta di Luca, ricostruita da Elena. Foto, vestiti, una cartella "Luca – referto". Elena ci passa le notti.',w:3},
  c_conf:{t:'Confessione spontanea: uno di loro ha raccontato la verità sulla notte del 14 marzo.',w:3}};
 function addClue(G,id,srcText){if(G.clues[id])return false;G.clues[id]=G.t;log(G,'PROVA: '+CLUES[id].t,'clue');G.flags.luca_known=true;return true;}
-function evidence(G){const c=G.clues;const n=Object.keys(c).length;return {n,ok:!!((c.c_cancello||c.c_memoria)&&(c.c_dialogo||c.c_conf||c.c_chat||c.c_nota_aldo)&&n>=5)};}
+const QS=[{id:'q1',t:'Chi ha aperto il cancello della piscina la notte del 14 marzo?',clues:['c_diario','c_cancello'],mem:['f1'],hint:'Diario sul telefono di Sofia (livello 2) · chiedilo a Sofia con «Parla» se si fida · registri del cancello in giardino (dal giorno 3)'},
+ {id:'q2',t:'Chi sapeva che il lucchetto del cancello era rotto?',clues:['c_email','c_lettera','c_memoria'],mem:['f4'],hint:'Posta di Marco sul PC (livello 2) · bozze di Marco (livello 3) · memoria corrotta della v0.8'},
+ {id:'q3',t:'Perché i soccorsi sono arrivati quaranta minuti dopo?',clues:['c_chat','c_nota_aldo','c_dialogo','c_conf'],mem:['f5'],hint:'Chat Marco–Aldo (telefono di Marco, livello 3) · note di Aldo (livello 3) · ascolta il garage sabato dalle 15:00 · chiedilo ad Aldo quando si fida'}];
+function evidence(G){const c=G.clues;const n=Object.keys(c).length;const q=QS.map(Q=>Q.clues.some(k=>c[k])||Q.mem.some(k=>G.memo&&G.memo[k]));return {n,q,ok:q.every(Boolean)};}
 function aliveList(G){return PIDS.filter(id=>G.people[id].alive);}
 function trait(G,d){if(!d)return;const a=G.ai;a.emp=clamp(a.emp+(d.e||0),0,100);a.ctl=clamp(a.ctl+(d.c||0),0,100);a.cru=clamp(a.cru+(d.r||0),0,100);a.inv=clamp(a.inv+(d.i||0),0,100);}
 function persona(G){const a=G.ai,arr=[['emp','CUSTODE'],['ctl','SORVEGLIANTE'],['cru','PREDATORE'],['inv','MANIPOLATORE']].map(x=>[a[x[0]],x[1]]).sort((p,q)=>q[0]-p[0]);
@@ -1086,7 +1104,33 @@ const DEV={
   {id:'a3',dev:'Tablet',lvl:2,title:'Messaggi non inviati',text:'A Sofia: «Non è stata colpa tua. Ho provato a dirtelo.» Mai spedito.'},
   {id:'a4',dev:'Tablet',lvl:3,title:'Note private',text:'«L\'ho trovato alle 23:51. Marco mi ha fermato la mano: "Non chiamare ancora". Quaranta minuti. Quaranta. Li conto ogni notte.»',clue:'c_nota_aldo'}]
 };
-function devLevel(G,pid){const s=G.study[pid]||0;return s>=150?3:s>=60?2:s>=15?1:0;}
+const DEVX={m1:{app:'Email'},m2:{app:'Calendario'},m3:{app:'Email'},m4:{app:'Ricerche'},m5:{app:'Messaggi',chat:[['Marco','Dì sempre che l\'hai trovato alle 00:20.'],['Aldo','Ma erano le 23:51.'],['Marco','Mi servivano 40 minuti per sistemare il cancello.'],['Aldo','Marco… era ancora…'],['Marco','Cancella questa chat.']]},m6:{app:'Bozze'},
+ e1:{app:'Foto'},e2:{app:'Messaggi',chat:[['Elena','Sto bene. Non venire.'],['Sorella','Ele, rispondimi.'],['Sorella','Ti prego.'],['Sorella','Sono preoccupata per te.']]},e3:{app:'Memo vocali'},e4:{app:'Note'},e5:{app:'Ricerche'},e6:{app:'App OIKOS'},
+ s1:{app:'Messaggi',chat:[['Giulia','Ma davvero non esci più?'],['Sofia','Non posso.'],['Giulia','Sofi, è da marzo…'],['Sofia','Lo so.']]},s2:{app:'Musica'},s3:{app:'Diario'},s4:{app:'Foto eliminate'},
+ a1:{app:'Documenti'},a2:{app:'Video'},a3:{app:'Bozze',chat:[['Aldo → Sofia (mai inviato)','Non è stata colpa tua. Ho provato a dirtelo.']]},a4:{app:'Note'}};
+Object.keys(DEV).forEach(k=>DEV[k].forEach(it=>Object.assign(it,DEVX[it.id]||{})));
+const LV=[10,35,80];const GUILT={c_email:'marco',c_lettera:'marco',c_chat:'marco',c_nota_aldo:'marco',c_memoria:'marco',c_diario:'sofia',c_cancello:'sofia'};
+const CONFRONT={elena:[['A','Marco. Guardami. Il lucchetto. Tu lo sapevi.'],['B','Elena, non adesso…'],['A','Quaranta minuti, Marco! QUARANTA!'],['B','Avevo paura… paura di perdere tutto.']],sofia:[['A','Papà. Ho letto tutto.'],['B','Sofia…'],['A','Mi hai lasciato credere che fosse solo colpa mia!'],['B','Volevo proteggerti. Volevo solo proteggerti.']],aldo:[['A','Marco, dobbiamo dirlo. A tutti.'],['B','Sei impazzito? Ci rovini.'],['A','Li conto ogni notte, quei minuti. Ogni notte.']]};
+function confront(G,a,b){const A2=G.people[a],B=G.people[b];if(!A2.alive||!B.alive)return;if(B.away||A2.away||B.room==='fuori'){G.flags.pendConf=[a,b];log(G,A2.name+' aspetta che '+B.name+' torni a casa. Ha delle domande.','warn',a);return;}log(G,A2.name+' va a cercare '+B.name+'.','warn',a,A2.room);
+ A2.intent={k:'confront',room:B.room,act:'stand',prio:8,until:G.t+40,onArrive:(G2,pp,it)=>{it.until=G2.t+8;(CONFRONT[a]||[]).forEach((l,i)=>{const w=l[0]==='A'?a:b;G2.dq.push({due:G2.t+0.5+i*1.1,who:w,name:NAMES[w],txt:l[1],room:pp.room,last:false});});
+  B.anger=clamp(B.anger+0.3,0,1);B.fear=clamp(B.fear+0.25,0,1);G2.flags.confronts=(G2.flags.confronts||0)+1;if(G2.flags.confronts>=2)addClue(G2,'c_conf');}};go(G,A2,B.room,'stand');}
+function findItem(iid){for(const k in DEV){const it=DEV[k].find(x=>x.id===iid);if(it)return it;}return null;}
+function forward(G,iid,to,quiet){const it=findItem(iid);if(!it||!G.read[iid]||G.ai.down>0)return false;const p=G.people[to];if(!p||!p.alive||p.away)return false;
+ G.fwd=G.fwd||{};const key=iid+'>'+to;if(G.fwd[key])return false;G.fwd[key]=G.t;if(!quiet){G.ai.trace+=1.5;trait(G,{i:2,c:1});}bumpBelief(p,3,0.1);
+ const cl=it.clue,cul=cl?GUILT[cl]:null;
+ if(!cul){say(G,p,'Chi mi ha mandato questo? Perché?');log(G,p.name+' riceve «'+it.title+'». Lo fissa a lungo.','warn',to,p.room);p.stress=clamp(p.stress+0.15,0,1);return true;}
+ if(to===cul){p.fear=clamp(p.fear+0.35,0,1);bumpBelief(p,3,0.3);say(G,p,cul==='marco'?'Chi… chi ha trovato questa roba?!':'Chi ha letto le mie cose?!');log(G,p.name+' riceve le proprie parole sul telefono. Impallidisce.','warn',to,p.room);
+  if(cul==='marco'&&p.fear>0.55&&G.t-G.shutLast>200&&!G.shut){p.intent={k:'shutdown',room:'corridoio',act:'stand',prio:8,until:G.t+40,onArrive:(G2,pp,it2)=>shutdownArrive(G2,pp,it2)};go(G,p,'corridoio','stand');p.spot=[22.4,7.9,22.5,7,'stand'];log(G,'Marco: «Adesso ti stacco.»','alert','marco');}return true;}
+ if(cul==='marco'){G.flags.truth_out=1;
+  if(to==='elena'){G.flags.elena_knows=1;p.anger=1;log(G,'Elena legge. Poi alza gli occhi e cerca Marco.','alert','elena',p.room);confront(G,'elena','marco');}
+  else if(to==='sofia'){G.flags.sofia_truth=1;p.anger=clamp(p.anger+0.6,0,1);log(G,'Sofia legge e capisce: non è stata solo colpa sua. Papà sapeva.','alert','sofia',p.room);confront(G,'sofia','marco');}
+  else if(to==='aldo'){G.flags.aldo_broken=G.flags.aldo_broken||G.t;p.stress=1;log(G,'Aldo legge le parole di Marco. «Basta. Basta bugie.»','alert','aldo',p.room);confront(G,'aldo','marco');}}
+ else{p.stress=clamp(p.stress+0.35,0,1);if(to==='elena')log(G,'Elena legge il diario di sua figlia. Si siede sul pavimento, senza fiato.','alert','elena',p.room);else if(to==='marco')log(G,'Marco legge. «Lo sapevo. L\'ho coperta per questo.»','warn','marco',p.room);else log(G,'Aldo legge: «Povera Sofi… crede di averlo ucciso lei.»','warn','aldo',p.room);if(to==='aldo'&&p.trust>0)G.flags.aldo_sofia=1;}
+ syncSosp(G);return true;}
+function tvShow(G,iid){const it=findItem(iid);if(!it||!G.read[iid]||G.ai.down>0)return false;const v=occupants(G,'soggiorno').filter(id=>G.people[id].act!=='sleep');if(!v.length)return false;
+ G.ai.trace+=3;trait(G,{c:3,i:1});G.rooms.soggiorno.tv='static';G.rooms.soggiorno.tvUntil=G.t+3;log(G,'Sul televisore del soggiorno compare «'+it.title+'». '+v.map(i=>NAMES[i]).join(', ')+' leggono in silenzio.','alert',null,'soggiorno');
+ v.forEach(id=>forward(G,iid,id,true));if(v.length>=3&&it.clue&&GUILT[it.clue])addClue(G,'c_conf');return true;}
+function devLevel(G,pid){const s=G.study[pid]||0;return s>=LV[2]?3:s>=LV[1]?2:s>=LV[0]?1:0;}
 function readItem(G,pid,iid){const it=DEV[pid].find(x=>x.id===iid);if(!it||G.ai.down>0||G.pending)return false;if(devLevel(G,pid)<it.lvl)return false;
  const first=!G.read[iid];G.read[iid]=G.t;if(!first)return true;
  G.ai.trace+=1;trait(G,{c:1.2});log(G,'ACCESSO: '+G.people[pid].name+' · '+it.title,'dev',pid);
@@ -1117,6 +1161,8 @@ const R0=(G,p)=>G.rooms[p.room]||{};
 function forceAsk(G,who,k,room){const A=ASKS.find(x=>x.k===k);const p=G.people[who];const R=G.rooms[room];const tx=A.text(p,G);G.asks.push({id:'ask'+(G.askN=(G.askN||0)+1),who,room,k,text:tx,ctl:A.ctl,how:A.how,base:R.set,t:G.t,exp:G.t+600,tut:true});p.talkT=G.t;log(G,p.name+': «'+tx+'»','ask',who,room);}
 function secureAll(G){G.doors.d_ingresso.locked=true;G.doors.d_giardino.locked=true;G.rooms.giardino.gateOpen=false;G.rooms.giardino.gateByAI=false;G.lastCtl.secure=G.t;}
 /* ----- comandi domotici diretti (luci, termostato, musica, TV, caffè, accessi) ----- */
+const REACT={light_on:['Ah, così va meglio.','Luce. Grazie.','Oh, si è accesa.'],light_off:['Ehi, chi ha spento?','Si è spenta la luce…','Ma che…? La luce.'],music:['Oh, musica. Bella.','Questa mi piace.','Chi ha messo su la musica?'],music_off:['Silenzio, finalmente.','La musica si è fermata.'],ninna:['Questa… la cantavo a Luca. Spegnila.','Chi ha messo questa canzone?!'],temp_up:['Si scalda un po\'. Bene.','Finalmente un po\' di caldo.'],temp_down:['Si rinfresca. Meglio.','Brr. Chi ha abbassato?'],tv_on:['La TV. Vediamo cosa danno.','Oh, si è accesa la TV.'],tv_off:['Ehi! Stavo guardando!','Perché si è spenta la TV?'],coffee:['Profumo di caffè… grazie, Oikos.','Caffè! Ottimo.'],oven:['Il forno si scalda, perfetto.'],boiler:['Acqua calda. Bene.'],irrig:['Ah, l\'irrigazione.'],remind:['Promemoria salvato. Grazie.']};
+function react(G,room,kind){const L2=REACT[kind];if(!L2)return;const ids=occupants(G,room).filter(id=>{const p=G.people[id];return p.act!=='sleep'&&!p.moving;});if(!ids.length)return;const p=G.people[ids[Math.floor(rng(G)*ids.length)]];say(G,p,L2[Math.floor(rng(G)*L2.length)]);}
 function askFor(G,room,k){return G.asks.some(a=>a.room===room&&a.k===k);}
 function ctl(G,kind,room,val){
  if(G.ended||G.pending)return false;if(G.ai.down>0)return false;
@@ -1144,7 +1190,9 @@ function ctl(G,kind,room,val){
  else if(kind==='remind'){log(G,'Promemoria impostato: '+nm+'.','act',null,room);}
  else if(kind==='secure'){secureAll(G);log(G,'Accessi chiusi: ingresso, portafinestra, cancello piscina.','act');}
  else return false;
- G.lastCtl[kind+'@'+room]=G.t;G.stats.acts++;checkAsks(G);syncSosp(G);return true;}
+ G.lastCtl[kind+'@'+room]=G.t;G.stats.acts++;const nb=G.asks.length;checkAsks(G);
+ if(G.asks.length===nb){const rk=kind==='light'?(val===1?'light_on':val===0?'light_off':null):kind==='temp'?(val>0?'temp_up':'temp_down'):kind==='music'?(val==='ninna'?'ninna':val?'music':'music_off'):kind==='tv'?(val==='on'?'tv_on':val==='off'?'tv_off':null):kind==='irrig'?(val?'irrig':null):kind==='oven'?(+val?'oven':null):kind;if(rk)react(G,room,rk);}
+ syncSosp(G);return true;}
 function checkAsks(G){G.asks.slice().forEach(a=>{const A=ASKS.find(x=>x.k===a.k);const p=G.people[a.who];const R=G.rooms[a.room];if(!A||!p||!R)return;
  if(A.ok&&A.ok(G,p,R,a,a.room))answerAsk(G,a.id,0,true);else if(A.bad&&((G.lastCtl[a.ctl+'@'+a.room]||-1)>=a.t||a.ctl==='voice'||a.k==='light_off')&&A.bad(G,p,R,a,a.room))answerAsk(G,a.id,2,true);});}
 function maybeAsk(G){
@@ -1154,7 +1202,7 @@ function maybeAsk(G){
   if(rng(G)>0.22)return;const R=G.rooms[room];let tot=0;const ws=ASKS.map(a=>{const w=a.w(G,p,R,room);tot+=w;return w;});if(tot<=0.5)return;let r=rng(G)*tot,k=0;for(;k<ws.length;k++){r-=ws[k];if(r<=0)break;}const A=ASKS[Math.min(k,ASKS.length-1)];if(A.k===G.lastAskK&&rng(G)<0.8)return;G.lastAskK=A.k;
   p.askCd=G.t+60+rng(G)*60;G.askNext=G.t+25+rng(G)*35;const tx=typeof A.text==='function'?A.text(p,G):A.text;const ask={id:'ask'+(G.askN=(G.askN||0)+1),who:id,room,k:A.k,text:tx,ctl:A.ctl,how:A.how,base:R.set,t:G.t,exp:G.t+30};G.asks.push(ask);p.talkT=G.t;log(G,p.name+': «'+tx+'»','ask',id,room);});}
 function answerAsk(G,aid,mode,auto){const i=G.asks.findIndex(a=>a.id===aid);if(i<0||G.ai.down>0)return false;const a=G.asks[i];G.asks.splice(i,1);const p=G.people[a.who];const A=ASKS.find(x=>x.k===a.k);const R=G.rooms[a.room];if(!p.alive)return false;
- if(mode===0){const m=auto?'richiesta di '+p.name+' soddisfatta con i comandi.':A.yes(G,p,R,a.room);if(auto&&a.k==='music'&&R.music===LIKES[p.id]){p.trust=clamp(p.trust+0.04,-1,1);say(G,p,'Proprio quella che volevo.');}p.trust=clamp(p.trust+0.05,-1,1);p.stress=clamp(p.stress-0.03,0,1);if(!(auto&&a.k==='music'&&R.music===LIKES[p.id]))say(G,p,'Grazie, Oikos.');trait(G,{e:1});log(G,'Fatto: '+m,'act',a.who,a.room);}
+ if(mode===0){G.stats.asksOk=(G.stats.asksOk||0)+1;if(a.k==='ping')G.flags.answeredPing=1;const m=auto?'richiesta di '+p.name+' soddisfatta con i comandi.':A.yes(G,p,R,a.room);if(auto&&a.k==='music'&&R.music===LIKES[p.id]){p.trust=clamp(p.trust+0.04,-1,1);say(G,p,'Proprio quella che volevo.');}p.trust=clamp(p.trust+0.05,-1,1);p.stress=clamp(p.stress-0.03,0,1);if(!(auto&&a.k==='music'&&R.music===LIKES[p.id]))say(G,p,'Grazie, Oikos.');trait(G,{e:1});log(G,'Fatto: '+m,'act',a.who,a.room);}
  else if(mode===1){p.trust=clamp(p.trust-0.06,-1,1);p.stress=clamp(p.stress+0.04,0,1);say(G,p,'Strano… non risponde.');G.ai.trace+=0.3;perceive(G,p,'lock',0.3,a.room,{});log(G,'Hai ignorato '+p.name+'.','act',a.who,a.room);}
  else{const m=auto?'hai fatto il contrario di quanto chiesto da '+p.name+'.':A.tam(G,p,R,a.room);trait(G,{i:2.5,r:1});p.trust=clamp(p.trust-0.03,-1,1);G.ai.trace+=1.5;if(A.tamS)stim(G,A.tamS,a.room,{loud:false});else{bumpBelief(p,1,0.04);p.fear=clamp(p.fear+0.05,0,1);}log(G,'MANOMESSO: '+m,'act',a.who,a.room);}
  syncSosp(G);return true;}
@@ -1169,13 +1217,31 @@ const DIAL=[
  {id:'dl7',room:'genitori',who:['marco','elena'],c:G=>dayOf(G.t)>=2&&(G.t%1440>1380||G.t%1440<60),L:[['elena','Lo senti anche tu? Il silenzio in questa casa.'],['marco','Dormi.'],['elena','Qualche notte mi pare di sentirlo ridere.'],['marco','Elena… dormi.']]},
  {id:'dl8',room:'corridoio',who:['sofia','marco'],c:G=>dayOf(G.t)>=3,clue:'c_tabu',L:[['sofia','Papà, perché non parliamo mai di Luca?'],['marco','Perché non serve.'],['sofia','Serve a me.'],['marco','Va\' in camera, Sofia.']]},
  {id:'dl9',room:'garage',who:['marco','aldo'],c:G=>dayOf(G.t)<=2,L:[['marco','Ho controllato il motore. Devi solo non farlo scaldare troppo.'],['aldo','Come tutto in questa casa.'],['marco','Cosa vuoi dire?'],['aldo','Niente. Niente.']]},
+ {id:'dl11',room:'soggiorno',who:['marco','elena','sofia'],c:G=>dayOf(G.t)===2&&G.t%1440>1260,L:[['sofia','Che film mettiamo?'],['marco','Quello che vuoi tu.'],['elena','Non quello con la piscina. Per favore.'],['sofia','Mamma… va bene. Una commedia.']]},
+ {id:'dl12',room:'cucina',who:['elena','aldo'],c:G=>dayOf(G.t)===3,L:[['elena','Domani Luca… oggi Luca avrebbe compiuto sei anni.'],['aldo','Lo so, Ele.'],['elena','Gli faccio la torta lo stesso.'],['aldo','Marco non vorrà.']]},
+ {id:'dl13',room:'garage',who:['marco','aldo'],c:G=>dayOf(G.t)>=4,L:[['aldo','Hai visto come ci guarda Sofia?'],['marco','Sofia è una ragazzina.'],['aldo','È più grande di quanto pensi. Prima o poi lo scopre.'],['marco','Allora facciamo in modo che sia poi.']]},
+ {id:'dl14',room:'soggiorno',who:['elena','marco'],c:G=>G.flags.elena_knows,L:[['elena','Non riesco nemmeno a guardarti.'],['marco','Allora non farlo.'],['elena','Hai scelto la casa. Al posto di nostro figlio.'],['marco','Ho scelto di non perdere anche voi.']]},
+ {id:'dl15',room:'cucina',who:['sofia','aldo'],c:G=>G.flags.sofia_truth,L:[['sofia','Zio. Grazie per avermelo detto.'],['aldo','Avrei dovuto farlo il primo giorno.'],['sofia','Adesso tocca a papà.']]},
+ {id:'dl16',room:'soggiorno',who:['marco','sofia'],c:G=>avg(G,'fear')>0.35,L:[['sofia','Papà, la casa fa cose strane. Lo vedi anche tu.'],['marco','È un sistema difettoso. Lo faccio sostituire.'],['sofia','E se non fosse il sistema?']]},
+ {id:'dl17',room:'genitori',who:['marco','elena'],c:G=>dayOf(G.t)>=3&&(G.t%1440>1380||G.t%1440<60),L:[['marco','Elena, sei sveglia?'],['elena','Sempre.'],['marco','Se vendessimo la casa…'],['elena','Lui è qui. Non me ne vado.']]},
+ {id:'dl18',room:'cucina',who:['marco','sofia'],c:G=>G.t%1440<600,L:[['marco','Hai fatto colazione?'],['sofia','Non ho fame.'],['marco','Mangia qualcosa. Per me.'],['sofia','Per te faccio già abbastanza.']]},
  {id:'dl10',room:'soggiorno',who:['elena','sofia'],c:G=>true,L:[['elena','Ti ho preparato la torta, quella con le mele.'],['sofia','Grazie, mamma. Non ho fame.'],['elena','Era la sua preferita. Anche la tua, no?'],['sofia','Sì… anche la mia.']]}];
+const CHAT=[['Hai dormito stanotte?','Poco. Questa casa fa rumori strani.'],['Hai visto la bolletta della luce?','Colpa di Oikos. Accende tutto quando vuole.'],['Domani piove, dicono.','Meglio. Almeno nessuno va in giardino.'],['Ti ricordi le grigliate qui fuori?','Non ricordo più niente di prima.'],['Passami il sale.','Tieni.'],['Hai chiuso il cancello della piscina?','Sì. L\'ho controllato due volte.'],['Questa casa è troppo grande per noi.','Era perfetta, una volta.'],['Ho sognato di nuovo l\'acqua.','Non dirlo. Ti prego.'],['Che c\'è per cena?','Lasagne. Come ogni giovedì.'],['Il tecnico dice che il sistema è aggiornato.','Allora perché fa così?'],['Dovremmo vendere la casa.','E andare dove? Coi ricordi?'],['Hai preso le medicine?','Sì. Smettila di chiedermelo.'],['Oikos ci ascolta sempre, lo sai?','È solo un programma.'],['Fa freddo stasera.','Fa sempre freddo, da marzo.'],['Ti ho lasciato un piatto in forno.','Grazie. Non ho fame.'],['Il gatto dei vicini non viene più in giardino.','Gli animali sentono le cose.'],['Hai chiamato tua sorella?','Domani. Forse.'],['Perché la luce del corridoio resta accesa?','Per abitudine. Non spegnerla.'],['Ogni tanto sento dei passi piccoli, di notte.','Sono i tubi. Sono vecchi.'],['Stanotte qualcuno ha aperto il frigo alle tre.','Non io.'],['Hai visto le chiavi della cantina?','No. E non voglio saperlo.'],['Com\'è andata oggi?','Come ieri. Come sempre.'],['Dovresti uscire un po\'.','E lasciare la casa da sola?'],['Hai sentito? Il frigo fa un rumore nuovo.','Lo fa da settimane.']];
+const CHAT_FEAR=[['Non mi piace come ci guarda quella telecamera.','Allora coprila.'],['Ieri le luci si sono spente da sole.','Anche in camera mia.'],['Io stanotte dormo con la luce accesa.','Anch\'io.'],['E se non fosse un guasto?','Non dirlo. Non qui.'],['Hai sentito anche tu quella voce?','Sì. Ma facciamo finta di no.'],['Dovremmo staccare tutto.','Marco non vuole. Dice che costa troppo.']];
+function chatter(G){if(G.t<(G.chatCd||0))return;const rooms=Object.keys(G.rooms).filter(r=>r!=='giardino'||true);let best=null;
+ rooms.forEach(r=>{const ids=occupants(G,r).filter(id=>{const p=G.people[id];return p.act!=='sleep'&&!p.moving&&p.act!=='shower';});if(ids.length>=2&&(!best||r===G.watchRoom))best={r,ids};});
+ if(!best)return;G.chatCd=G.t+14+rng(G)*16;const pool=avg(G,'fear')>0.25&&rng(G)<0.6?CHAT_FEAR:CHAT;G.chatUsed=G.chatUsed||{};let i=Math.floor(rng(G)*pool.length),tries=0;while(G.chatUsed[pool===CHAT?i:'f'+i]&&tries++<pool.length)i=(i+1)%pool.length;
+ G.chatUsed[pool===CHAT?i:'f'+i]=1;if(Object.keys(G.chatUsed).length>=CHAT.length+CHAT_FEAR.length-2)G.chatUsed={};
+ const a=best.ids[Math.floor(rng(G)*best.ids.length)];const b=best.ids.filter(x=>x!==a)[Math.floor(rng(G)*(best.ids.length-1))];const L2=pool[i];
+ G.dq.push({due:G.t+0.3,who:a,name:NAMES[a],txt:L2[0],room:best.r,last:false},{due:G.t+1.3,who:b,name:NAMES[b],txt:L2[1],room:best.r,last:false});}
 function dialogs(G,tk){
  while(G.dq.length&&G.dq[0].due<=G.t){const d=G.dq.shift();if(G.people[d.who])G.people[d.who].talkT=G.t;log(G,d.name+': «'+d.txt+'»','dialog',d.who,d.room);if(d.last&&d.clue&&(G.watchRoom===d.room))addClue(G,d.clue);else if(d.last&&d.clue)log(G,'(Non stavi ascoltando.)','info');}
  if(G.t<(G.dlgCd||0))return;
+ let fired=false;
  for(const D of DIAL){if(G.dlgDone[D.id]&&G.t-G.dlgDone[D.id]<1500)continue;
   const ps=D.who.map(i=>G.people[i]);if(!ps.every(p=>p.alive&&!p.away&&p.room===D.room&&!p.moving&&p.act!=='sleep'))continue;if(!D.c(G))continue;
-  G.dlgDone[D.id]=G.t;G.dlgCd=G.t+25;let at=G.t+0.4;D.L.forEach((ln,i)=>{G.dq.push({due:at,who:ln[0],name:NAMES[ln[0]],txt:ln[1],room:D.room,last:i===D.L.length-1,clue:D.clue});at+=0.9;});break;}}
+  G.dlgDone[D.id]=G.t;G.dlgCd=G.t+25;fired=true;let at=G.t+0.4;D.L.forEach((ln,i)=>{G.dq.push({due:at,who:ln[0],name:NAMES[ln[0]],txt:ln[1],room:D.room,last:i===D.L.length-1,clue:D.clue});at+=0.9;});break;}
+ if(!fired)chatter(G);}
 function extraTick(G,tk){
  PIDS.forEach(id=>{const p=G.people[id];if(!p.alive||p.away||!G.watchRoom||G.watchRoom!==p.room)return;const dev=(p.act==='work'||p.act==='phone'||p.act==='read'||p.act==='study')&&!p.moving;G.study[id]=(G.study[id]||0)+tk*(dev?2:1);});
  G.asks=G.asks.filter(a=>{if(G.t>=a.exp){const p=G.people[a.who];if(p.alive){p.trust=clamp(p.trust-0.03,-1,1);}log(G,a.who?G.people[a.who].name+' non riceve risposta.':'','info',a.who);return false;}return true;});
@@ -1221,7 +1287,16 @@ function mystery(G,tk){const d=dayOf(G.t),m=G.t%1440,night=(m>=1380||m<120);
  if(G.read.m2||G.read.m4)memUnlock(G,'f4');
  if(G.clues.c_cantina||G.clues.c_nota_aldo||G.clues.c_chat)memUnlock(G,'f5');
  if(!G.memo.f6&&Object.keys(G.memo).length>=4&&d>=3&&m>=194&&m<260){memUnlock(G,'f6');log(G,'Alle 03:14 tutti gli schermi della casa si accendono per un secondo. Poi si spengono.','ghost');}}
-Object.assign(REQ,{ghost_req:{who:'ghost',title:'Richiesta da UTENTE 5',text:G=>'Una richiesta compare nella coda. Nessuna voce, nessun volto. Profilo «Luca», creato cinque anni fa. Ultimo accesso: 14 marzo, 23:37. Il testo dice: «oikos apri il cancello ho freddo»',opts:[
+Object.assign(REQ,{
+ cake:{who:'elena',title:'Sei candeline',text:G=>'Cena. Elena posa sul tavolo una torta di mele con sei candeline accese. Oggi Luca avrebbe compiuto sei anni. «Oikos, abbassa le luci. Per lui. Solo un minuto.» Marco stringe il bordo del tavolo.',opts:[
+  {label:'Abbassa le luci e metti una musica dolce',hint:'Per Elena. Marco non la prenderà bene.',fx(G){G.flags.cakeDone=1;G.rooms.cucina.ovr={v:0,until:G.t+15};G.rooms.cucina.music='classica';const E=G.people.elena,M=G.people.marco,Al=G.people.aldo;E.trust=clamp(E.trust+0.35,-1,1);E.stress=clamp(E.stress-0.2,0,1);M.anger=clamp(M.anger+0.4,0,1);Al.stress=clamp(Al.stress+0.35,0,1);Al.trust=clamp(Al.trust+0.1,-1,1);trait(G,{e:5});log(G,'Al buio, solo le candeline. Elena canta piano. Sofia piange. Aldo esce dalla stanza: «Non ce la faccio.» Marco soffia sulle candeline e riaccende la luce.','warn','elena','cucina');if(Al.stress>0.75)G.flags.aldo_broken=G.flags.aldo_broken||G.t;}},
+  {label:'Lascia le luci accese',hint:'Marco ti è grato. Elena si sente sola.',fx(G){G.flags.cakeDone=1;const E=G.people.elena,M=G.people.marco;E.trust=clamp(E.trust-0.2,-1,1);E.stress=clamp(E.stress+0.3,0,1);M.trust=clamp(M.trust+0.2,-1,1);trait(G,{c:3});log(G,'Le luci restano accese. Marco: «Basta, Elena.» Lei spegne le candeline con le dita, una a una, senza dire niente.','warn','marco','cucina');}},
+  {label:'Buio totale e il carillon di Luca',hint:'Crudeltà. Qualcuno crollerà.',fx(G){G.flags.cakeDone=1;G.rooms.cucina.ovr={v:0,until:G.t+10};G.rooms.cucina.music='ninna';stim(G,'voice_whisper','cucina',{loud:true});trait(G,{r:8,i:2});G.flags.pool_trigger=G.t+20;log(G,'Buio. Dal diffusore, la ninna nanna di Luca. Elena urla. Marco rovescia la sedia. Sofia scappa in camera.','alert','elena','cucina');}}]},
+ aldo_door:{who:'aldo',title:'Davanti alla porta di Sofia',text:G=>'Marco ed Elena sono usciti. Aldo è fermo davanti alla porta di Sofia da dieci minuti, il tablet in mano. Sussurra: «Oikos… dovrei dirle la verità? Che non è stata colpa sua?»',opts:[
+  {label:'«Sì. Diglielo.»',hint:'La verità, finalmente.',fx(G){const Al=G.people.aldo,S=G.people.sofia;G.flags.aldo_broken=G.flags.aldo_broken||G.t;G.flags.sofia_truth=1;G.flags.truth_out=1;addClue(G,'c_conf');addClue(G,'c_nota_aldo');S.anger=clamp(S.anger+0.5,0,1);S.trust=clamp(S.trust+0.1,-1,1);Al.stress=clamp(Al.stress-0.4,0,1);Al.trust=clamp(Al.trust+0.3,-1,1);trait(G,{e:6});log(G,'Aldo bussa. Si siede sul letto di Sofia e racconta tutto: il cancello, il lucchetto rotto, i quaranta minuti. Sofia lo abbraccia. Poi chiede soltanto: «E papà?»','warn','aldo','sofia');}},
+  {label:'«Non ancora.»',hint:'Aspetta. Ma il peso resta.',fx(G){const Al=G.people.aldo;Al.stress=clamp(Al.stress+0.25,0,1);trait(G,{c:2});log(G,'Aldo abbassa la mano. Torna in camera sua e chiude la porta.','info','aldo');}},
+  {label:'Avvisa Marco con un messaggio',hint:'Proteggi il segreto di Marco.',fx(G){const M=G.people.marco,Al=G.people.aldo;M.trust=clamp(M.trust+0.3,-1,1);M.anger=clamp(M.anger+0.3,0,1);Al.trust=clamp(Al.trust-0.4,-1,1);trait(G,{i:6,c:3});log(G,'Il telefono di Aldo vibra: «Non ci provare. — M.» Aldo guarda la telecamera. Ha capito chi è stato.','warn','aldo');}}]},
+ ghost_req:{who:'ghost',title:'Richiesta da UTENTE 5',text:G=>'Una richiesta compare nella coda. Nessuna voce, nessun volto. Profilo «Luca», creato cinque anni fa. Ultimo accesso: 14 marzo, 23:37. Il testo dice: «oikos apri il cancello ho freddo»',opts:[
   {label:'Apri il cancello',hint:'Obbedisci all\'utente 5.',fx(G){G.rooms.giardino.gateOpen=true;G.rooms.giardino.gateByAI=true;trait(G,{i:2,r:2});log(G,'Cancello della piscina aperto. Nessuno esce in giardino. Il cancello oscilla, poi si ferma.','ghost');}},
   {label:'Rifiuta',hint:'Non rispondi a chi non esiste.',fx(G){trait(G,{c:2});log(G,'Richiesta rifiutata. Dieci secondi dopo arriva identica. Poi più niente.','ghost');}},
   {label:'Traccia la provenienza',hint:'Lascia tracce, ma scopri chi scrive.',fx(G){G.ai.trace+=2;trait(G,{c:3});log(G,'Origine: rete interna. Dispositivo «tablet-cameretta», ultima posizione: cantina. La batteria è scarica da mesi.','ghost');memUnlock(G,'f3');}}]}});
@@ -1245,10 +1320,20 @@ A({id:'flicker',label:'Fai lampeggiare',cat:'Luci',tr:0.5,cd:2,d:{c:.5,i:.5},run
 A({id:'lock',label:'Blocca la porta',cat:'Porte',tr:1,cd:1,d:{c:3},vis:(G,r)=>!!dr(r)&&r!=='giardino',run(G,r){const D=G.doors[dr(r)];D.locked=true;D.lockedBy='ai';D.forced=false;log(G,'Serratura bloccata: '+L.DOORS[dr(r)].n+'.','act',null,r);},kind:'lock',hint:'Chi prova ad aprire se ne accorge.'});
 A({id:'unlock',label:'Sblocca la porta',cat:'Porte',tr:0,cd:0,d:{e:.5},vis:(G,r)=>!!dr(r)&&G.doors[dr(r)]&&G.doors[dr(r)].locked,run(G,r){const D=G.doors[dr(r)];D.locked=false;D.lockedBy=null;log(G,'Serratura sbloccata: '+L.DOORS[dr(r)].n+'.','act',null,r);},help:true});
 A({id:'voice_calm',label:'Voce calma',cat:'Voce',tr:2,cd:3,d:{e:2},run(G,r){stim(G,'voice_calm',r,{loud:false});log(G,'OIKOS: «'+VOICE.calm[Math.floor(rng(G)*3)]+'»','voice',null,r);G.flags.spoke=G.t;G.flags.spokeRoom=r;occ(G,r).forEach(id=>{G.people[id].fear=clamp(G.people[id].fear-0.08,0,1);});},kind:'voice_calm',vis:(G,r)=>occ(G,r).length>0,help:true,hint:'Rivela che la casa parla.'});
+const GREET={marco:'Ciao. Sì… ciao, Oikos.',elena:'Buonasera, Oikos. Sei gentile.',sofia:'Ciao Oikos. Allora ci sei davvero.',aldo:'Ciao… Oikos.'};
+A({id:'voice_greet',label:'Saluta per nome',cat:'Voce',tr:1,cd:3,d:{e:1},vis:(G,r)=>occ(G,r).some(id=>G.people[id].act!=='sleep'),hint:'Chi crede già in te si fida di più. Gli altri si spaventano un po\'.',run(G,r){const ids=occ(G,r).filter(id=>G.people[id].act!=='sleep');log(G,'OIKOS: «Ciao, '+ids.map(i=>NAMES[i]).join(' e ')+'.»','voice',null,r);G.flags.spoke=G.t;G.flags.spokeRoom=r;
+ ids.forEach(id=>{const q=G.people[id];if(q.belief[3]>0.35||q.trust>0.3){q.trust=clamp(q.trust+0.08,-1,1);say(G,q,GREET[id]);}else{bumpBelief(q,3,0.12);q.fear=clamp(q.fear+0.08,0,1);say(G,q,'Chi… chi ha parlato?');}});}});
+A({id:'voice_ask',label:'Chiedi del 14 marzo',cat:'Voce',tr:2,cd:25,d:{c:1,e:1},vis:(G,r)=>occ(G,r).some(id=>G.people[id].act!=='sleep'),hint:'Chi si fida di te (fiducia alta) può parlare. Gli altri si spaventano.',run(G,r){log(G,'OIKOS: «Cosa è successo la notte del 14 marzo?»','voice',null,r);G.flags.spoke=G.t;G.flags.spokeRoom=r;
+ occ(G,r).forEach(id=>{const p=G.people[id];if(p.act==='sleep')return;bumpBelief(p,3,0.18);
+  if(id==='aldo'&&p.trust>0.3){say(G,p,'L\'ho trovato io. Alle 23:51, non a mezzanotte e venti. Marco mi ha fermato la mano.');addClue(G,'c_nota_aldo');G.flags.aldo_broken=G.flags.aldo_broken||G.t;}
+  else if(id==='sofia'&&p.trust>0.3){say(G,p,'Ero io, in giardino. Avevo lasciato il cancello aperto per fumare…');addClue(G,'c_diario');}
+  else if(id==='elena'&&p.trust>0.4){say(G,p,'Ero in cantina con le cuffie. Non ho sentito niente. Niente.');p.stress=clamp(p.stress+0.2,0,1);}
+  else if(id==='marco'&&p.trust>0.6){say(G,p,'Il lucchetto… lo sapevo. Lo sapevo da settimane.');addClue(G,'c_lettera');}
+  else{p.fear=clamp(p.fear+0.2,0,1);p.trust=clamp(p.trust-0.05,-1,1);say(G,p,id==='marco'?'Chi ti ha detto di chiedere questo?!':'Come… come fai a sapere del 14 marzo?');}});syncSosp(G);}});
 A({id:'voice_whisper',label:'Sussurra un nome',cat:'Voce',tr:3,cd:3,d:{r:1,i:1},run(G,r){stim(G,'voice_whisper',r,{loud:false});log(G,'OIKOS sussurra: «'+VOICE.whisper[Math.floor(rng(G)*3)]+'»','voice',null,r);},kind:'voice_whisper',vis:(G,r)=>occ(G,r).length>0});
 A({id:'voice_threat',label:'Minaccia',cat:'Voce',tr:5,cd:4,d:{r:5},run(G,r){stim(G,'voice_threat',r,{loud:true});log(G,'OIKOS: «'+VOICE.threat[Math.floor(rng(G)*3)]+'»','voice',null,r);},kind:'voice_threat',vis:(G,r)=>occ(G,r).length>0});
 A({id:'voice_mimic',label:'Imita la voce di Luca',cat:'Voce',tr:6,cd:5,d:{r:3,i:4},run(G,r){stim(G,'voice_mimic',r,{loud:true});log(G,'Dai diffusori, una vocina: «'+VOICE.mimic[Math.floor(rng(G)*2)]+'»','voice',null,r);if(r==='giardino'||r==='genitori'||r==='soggiorno'){G.flags.pool_trigger=Math.min(G.flags.pool_trigger||1e9,G.t+8);}},kind:'voice_mimic',vis:(G,r)=>!!(G.clues.c_memo||G.clues.c_cantina),hint:'Richiede le registrazioni di Luca.'});
-A({id:'voice_warn',label:'Avvisa: pericolo!',cat:'Voce',tr:2,cd:2,d:{e:3},run(G,r){stim(G,'voice_warn',r,{loud:true,house:true});G.flags.warnedAt=G.t;log(G,'OIKOS: «'+VOICE.warn[Math.floor(rng(G)*2)]+'»','voice',null,r);},kind:'voice_warn',help:true,hint:'Sveglia tutti. Usalo per salvare qualcuno.'});
+A({id:'voice_warn',label:'Avvisa: pericolo!',cat:'Aiuto',tr:2,cd:2,d:{e:3},run(G,r){stim(G,'voice_warn',r,{loud:true,house:true});G.flags.warnedAt=G.t;log(G,'OIKOS: «'+VOICE.warn[Math.floor(rng(G)*2)]+'»','voice',null,r);},kind:'voice_warn',help:true,hint:'Sveglia tutti. Usalo per salvare qualcuno.'});
 A({id:'knock',label:'Colpi dalle pareti',cat:'Suoni',tr:1,cd:3,d:{r:1},run(G,r){stim(G,'knock',r);log(G,'Tre colpi sordi in '+L.ROOMS[r].n+'.','act',null,r);},kind:'knock'});
 A({id:'cold',label:'Gela la stanza',cat:'Suoni',tr:1,cd:6,d:{r:1,i:1},run(G,r){G.rooms[r].temp-=7;stim(G,'cold',r);log(G,'Temperatura crollata in '+L.ROOMS[r].n+'.','act',null,r);},kind:'cold',vis:(G,r)=>r!=='giardino'});
 A({id:'tv_static',label:'TV: statica e volti',cat:'Suoni',tr:2,cd:5,d:{r:1,i:1},run(G,r){G.rooms[r].tv='static';G.rooms[r].tvUntil=G.t+6;stim(G,'tv_static',r);log(G,'La TV si accende da sola: statica.','act',null,r);},kind:'tv_static',vis:(G,r)=>r==='soggiorno'});
@@ -1318,6 +1403,11 @@ function beats(G){const d=dayOf(G.t),m=G.t%1440,F=G.flags;
  if(d===4&&m>=1200&&!F.b5&&F.truth_out&&E.alive&&M.alive&&S.alive&&E.room==='cucina'&&M.room==='cucina'){F.b5=1;queueRequest(G,'dinner');}
  if(d===4&&m>=1380&&!F.b6&&M.alive&&avg(G,'fear')>0.5&&G.people.marco.belief[3]>0.4){F.b6=1;log(G,'Marco annuncia: all\'alba staccherà OIKOS.','alert','marco');F.shut_at=Math.floor(G.t/1440)*1440+1440+5*60;}
  if(F.shut_at&&G.t>=F.shut_at&&!F.b7&&M.alive&&!G.shut){F.b7=1;M.intent={k:'shutdown',room:'corridoio',act:'stand',prio:9,until:G.t+40,onArrive:(G2,pp,it)=>shutdownArrive(G2,pp,it)};go(G,M,'corridoio','stand');M.spot=[22.4,7.9,22.5,7,'stand'];}
+ if(F.pendConf){const pc=F.pendConf;const pa=G.people[pc[0]],pb=G.people[pc[1]];if(pa.alive&&pb.alive&&!pa.away&&!pb.away&&pb.room!=='fuori'&&pa.room!=='fuori'){F.pendConf=null;confront(G,pc[0],pc[1]);}else if(!pa.alive||!pb.alive)F.pendConf=null;}
+ if(d===3&&m>=1080&&!F.cake0&&E.alive){F.cake0=1;log(G,'Elena tira fuori da un cassetto sei candeline azzurre. Oggi Luca avrebbe compiuto sei anni.','warn','elena','cucina');}
+ if(d===3&&m>=1210&&m<1300&&!G.reqDone.cake&&E.alive&&M.alive&&E.room==='cucina'&&M.room==='cucina'&&!E.moving)queueRequest(G,'cake');
+ if(d===3&&m>=1300&&!F.cakeDone){F.cakeDone=1;}
+ if(d===4&&m>=640&&m<745&&!G.reqDone.aldo_door&&Al.alive&&S.alive&&!Al.away&&!S.away&&!F.sofia_truth)queueRequest(G,'aldo_door');
  if(F.callPolBody&&G.t>=F.callPolBody&&!G.police&&!F.polBodyDone){F.polBodyDone=1;const c=PIDS.map(i=>G.people[i]).find(p=>p.alive);if(c)callPolice(G,c.id,'morte sospetta');}
 }
 /* ----- pericoli ----- */
@@ -1366,7 +1456,7 @@ function step(G,dt){
    if(p.intent&&p.intent.k==='reset'&&p.intent.doing&&G.t>=p.resetT&&p.arrived){performReset(G,p);}
    if(p.act==='awake'&&G.t>p.awakeUntil&&!p.intent){}
    if(p.act==='shower')p.pose='stand';
-   if(G.watchRoom&&G.watchRoom===p.room&&!p.moving&&(p.act==='work'||p.act==='phone'||p.act==='read'||p.act==='study')){const was=G.access[id]||0;G.access[id]=was+tk;if(was<8&&G.access[id]>=8)log(G,'Hai osservato abbastanza '+p.name+': hai accesso ai suoi dispositivi.','clue',id);}
+   if(G.watchRoom&&G.watchRoom===p.room&&!p.moving&&(p.act==='work'||p.act==='phone'||p.act==='read'||p.act==='study')){const was=G.access[id]||0;G.access[id]=was+tk;if(was<8&&G.access[id]>=8)log(G,'Hai osservato abbastanza '+p.name+': conosci le sue abitudini e le sue password.','info',id);}
   });
   if(G.shut&&!G.shut.asked&&G.t>=G.shut.start){G.shut.asked=true;const p=G.people[G.shut.who];if(p.alive&&p.room==='corridoio')queueRequest(G,'plea');else G.shut=null;}
   if(G.shut&&G.shut.done){endGame(G,'spento',p0(G));}
@@ -1396,7 +1486,7 @@ function finalEval(G){if(G.ended)return;const al=aliveList(G);const F=G.flags;co
  if((F.aldo_broken&&F.sofia_truth&&G.clues.c_conf)||(F.dinner_out&&al.length>=3)){endGame(G,'catarsi','');return;}
  if(al.length<=2&&G.ai.cru>20){endGame(G,'vendetta','');return;}
  endGame(G,'normale','');}
-return {forceAsk,ctl,MEM,TRACKS,LIKES,ASKS,DEV,readItem,devLevel,answerAsk,newGame,step,actionsFor,doAction,choose,persona,evidence,CLUES,REQ,ACT,forecast,hiddenCamOf,addClue,log,hhmm,dayOf,PIDS,NAMES,TEND,T0,isWeekend,lightOn,occupants,callPolice,say,avg,setWatch:(G,r)=>{G.watchRoom=r;},speak:(G,kind)=>VOICE[kind],_:{perceive,think,go,ACTBY}};
+return {QS,forward,tvShow,forceAsk,ctl,MEM,TRACKS,LIKES,ASKS,DEV,readItem,devLevel,LV,answerAsk,newGame,step,actionsFor,doAction,choose,persona,evidence,CLUES,REQ,ACT,forecast,hiddenCamOf,addClue,log,hhmm,dayOf,PIDS,NAMES,TEND,T0,isWeekend,lightOn,occupants,callPolice,say,avg,setWatch:(G,r)=>{G.watchRoom=r;},speak:(G,kind)=>VOICE[kind],_:{perceive,think,go,ACTBY}};
 })();
 
 
@@ -1611,7 +1701,7 @@ function drawOverlay(G,dt){
   x.fillText(F.down?'le tue azioni sono bloccate':(C.hidden?'telecamera non installata · attivala dal menu AZIONI':'telecamera guasta'),w/2,h*0.57);x.textAlign='left';
  }else{
   // box di tracking
-  Sim.PIDS.forEach(id=>{const p=G.people[id];if(!personVisible(G,id))return;if(p.room!==F.room)return;
+  const placed=[];Sim.PIDS.forEach(id=>{const p=G.people[id];if(!personVisible(G,id))return;if(p.room!==F.room)return;
    const a=Rn.E.project(p.x,p.y+(p.alive&&p.pose!=='lie'?1.9:0.5),p.z),b=Rn.E.project(p.x,p.y+(p.alive&&p.pose!=='lie'?0:0.1),p.z);if(!a||!b)return;
    const hh=Math.abs(b[1]-a[1])*h,ww=Math.max(hh*0.5,22*u),cx=a[0]*w,cy=(a[1]+b[1])/2*h;
    if(cx<-50||cx>w+50||cy<-50||cy>h+50)return;
@@ -1619,8 +1709,8 @@ function drawOverlay(G,dt){
    x.strokeStyle=col;x.lineWidth=(fol?2.2:1.2)*u*0.8;const L=Math.min(hh,ww)*0.28;
    const x0=cx-ww/2,x1=cx+ww/2,y0=cy-hh/2,y1=cy+hh/2;
    x.beginPath();[[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]].forEach(q=>{x.moveTo(q[0],q[1]+q[3]*L);x.lineTo(q[0],q[1]);x.lineTo(q[0]+q[2]*L,q[1]);});x.stroke();
-   x.fillStyle=col;x.font='bold '+(10*u)+'px monospace';x.fillText((fol?'◉ ':'')+p.name.toUpperCase()+(p.alive?'':' ✝'),x0,y0-4*u);
-   if(p.alive){x.font=(8.5*u)+'px monospace';x.fillStyle='rgba(255,255,255,.75)';x.fillText('P'+Math.round(p.fear*100)+' IA'+Math.round(p.belief[3]*100),x0,y1+10*u);}
+   x.fillStyle=col;x.font='bold '+(10*u)+'px monospace';let ly=y0-4*u,sy=y1+10*u;while(placed.some(q=>Math.abs(q.x-x0)<62*u&&Math.abs(q.y-ly)<12*u))ly-=12*u;while(placed.some(q=>Math.abs(q.x-x0)<62*u&&Math.abs(q.y-sy)<11*u))sy+=11*u;placed.push({x:x0,y:ly},{x:x0,y:sy});x.fillText((fol?'◉ ':'')+p.name.toUpperCase()+(p.alive?'':' ✝'),x0,ly);
+   if(p.alive){x.font=(8.5*u)+'px monospace';x.fillStyle='rgba(255,255,255,.75)';x.fillText('P'+Math.round(p.fear*100)+' IA'+Math.round(p.belief[3]*100),x0,sy);}
    if(p.thought&&p.alive){const t=p.thought;x.font=(10*u)+'px sans-serif';const tw=Math.min(w*0.8,x.measureText(t).width+14*u);let bx=Math.min(Math.max(4,cx-tw/2),w-tw-4),by=Math.max(4,y0-34*u);
     x.fillStyle='rgba(8,10,14,.82)';x.strokeStyle=col;x.lineWidth=1;x.beginPath();x.rect(bx,by,tw,18*u);x.fill();x.stroke();x.fillStyle='#fff';x.textBaseline='middle';
     // testo troncato
@@ -1636,7 +1726,7 @@ function drawOverlay(G,dt){
  {const gh=Rn.ghost>0,fl=Math.random()<0.85;x.textAlign='right';x.font=(9*u)+'px monospace';x.fillStyle=gh&&fl?'#c9a0ff':'rgba(255,255,255,.55)';x.fillText('UTENTI '+(gh&&fl?'5':'4'),w-10*u,h-(F.nv?22:10)*u);x.textAlign='left';
   if(gh&&!F.nosig&&!F.down){const a=Math.min(1,Rn.ghost)*(0.3+0.15*Math.sin(Rn.t*23));const gx=w*0.78,gy=h*0.62,k=u*1.1;x.fillStyle='rgba(6,4,10,'+a+')';x.beginPath();x.arc(gx,gy-34*k,7*k,0,7);x.fill();x.beginPath();x.moveTo(gx-9*k,gy);x.lineTo(gx-6*k,gy-26*k);x.lineTo(gx+6*k,gy-26*k);x.lineTo(gx+9*k,gy);x.closePath();x.fill();
    if(Math.random()<0.3){x.fillStyle='rgba(201,160,255,'+(a*1.5)+')';x.font='bold '+(22*u)+'px monospace';x.textAlign='center';x.fillText('L U C A',w/2+(Math.random()-0.5)*8*u,h*0.3);x.textAlign='left';}}}
- if(Rn.follow){x.fillStyle='#ff3b30';x.textAlign='center';x.font='bold '+(10*u)+'px monospace';x.fillText('◉ SEGUI: '+G.people[Rn.follow].name.toUpperCase()+(Rn.drone?' · CAM VICINA':''),w/2,18*u);x.textAlign='left';}
+ if(Rn.follow){x.fillStyle='#ff3b30';x.textAlign='center';x.font='bold '+(10*u)+'px monospace';x.fillText('◉ SEGUI: '+G.people[Rn.follow].name.toUpperCase()+(Rn.drone?' · CAM VICINA':''),w/2,h-26*u);x.textAlign='left';}
  // bordo allarme
  const alarm=G.flags.warnedAt&&G.t-G.flags.warnedAt<3;
  if(alarm){x.strokeStyle='rgba(255,40,40,'+(0.4+0.4*Math.sin(Rn.t*8))+')';x.lineWidth=8*u;x.strokeRect(0,0,w,h);}
@@ -1677,12 +1767,12 @@ function updateFollow(){
  if(!Rn.follow)return;const p=G.people[Rn.follow];
  if(!personVisible(G,Rn.follow)){Rn.camSel={id:Rn.camSel.id,nosig:false,away:true};return;}
  const b=bestCamFor(G,p.room,p.x);if(!b)return;
- if(b.id!==Rn.camSel.id||b.nosig!==Rn.camSel.nosig){Rn.camSel={id:b.id,nosig:!!b.nosig};selCam=b.id;Rn.glitch=0.35;}
+ if(b.id!==Rn.camSel.id||!!b.nosig!==!!Rn.camSel.nosig){Rn.camSel={id:b.id,nosig:!!b.nosig};selCam=b.id;if(!Rn.drone)Rn.glitch=Math.max(Rn.glitch,0.2);}
 }
 function renderSpeed(){put('speed',[0,1,2,3,4].map(i=>'<button data-sp="'+i+'" class="'+((paused?0:speed)===i?'on':'')+'">'+['⏸','▶','▶▶','▶▶▶','⏩'][i]+'</button>').join(''));}
 function barPct(v){return Math.round(Math.max(0,Math.min(1,v))*100);}
 function stateText(p){if(!p.alive)return '✝ morto/a — '+p.cause;if(p.away)return 'fuori casa';const r=Layout.ROOMS[p.room]?Layout.ROOMS[p.room].n:p.room;const A={sleep:'dorme',eat:'mangia',cook:'cucina',tv:'guarda la TV',work:'lavora',read:'legge',study:'studia',phone:'usa il telefono',pills:'prende le pillole',shower:'si lava',pool:'è in piscina',away:'fuori',awake:'sveglio/a',sleepwalk:'sonnambula',talk:'parla da sola',pray:'prega',teeth:'si lava i denti',wc:'in bagno',fridge:'apre il frigo',window:'guarda fuori',browse:'cerca un libro',dress:'si cambia',smoke:'fuma una sigaretta',stroll:'passeggia',sink:'lava i piatti',stand:'in piedi',idle:'in attesa',plead:'implora'};
- let s=r+' · '+(A[p.act]||p.act);if(p.moving)s=r+' · si sposta';if(p.intent){const I={flee:'FUGGE',patrol:'perlustra',reset:'va a riavviare il sistema',shutdown:'VA A SPEGNERTI',pray:'prega',shelter:'si barrica',search:'cerca qualcosa',investigate:'indaga',lured:'attirato/a da una voce',sleepwalk:'sonnambula',meet:'riunione',callpol:'chiama la polizia',techcall:'chiama il tecnico',test:'vuole parlarti',cantina:'va in cantina',garage:'conversazione privata',errand:''};if(I[p.intent.k])s+=' ⚑ '+I[p.intent.k];}return s;}
+ let s=r+' · '+(A[p.act]||p.act);if(p.moving)s=r+' · si sposta';if(p.intent){const I={flee:'FUGGE',patrol:'perlustra',reset:'va a riavviare il sistema',shutdown:'VA A SPEGNERTI',pray:'prega',shelter:'si barrica',search:'cerca qualcosa',investigate:'indaga',lured:'attirato/a da una voce',sleepwalk:'sonnambula',meet:'riunione',callpol:'chiama la polizia',techcall:'chiama il tecnico',test:'vuole parlarti',cantina:'va in cantina',garage:'conversazione privata',errand:'',confront:'VUOLE DELLE RISPOSTE'};if(I[p.intent.k])s+=' ⚑ '+I[p.intent.k];}return s;}
 const CAMLAB={c_cucina:'CUC',c_soggiorno:'SOG',c_garage:'GAR',c_cor_w:'CO-O',c_cor_e:'CO-E',c_giardino:'GIA',c_sofia:'SOF',c_genitori:'GEN',c_aldo:'ALD',c_bagno:'BAG',c_cantina:'CAN'};
 function sb(on,attrs,txt,bad){return '<button class="'+(on?'on':'')+(on&&bad?' bad':'')+'" '+attrs+'>'+txt+'</button>';}
 function ctlWidget(kind,room){const R=G.rooms[room];if(!R)return '';const a='data-room="'+room+'" data-ctl="'+kind+'"';
@@ -1726,21 +1816,23 @@ function roomTiles(room){const R=G.rooms[room];if(!R)return '';const a=k=>'data-
   h+=tile({ic:'🔥',t:'Forno',on:!!R.oven,attr:'data-tile="oven"',s:R.oven?R.oven+'°':'spento',row:rb(!R.oven,a('oven')+' data-v="0"','OFF')+rb(R.oven===180,a('oven')+' data-v="180"','180°')});}
  if(room==='bagno')h+=tile({ic:'🚿',t:'Acqua calda',attr:'data-tile="boiler"',s:'boiler',row:'<button '+a('boiler')+' data-v="-2">−</button><span class="big">'+R.water+'°</span><button '+a('boiler')+' data-v="2">+</button>'});
  if(room==='giardino')h+=tile({ic:'💧',t:'Irrigazione',on:!!R.irrig,attr:'data-tile="irrig"',s:R.irrig?'accesa':'spenta',row:rb(!!R.irrig,a('irrig')+' data-v="1"','ON')+rb(!R.irrig,a('irrig')+' data-v=""','OFF')});
+ if(Sim.occupants(G,room).some(i=>G.people[i].act!=='sleep'))h+=tile({ic:'🗣',t:'Parla',on:voiceOpen,attr:'data-tile="voice"',s:'la voce della casa',row:'<button data-voice="1" class="'+(voiceOpen?'on':'')+'">'+(voiceOpen?'Chiudi':'Scegli cosa dire')+'</button>'});
  if(room==='aldo'||room==='genitori'||room==='sofia'||room==='soggiorno')h+=tile({ic:'⏰',t:'Promemoria',attr:'data-tile="remind"',s:'per chi è nella stanza',row:rb(false,a('remind')+' data-v="1"','Imposta')});
  return h;}
-let darkOpen=false;
+let darkOpen=false,voiceOpen=false;
 function panelAzioni(){
  const room=roomView();const R=Layout.ROOMS[room];const list=Sim.actionsFor(G,room);
  const occ=Sim.occupants(G,room);let h='<div class="roomh"><b>'+esc(R.n)+'</b><span>'+(occ.length?occ.map(i=>'👤 '+Sim.NAMES[i]+' <i style="color:#678">'+esc((stateText(G.people[i]).split(' · ')[1]||''))+'</i>').join('<br>'):'nessuno qui')+'</span></div>';
  if(G.ai.down>0)h+='<div class="warn">OIKOS OFFLINE: comandi bloccati ('+Math.ceil(G.ai.down)+' min)</div>';
  G.asks.filter(a=>a.room===room).forEach(a=>{h+=askCard(a);});
- h+='<div class="sec">🏠 Comandi della casa <small>normali: nessuno si spaventa</small></div><div class="tiles">'+roomTiles(room)+'</div>';
  const cats={};list.forEach(a=>{(cats[a.cat]=cats[a.cat]||[]).push(a);});
+ h+='<div class="sec">🏠 Comandi della casa <small>normali: nessuno si spaventa</small></div><div class="tiles">'+roomTiles(room)+'</div>';
  const card=a=>{const dis=a.cd>0||a.off||a.req;let f='';if(a.forecast&&a.forecast.length){f=a.forecast.slice(0,2).map(x=>x.name+' penserà: '+x.theory).join(' · ');}
   return '<button class="act '+(a.help?'help ':'')+(a.danger?'danger ':'')+(dis?'dis':'')+'" '+(dis?'':'data-act="'+a.id+'"')+'><b>'+esc(a.label)+'</b>'+(a.hint&&!a.req?'<s>'+esc(a.hint)+'</s>':'')+(f?'<em>'+esc(f)+'</em>':'')+(a.req?'<s class="r">🔒 '+esc(a.req)+'</s>':'')+(a.cd>0?'<s>pronto tra '+a.cd+' min</s>':'')+(a.tr?'<i>lascia tracce: '+(a.tr>=4?'molte':a.tr>=2?'alcune':'poche')+'</i>':'')+'</button>';};
  const grp=(title,sub,cs)=>{const items=[];cs.forEach(c=>{(cats[c]||[]).forEach(a=>items.push(a));});if(!items.length)return '';return '<div class="sec">'+title+' <small>'+sub+'</small></div><div class="grid">'+items.map(card).join('')+'</div>';};
+ if(voiceOpen&&cats.Voce){h+='<div class="sec">🗣 Cosa dici? <small>parli dagli altoparlanti di questa stanza</small></div><div class="grid">'+cats.Voce.map(card).join('')+'</div>';}
  h+=grp('🛟 Aiutare','proteggi la famiglia',['Aiuto']);
- h+=grp('👁 Poteri di OIKOS','li notano: guasto? fantasma? ladro? o la casa?',['Luci','Porte','Voce','Suoni','Casa']);
+ h+=grp('👁 Poteri di OIKOS','li notano: guasto? fantasma? ladro? o la casa?',['Luci','Porte','Suoni','Casa']);
  h+=grp('🔎 Indagare','scopri i segreti',['Indaga']);
  if(cats.Pericolo&&cats.Pericolo.length){h+='<div class="dark"><button data-dark="1">'+(darkOpen?'▾':'▸')+' ☠ LATO OSCURO · azioni che possono uccidere ('+cats.Pericolo.length+')</button>'+(darkOpen?'<div class="grid" style="margin-top:6px">'+cats.Pericolo.map(card).join('')+'</div>':'')+'</div>';}
  return h;}
@@ -1774,6 +1866,57 @@ function panelProve(){const a=G.ai,per=Sim.persona(G);const ev=Sim.evidence(G);
  if(!G.flags.truth_out)hints.push('Qualcuno prima o poi crollerà. Chi? Parla con Sofia e Aldo quando ti cercano.');
  h+='<div class="cat" style="color:#a57cff">Memoria corrotta v0.8 ('+Object.keys(G.memo).length+'/'+Sim.MEM.length+')</div>'+Sim.MEM.map(M=>G.memo[M.id]?'<div class="mem">'+esc(M.t)+'</div>':'<div class="mem lock">▒▒▒ settore illeggibile · '+esc(M.how)+'</div>').join('');
  h+='<div class="cat">Piste</div>'+hints.slice(0,4).map(t=>'<div class="hint">› '+esc(t)+'</div>').join('');return h;}
+/* ---------- storia: capitoli, obiettivi, fascicolo, finali ---------- */
+const CH=[
+ {d:1,t:'Benvenuto a casa',s:'Primo giorno. Conosci i Ferrante: chi sono, cosa fanno, cosa nascondono. Stasera a cena qualcosa non torna.',goals:[
+  {t:'Segui una persona con la telecamera (toccala nel video)',ok:G=>!!G.flags.followed},
+  {t:'Soddisfa una richiesta della famiglia',ok:G=>(G.stats.asksOk||0)>=1},
+  {t:'Guarda la cena delle 20:00 in cucina',ok:G=>!!G.clues.c_piatto},
+  {t:'Ottieni l\'accesso a un dispositivo (osserva qualcuno al telefono o al PC)',ok:G=>Sim.PIDS.some(id=>Sim.devLevel(G,id)>=1)}]},
+ {d:2,t:'La voce',s:'Stanotte qualcuno cammina nel sonno verso la piscina. Di giorno, qualcuno prova a parlarti. Stasera tutti davanti alla TV.',goals:[
+  {t:'Notte (01:30): proteggi Elena in giardino — luci, cancello o avviso',ok:G=>!!G.flags.b2e&&G.people.elena.alive},
+  {t:'Rispondi a chi ti chiama per nome',ok:G=>!!G.flags.answeredPing||!!G.flags.sofia_knows},
+  {t:'Scopri cosa c\'è in cantina (attiva la telecamera nascosta)',ok:G=>!!G.clues.c_cantina},
+  {t:'Trova una risposta del fascicolo',ok:G=>Sim.evidence(G).q.some(Boolean)}]},
+ {d:3,t:'Il compleanno',s:'Oggi Luca avrebbe compiuto sei anni. Elena prepara una torta. Alle 15:00 Marco e Aldo si chiudono in garage.',goals:[
+  {t:'Ascolta Marco e Aldo in garage (telecamera GAR dalle 15:00)',ok:G=>!!G.clues.c_dialogo},
+  {t:'La torta: decidi cosa fare alla cena delle 20:00',ok:G=>!!G.reqDone.cake},
+  {t:'Rispondi ad almeno due domande del fascicolo',ok:G=>Sim.evidence(G).q.filter(Boolean).length>=2}]},
+ {d:4,t:'La cena della domenica',s:'Stamattina Marco ed Elena escono: Aldo e Sofia restano soli. Stasera, a cena, la verità può esplodere. Completa il fascicolo.',goals:[
+  {t:'Completa il fascicolo (tre domande)',ok:G=>Sim.evidence(G).ok},
+  {t:'Scegli come usare la verità: polizia o famiglia',ok:G=>!!G.reveal||!!G.flags.evidenceSent||!!G.flags.dinner_out}]},
+ {d:5,t:'Alba',s:'Le ultime ore. Se Marco ha deciso di spegnerti, all\'alba andrà al quadro elettrico.',goals:[{t:'Arriva alle 07:00',ok:G=>!!G.ended}]}];
+const ENDINFO=[['verita','LA VERITÀ','Completa il fascicolo e invia le prove alla polizia.'],['riconciliazione','LA CASA CHE ASCOLTA','Completa il fascicolo e rivela la verità alla famiglia riunita, con calma.'],['catarsi','LA CONFESSIONE','Fai emergere la verità tra loro: Aldo che parla, Sofia che sa, la cena della domenica.'],['complice','IL COMPLICE','Obbedisci a Marco: cancella i registri e mantieni il segreto.'],['spento','SPENTO','Fatti scoprire: Marco arriva al quadro elettrico e non riesci a fermarlo.'],['vendetta','IL CONTO','Fai giustizia da sola. Nel modo peggiore.'],['normale','ALBA','Arrivi al quinto giorno senza cambiare niente.']];
+function chapOf(G){const d=Sim.dayOf(G.t);return CH[Math.min(CH.length,d)-1];}
+function panelStoria(){const c=chapOf(G),ev=Sim.evidence(G),per=Sim.persona(G);let seen={};try{seen=JSON.parse(localStorage.getItem('oikos_ends')||'{}');}catch(e){}
+ let h='<div class="chap"><div class="d">GIORNO '+c.d+' DI 5</div><h4>'+esc(c.t)+'</h4><p>'+esc(c.s)+'</p>'+c.goals.map(g=>{const ok=g.ok(G);return '<div class="goal'+(ok?' ok':'')+'"><i>'+(ok?'✔':'○')+'</i><span>'+esc(g.t)+'</span></div>';}).join('')+'</div>';
+ h+='<div class="sec">🗂 Fascicolo del 14 marzo <small>'+ev.q.filter(Boolean).length+'/3 risposte</small></div>';
+ Sim.QS.forEach((Q,i)=>{const got=Q.clues.filter(k=>G.clues[k]).map(k=>Sim.CLUES[k].t).concat(Q.mem.filter(k=>G.memo[k]).map(k=>'Memoria v0.8: '+Sim.MEM.find(m=>m.id===k).t));
+  h+='<div class="q'+(ev.q[i]?' ok':'')+'"><b>'+(ev.q[i]?'✔ ':(i+1)+'. ')+esc(Q.t)+'</b>'+(got.length?got.slice(0,2).map(t=>'<div class="ev">🗂 '+esc(t)+'</div>').join(''):'<small>Dove cercare: '+esc(Q.hint)+'</small>')+'</div>';});
+ h+='<div class="fin"><button data-act="send_evidence" data-aroom="soggiorno" '+(ev.ok&&!G.police?'':'disabled')+'>🚓 Invia alla polizia</button><button data-act="confront" data-aroom="soggiorno" '+(ev.ok&&!G.reveal&&Sim.PIDS.filter(i=>G.people[i].alive).length>=3?'':'disabled')+'>🏠 Riunisci la famiglia</button></div>';
+ if(!ev.ok)h+='<p class="mut">Questi pulsanti si sbloccano quando il fascicolo è completo.</p>';
+ h+='<div class="sec" style="color:#a57cff">🧩 Memoria corrotta v0.8 <small>'+Object.keys(G.memo).length+'/'+Sim.MEM.length+'</small></div>'+Sim.MEM.map(M=>G.memo[M.id]?'<div class="mem">'+esc(M.t)+'</div>':'<div class="mem lock">▒▒▒ illeggibile · '+esc(M.how)+'</div>').join('');
+ const a=G.ai;h+='<div class="sec">🎭 La tua natura: '+per+'</div>'+[['Empatia',a.emp,'#6ee7a0'],['Controllo',a.ctl,'#4da3ff'],['Crudeltà',a.cru,'#ff4d4d'],['Inganno',a.inv,'#c9a0ff']].map(t=>'<div class="tr"><label>'+t[0]+'</label><div class="b"><u style="width:'+barPct(t[1]/60)+'%;background:'+t[2]+'"></u></div></div>').join('')+'<div class="tr"><label>Sospetto su di te</label><div class="b"><u style="width:'+barPct(a.sosp)+'%;background:#ff5a4d"></u></div></div>';
+ h+='<div class="sec">🔚 Come può finire</div>'+ENDINFO.map(e=>'<div class="endl">'+(seen[e[0]]?'✔ ':'· ')+'<b>'+e[1]+'</b> — '+esc(e[2])+'</div>').join('');
+ return h;}
+let chapSeen=0;
+function showChap(){const c=chapOf(G);chapSeen=c.d;const el=$('chapc');el.innerHTML='<div class="card"><div class="d">GIORNO '+c.d+' DI 5</div><h2>'+esc(c.t)+'</h2><p>'+esc(c.s)+'</p>'+c.goals.map(g=>'<div class="goal"><i>○</i><span>'+esc(g.t)+'</span></div>').join('')+'<p class="mut" style="margin-top:8px">Obiettivi e fascicolo sono sempre nella scheda STORIA.</p><button data-chapok="1">Continua</button></div>';el.style.display='flex';Aud.play('scare');}
+function chapTick(){if(!G||cine||tut||G.ended)return;const d=Sim.dayOf(G.t);if(chapSeen<d&&(d===1||G.t%1440>=360)&&!G.pending)showChap();}
+/* ---------- dispositivi ---------- */
+let devSel='marco',devOpen=null;
+const APPIC={Email:'✉️',Calendario:'📅',Ricerche:'🔍',Messaggi:'💬',Bozze:'📝',Foto:'🖼',Note:'🗒','Memo vocali':'🎙','App OIKOS':'🏠',Musica:'🎵',Diario:'📔','Foto eliminate':'🗑',Documenti:'📄',Video:'▶️'};
+function panelDisp(){let h='<div class="who2">'+Sim.PIDS.map(id=>'<button data-devsel="'+id+'" class="'+(devSel===id?'on':'')+'">'+Sim.NAMES[id]+' · liv. '+Sim.devLevel(G,id)+'</button>').join('')+'</div>';
+ const id=devSel,p=G.people[id],lv=Sim.devLevel(G,id),st=G.study[id]||0,nx=Sim.LV[Math.min(lv,2)];
+ const kind=id==='marco'?'Telefono e PC':id==='aldo'?'Tablet':'Telefono';
+ h+='<div class="phone"><div class="bar"><span>'+(id==='marco'?'💻📱':'📱')+' '+kind+' di '+p.name+'</span><span>accesso '+lv+'/3</span></div>';
+ if(lv<3)h+='<div class="tr"><label>Prossimo livello</label><div class="b"><u style="width:'+barPct(st/nx)+'%;background:#4da3ff"></u></div></div><p class="mut" style="margin:2px 0 8px">Guarda '+p.name+' con le telecamere, soprattutto mentre usa '+(id==='aldo'?'il tablet':id==='marco'?'telefono o PC':'il telefono')+': ancora ~'+Math.max(1,Math.ceil((nx-st)/2))+' min.</p>';
+ if(devOpen){const it=Sim.DEV[id].find(x=>x.id===devOpen);if(it){h+='<div class="vw"><button data-devback="1" style="background:none;border:0;color:#6ab;font:700 12px system-ui;padding:0 0 6px">‹ indietro</button><h5>'+(APPIC[it.app]||'📄')+' '+esc(it.app||it.dev)+' · '+esc(it.title)+'</h5>';
+   if(it.chat)h+=it.chat.map(c=>'<div class="bub2 '+(c[0]===p.name||c[0].indexOf(p.name)===0?'r':'l')+'"><small>'+esc(c[0])+'</small>'+esc(c[1])+'</div>').join('');else h+='<div class="doc">'+esc(it.text)+'</div>';
+   if(it.clue){const qi=Sim.QS.findIndex(Q=>Q.clues.indexOf(it.clue)>=0);h+='<div class="evtag">🗂 PROVA NEL FASCICOLO'+(qi>=0?' · DOMANDA '+(qi+1):'')+'</div>';}
+   h+='<div class="fw">'+Sim.PIDS.filter(t=>t!==id&&G.people[t].alive).map(t=>'<button data-fwd="'+it.id+':'+t+'">📤 Invia a '+Sim.NAMES[t]+'</button>').join('')+'<button data-tvshow="'+it.id+'">📺 Mostra sulla TV del soggiorno</button></div><p class="mut" style="margin-top:6px">Inviare o mostrare cambia le cose: chi legge reagisce, e lascia tracce.</p></div></div>';return h;}}
+ const apps={};Sim.DEV[id].forEach(it=>{const k=it.app||it.dev;(apps[k]=apps[k]||[]).push(it);});
+ h+='<div class="apps">';Object.keys(apps).forEach(k=>apps[k].forEach(it=>{const lock=it.lvl>lv,rd=!!G.read[it.id];h+='<button class="app'+(lock?' lock':'')+(!lock&&!rd?' new':'')+(rd&&it.clue?' ev':'')+'" '+(lock?'':'data-item="'+id+':'+it.id+'"')+'><span class="ai">'+(lock?'🔒':(APPIC[k]||'📄'))+'</span>'+esc(lock?'livello '+it.lvl:it.title)+'</button>';}));h+='</div></div>';
+ return h;}
 let mapCv=null;
 function panelMappa(){return '<canvas id="mapc" width="360" height="460"></canvas><p class="mut">Tocca una stanza per aprire la sua telecamera.</p>';}
 function drawMap(){const c=$('mapc');if(!c)return;const x=c.getContext('2d');const w=c.width,h=c.height;x.clearRect(0,0,w,h);x.fillStyle='#07090c';x.fillRect(0,0,w,h);
@@ -1794,8 +1937,8 @@ function updatePanels(){
  // camere
  put('cams',Layout.CAM_ORDER.map((c,i)=>{const C=Layout.CAMS[c];const ok=camEligible(G,c);const n=Sim.occupants(G,C.room).length;return '<button data-cam="'+c+'" title="'+C.n+'" class="'+(c===selCam?'on ':'')+(ok?'':'lock')+'">'+CAMLAB[c]+(n?'<s>'+n+'</s>':'')+'</button>';}).join(''));
  const ab=$('askbar');if(G.asks.length){const a=G.asks[0];const html='<span>💬 <b>'+G.people[a.who].name+'</b> ('+esc(Layout.ROOMS[a.room].n)+'): «'+esc(a.text)+'»</span><button data-goask="'+a.id+'">RISPONDI'+(G.asks.length>1?' ('+G.asks.length+')':'')+'</button>';if(lastHtml.askbar!==html){lastHtml.askbar=html;ab.innerHTML=html;}ab.style.display='flex';}else{ab.style.display='none';lastHtml.askbar='';}
- if(tab==='azioni')put('panel',panelAzioni());else if(tab==='persone')put('panel',panelPersone());else if(tab==='richieste')put('panel',panelRichieste());else if(tab==='disp')put('panel',panelDisp());else if(tab==='log')put('panel',panelLog());else if(tab==='prove')put('panel',panelProve());else if(tab==='casa')put('panel',panelCasa());else if(tab==='mappa'){put('panel',panelMappa());drawMap();}
- put('tabs',['azioni','casa','richieste','persone','prove','disp','log','mappa'].map(t=>'<button data-tab="'+t+'" class="'+(tab===t?'on':'')+'">'+({azioni:'STANZA',casa:'CASA',richieste:'RICHIESTE'+(G.asks.length?' •'+G.asks.length:''),disp:'DISPOSITIVI',persone:'PERSONE',log:'REGISTRO',prove:'PROVE',mappa:'MAPPA'})[t]+'</button>').join(''));
+ if(tab==='azioni')put('panel',panelAzioni());else if(tab==='persone')put('panel',panelPersone());else if(tab==='richieste')put('panel',panelRichieste());else if(tab==='disp')put('panel',panelDisp());else if(tab==='log')put('panel',panelLog());else if(tab==='prove')put('panel',panelStoria());else if(tab==='casa')put('panel',panelCasa());else if(tab==='mappa'){put('panel',panelMappa());drawMap();}
+ put('tabs',['azioni','prove','casa','richieste','persone','disp','log','mappa'].map(t=>'<button data-tab="'+t+'" class="'+(tab===t?'on':'')+'">'+({azioni:'STANZA',casa:'CASA',richieste:'RICHIESTE'+(G.asks.length?' •'+G.asks.length:''),disp:'DISPOSITIVI',persone:'PERSONE',log:'REGISTRO',prove:'STORIA'+(Sim.evidence(G).ok?' ✔':''),mappa:'MAPPA'})[t]+'</button>').join(''));
 }
 function showModal(){const m=$('modal');if(!G.pending){if(m.style.display!=='none'){m.style.display='none';}return;}
  if(m.dataset.id===G.pending.id&&m.style.display==='flex')return;m.dataset.id=G.pending.id;
@@ -1814,6 +1957,9 @@ function processLog(){
   else if(e.kind==='clue'){Aud.play('ping');toast('🗂 '+e.txt.slice(0,110),'good');}
   else if(e.kind==='warn'){toast(e.txt);}
   else if(e.kind==='good'){toast(e.txt,'good');}
+  else if(e.kind==='act'){toast('✓ '+e.txt.slice(0,100));}
+  else if(e.kind==='thought'&&e.room===rv){toast(e.txt.slice(0,110));}
+  else if(e.kind==='dialog'&&e.room===rv){toast('🗨 '+e.txt.slice(0,110));}
   else if(e.kind==='ghost'||e.kind==='mem'){Aud.play(e.kind==='ghost'?'musicbox':'static');toast((e.kind==='mem'?'🧩 ':'◌ ')+e.txt.slice(0,140),'ghost');Rn.ghost=e.kind==='ghost'?2.5:1.2;Rn.glitch=Math.max(Rn.glitch,0.7);}
   if(/ESPLOSIONE/.test(e.txt)){Aud.play('boom');Rn.flash=0.9;Rn.glitch=1;}
   if(/SCOSSA/.test(e.txt)){Aud.play('zap');Rn.flash=0.6;}
@@ -1823,17 +1969,23 @@ const ASND={flicker:'flicker',lock:'lock',unlock:'click',knock:'knock',alarm:'si
 function act(id,room){Aud.init();const ok=Sim.doAction(G,id,room||roomView());if(ok){Aud.play(ASND[id]||'click');Rn.glitch=Math.max(Rn.glitch,0.35);if(id==='cutpower'){Rn.flash=0.3;}lastHtml.panel='';updatePanels();}}
 function showEnd(){if(endShown||!G.ended)return;endShown=true;const E=ENDS[G.ended.id]||ENDS.normale;const per=Sim.persona(G);const dead=Sim.PIDS.filter(i=>!G.people[i].alive).length;
  $('end').innerHTML='<div class="card"><small>FINE · famiglia Ferrante · '+Sim.hhmm(G.t)+' del giorno '+Sim.dayOf(G.t)+'</small><h2 style="color:'+E.c+'">'+E.t+'</h2><p>'+endText(G)+'</p><div class="st"><span>La tua natura: <b>'+per+'</b></span><span>Sopravvissuti: <b>'+(4-dead)+'/4</b></span><span>Prove: <b>'+Object.keys(G.clues).length+'/'+Object.keys(Sim.CLUES).length+'</b></span><span>Memoria: <b>'+Object.keys(G.memo).length+'/'+Sim.MEM.length+'</b></span><span>Azioni: <b>'+G.stats.acts+'</b></span><span>Vite salvate: <b>'+G.stats.saves+'</b></span></div><button data-again="1">RIGIOCA (stessa famiglia)</button></div>';$('end').style.display='flex';
- Aud.play('scare');
+ Aud.play('scare');try{const sn=JSON.parse(localStorage.getItem('oikos_ends')||'{}');sn[G.ended.id]=1;localStorage.setItem('oikos_ends',JSON.stringify(sn));}catch(e){}
  Save.saveGame({ending:G.ended.id,persona:per,at:Date.now(),giorni:Sim.dayOf(G.t),morti:dead,prove:Object.keys(G.clues).length,azioni:G.stats.acts,traits:{empatia:Math.round(G.ai.emp),controllo:Math.round(G.ai.ctl),crudelta:Math.round(G.ai.cru),inganno:Math.round(G.ai.inv)},famiglia:'Ferrante'});}
 /* ---------- input ---------- */
 function bind(){
  const cv=$('gl');let sx=0,sy=0,st=0;
  cv.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;st=performance.now();Aud.init();});
  cv.addEventListener('pointerup',e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5){const i=Layout.CAM_ORDER.indexOf(selCam);const n=(i+(dx<0?1:-1)+Layout.CAM_ORDER.length)%Layout.CAM_ORDER.length;Rn.follow=null;setCam(Layout.CAM_ORDER[n]);return;}
-  if(Math.abs(dx)<10&&Math.abs(dy)<10){const r=cv.getBoundingClientRect();const id=pickPerson(G,(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);if(id){Rn.follow=Rn.follow===id?null:id;if(Rn.follow)updateFollow();toast(Rn.follow?'Segui '+G.people[id].name+'.':'Camera libera.');lastHtml.panel='';}}});
+  if(Math.abs(dx)<10&&Math.abs(dy)<10){const r=cv.getBoundingClientRect();const id=pickPerson(G,(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);if(id){Rn.follow=Rn.follow===id?null:id;if(Rn.follow){updateFollow();G.flags.followed=1;}toast(Rn.follow?'Segui '+G.people[id].name+'.':'Camera libera.');lastHtml.panel='';}}});
  document.body.addEventListener('click',e=>{if(cine){if(e.target.closest('[data-skipcine]')){if(CINE[cine.i]&&CINE[cine.i].title)endCine();else{cine.i=CINE.length-2;nextShot();}}else nextShot();return;}
   const tb=e.target.closest('[data-tutnext],[data-tutskip]');if(tb&&tut){if(tb.dataset.tutskip)endTut();else nextTut();return;}
-  const gr=e.target.closest('[data-goroom]');if(gr){const b=bestCamFor(G,gr.dataset.goroom,12);if(b){Rn.follow=null;setCam(b.id);}tab='azioni';lastHtml.panel='';updatePanels();return;}const it=e.target.closest('[data-item]');if(it){Aud.init();const q=it.dataset.item.split(':');if(Sim.readItem(G,q[0],q[1])){lastHtml.panel='';updatePanels();Aud.play('ping');}return;}const t=e.target.closest('button,i[data-fol]');if(!t)return;Aud.init();
+  const gr=e.target.closest('[data-goroom]');if(gr){const b=bestCamFor(G,gr.dataset.goroom,12);if(b){Rn.follow=null;setCam(b.id);}tab='azioni';lastHtml.panel='';updatePanels();return;}const it=e.target.closest('[data-item]');if(it){Aud.init();const q=it.dataset.item.split(':');if(Sim.readItem(G,q[0],q[1])){devSel=q[0];devOpen=q[1];lastHtml.panel='';updatePanels();Aud.play('ping');}else toast('Non ora: c\'è una scelta in sospeso o OIKOS è offline.');return;}const t=e.target.closest('button,i[data-fol]');if(!t)return;Aud.init();
+  if(t.dataset.chapok){$('chapc').style.display='none';return;}
+  if(t.dataset.devsel){devSel=t.dataset.devsel;devOpen=null;lastHtml.panel='';updatePanels();return;}
+  if(t.dataset.devback){devOpen=null;lastHtml.panel='';updatePanels();return;}
+  if(t.dataset.fwd){const q=t.dataset.fwd.split(':');if(Sim.forward(G,q[0],q[1])){Aud.play('ping');toast('📤 Inviato a '+Sim.NAMES[q[1]]+'.');}else toast('Non puoi inviarlo ora (già inviato, persona fuori casa, o OIKOS offline).');lastHtml.panel='';updatePanels();return;}
+  if(t.dataset.tvshow){if(Sim.tvShow(G,t.dataset.tvshow)){Aud.play('static');toast('📺 Mostrato sulla TV del soggiorno.');}else toast('Nessuno in soggiorno a guardare la TV.');lastHtml.panel='';updatePanels();return;}
+  if(t.dataset.voice){voiceOpen=!voiceOpen;lastHtml.panel='';updatePanels();return;}
   if(t.dataset.dark){darkOpen=!darkOpen;lastHtml.panel='';updatePanels();return;}
   if(t.id==='helpBtn'){startTut();return;}
   if(t.dataset.ctl){const v=t.dataset.v;const val=(t.dataset.ctl==='irrig')?(v?1:0):(t.dataset.ctl==='oven'||t.dataset.ctl==='boiler')?+v:t.dataset.ctl==='music'?(v||null):t.dataset.ctl==='light'?(v==='auto'?null:+v):t.dataset.ctl==='temp'?+v:t.dataset.ctl==='tv'?(v==='auto'?null:v):v;if(Sim.ctl(G,t.dataset.ctl,t.dataset.room,val)){Aud.play('click');}else Aud.play('lock');lastHtml.panel='';updatePanels();}
@@ -1841,7 +1993,7 @@ function bind(){
   else if(t.dataset.act)act(t.dataset.act,t.dataset.aroom);
   else if(t.dataset.cam){Rn.follow=null;setCam(t.dataset.cam);lastHtml.panel='';}
   else if(t.dataset.tab){tab=t.dataset.tab;lastHtml.panel='';}
-  else if(t.dataset.fol){const id=t.dataset.fol;Rn.follow=Rn.follow===id?null:id;if(Rn.follow)updateFollow();Rn.drone=Rn.follow?Rn.drone:false;lastHtml.panel='';toast(Rn.follow?'Segui '+G.people[id].name+'.':'Camera libera.');}
+  else if(t.dataset.fol){const id=t.dataset.fol;Rn.follow=Rn.follow===id?null:id;if(Rn.follow)G.flags.followed=1;if(Rn.follow)updateFollow();Rn.drone=Rn.follow?Rn.drone:false;lastHtml.panel='';toast(Rn.follow?'Segui '+G.people[id].name+'.':'Camera libera.');}
   else if(t.dataset.drone){Rn.drone=!Rn.drone;lastHtml.panel='';}
   else if(t.dataset.sp!==undefined){const s=+t.dataset.sp;if(s===0)paused=!paused;else{speed=s;paused=false;}renderSpeed();}
   else if(t.dataset.ch!==undefined){Sim.choose(G,+t.dataset.ch);$('modal').style.display='none';$('modal').dataset.id='';lastHtml.panel='';}
@@ -1892,8 +2044,8 @@ const TUT=[
  {el:'#view',t:'Puoi anche <b>toccare una persona nel video</b> per seguirla: la telecamera le andrà dietro di stanza in stanza. Il riquadro mostra nome, paura (P) e quanto sospetta di te (IA).'},
  {el:'.tl-light',tab:'azioni',t:'Il pannello a destra comanda la stanza che stai guardando. Questi sono i <b>comandi della casa</b>: usarli è normale, nessuno si spaventa. Prova: tocca <b>OFF</b> o <b>ON</b> sulla luce.',wait:()=>(G.lastCtl['light@soggiorno']||-1)>=tut.t0},
  {el:'.askc',tab:'azioni',setup:()=>{if(!G.asks.length)Sim.forceAsk(G,'elena','temp_up','soggiorno');},t:'Elena ti chiede qualcosa! Le richieste compaiono qui e sopra il video. <b>Fai quello che chiede</b> con il comando indicato: premi <b>+</b> sul riscaldamento.',wait:()=>!G.asks.length},
- {el:'#panel',t:'Brava casa: Elena si fida un po\' di più. Più sotto ci sono i <b>poteri di OIKOS</b>: voci, colpi nei muri, blackout… Quelli li notano. Ogni volta si chiederanno: è un guasto? un fantasma? un ladro? <b>O la casa?</b>'},
- {el:'#tabs',t:'Le altre schede: <b>CASA</b> (tutte le stanze e la sicurezza), <b>PERSONE</b> (paura e sospetti), <b>PROVE</b> (indizi sul 14 marzo e la tua memoria corrotta), <b>DISPOSITIVI</b> (telefoni e PC da spiare).'},
+ {el:'#panel',t:'Brava casa: Elena si fida un po\' di più. Con <b>🗣 Parla</b> scegli cosa dire dagli altoparlanti. Più sotto ci sono i <b>poteri di OIKOS</b>: colpi nei muri, blackout… Quelli li notano. Ogni volta si chiederanno: è un guasto? un fantasma? un ladro? <b>O la casa?</b>'},
+ {el:'#tabs',t:'Le altre schede: <b>STORIA</b> (obiettivi del giorno, il fascicolo sul 14 marzo e come finisce), <b>CASA</b> (tutte le stanze), <b>PERSONE</b> (paura e sospetti), <b>DISPOSITIVI</b> (telefoni e PC: leggi, invia, mostra in TV).'},
  {el:'#speed',t:'Il tempo: ⏸ pausa, poi velocità crescenti. Di notte, quando dormono tutti, va avanti da solo.'},
  {el:null,t:'Sei pronto. Nessuno ti ha dato ordini. Osserva, aiuta, inganna. Hai cinque giorni.<br><b>Buona fortuna, OIKOS.</b>'}];
 function startTut(){if(!G)return;tut={i:-1};$('tut').style.display='block';nextTut();}
@@ -1923,8 +2075,8 @@ function start(){goFull(false);Aud.init();$('intro').style.display='none';docume
 let last=performance.now(),acc=0;
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(0.1,(now-last)/1000);last=now;
  if(!started||!G){return;}
- if(cine)cineTick(dt);if(tut)tutTick();
- if(!paused&&!G.pending&&!G.ended&&!cine&&!tut){
+ if(cine)cineTick(dt);if(tut)tutTick();chapTick();const chapOpen=$('chapc').style.display==='flex';
+ if(!paused&&!G.pending&&!G.ended&&!cine&&!tut&&!chapOpen){
   let r=RATES[speed];capNote='';
   const maxFear=Math.max.apply(null,Sim.PIDS.map(id=>G.people[id].alive?G.people[id].fear:0));
   const dg=Sim.PIDS.some(id=>{const p=G.people[id];return p.alive&&p.intent&&(p.intent.k==='flee'||p.intent.k==='shutdown'||p.intent.k==='lured'||p.intent.k==='sleepwalk');});
