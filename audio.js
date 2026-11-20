@@ -389,7 +389,8 @@ export function clankSfx(){ const n = AU.ctx ? AU.ctx.currentTime : 0; if (n - l
 export function dripsSfx(){ const now = AU.ctx ? AU.ctx.currentTime : 0, busy = now - lastDrips < 3; lastDrips = now;
   const n = busy ? 1 + Math.floor(Math.random()*2) : 3 + Math.floor(Math.random()*3); for (let i=0;i<n;i++) play('drip', { vol:R(.06,.14)*(busy?.7:1), rate:R(.85,1.2), delay:R(.05,1.4), pan:R(.1,.6), rev:.3 }); }
 // durante telefonate e scelte i rumori di fondo si abbassano
-export function duck(on){ if (!AU.ctx || AU._duck === on) return; AU._duck = on; AU.amb.gain.setTargetAtTime(on ? .45 : 1, AU.ctx.currentTime, on ? .3 : 1.2); }
+export function silence(sec=8){ if (!AU.ctx) return; const t = AU.ctx.currentTime; AU._duck = 'sil'; AU.amb.gain.cancelScheduledValues(t); AU.amb.gain.setTargetAtTime(.0001, t, .4); AU.amb.gain.setTargetAtTime(1, t + sec, 1.5); setTimeout(()=>{ AU._duck = null; }, sec*1000 + 3000); }
+export function duck(on){ if (AU._duck === 'sil') return; if (!AU.ctx || AU._duck === on) return; AU._duck = on; AU.amb.gain.setTargetAtTime(on ? .45 : 1, AU.ctx.currentTime, on ? .3 : 1.2); }
 export function coinSfx(){ play('coin', { vol:.32, rev:.2 }); }
 export function bellSfx(far=1){ play('bell', { vol:.75/far, rate:far>1 ? .94 : 1, rev:.55 + (far-1)*.5, lp:far>1 ? 1100 : 0 }); }
 export function groanSfx(vol=.6, dur=4){ play('groan', { vol:vol*1.1, dur:Math.min(dur,7), fade:.9, rate:R(.85,1.05), rev:.55 }); }

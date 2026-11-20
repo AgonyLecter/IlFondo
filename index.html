@@ -22,6 +22,9 @@
       <div class="mini" id="tankTxt">CISTERNA</div>
       <div class="meter"><svg id="lucEye" viewBox="0 0 40 24"><path d="M2 12 Q20 -4 38 12 Q20 28 2 12Z" fill="#0b0d0c" stroke="#b9c7a8" stroke-width="1.6"/><circle id="lucIris" cx="20" cy="12" r="6" fill="#c9a640"/><ellipse cx="20" cy="12" rx="1.3" ry="5.5" fill="#000"/><path id="lucLid" d="M2 12 Q20 -4 38 12 Q20 -4 2 12Z" fill="#141010" stroke="#b9c7a8" stroke-width="1.2"/></svg><canvas id="ecg" width="200" height="40"></canvas></div>
       <div class="mini" id="lucTxt">LUCIDITÀ</div>
+      <div class="mini dn" id="lucWhy"></div>
+      <button id="breathBtn">RESPIRA</button>
+      <div id="lucPop"></div>
       <div class="bar hidden" id="lucBar"><i></i></div>
     </div>
   </div>
@@ -57,7 +60,7 @@
   <button class="close" data-close="diary">✕</button>
   <h2>DIARIO</h2>
   <div class="sub" id="diaryCount"></div>
-  <div class="tabs"><button data-tab="lore" class="on">SCOPERTE</button><button data-tab="relic">REPERTI</button><button data-tab="rules">REGOLE</button></div>
+  <div class="tabs"><button data-tab="lore" class="on">SCOPERTE</button><button data-tab="relic">REPERTI</button><button data-tab="mind">MENTE</button><button data-tab="rules">REGOLE</button></div>
   <div id="diaryList"></div>
 </div>
 
@@ -79,6 +82,7 @@
 </div>
 <div id="fade"></div>
 <div id="subliminal" class="hidden"></div>
+<div id="breathOv" class="hidden"><div class="ring"></div><div class="bt">inspira… trattieni… espira</div></div>
 <div id="cine" class="hidden"><div class="lb t"></div><div class="lb b"></div><div id="cineCap"></div><div id="cineMid"></div><button id="skipBtn">SALTA ›</button></div>
 <canvas id="scare" class="hidden"></canvas>
 <div id="rotate"><div class="ph"></div>RUOTA IL TELEFONO<br><span style="opacity:.5;font-size:11px">IL FONDO SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO</span></div>
