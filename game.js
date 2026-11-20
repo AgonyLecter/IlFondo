@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { AU, initAudio, setUnder, sfxNoise, play, splashSfx, pullSfx, coinSfx, bellSfx, groanSfx, whisperSfx, stingerSfx, heartSfx, creakSfx, ringSfx, staticSfx, bubbleSfx,
+import { AU, initAudio, setUnder, sfxNoise, play, splashSfx, castSfx, reelSfx, duck, coinSfx, bellSfx, groanSfx, whisperSfx, stingerSfx, heartSfx, creakSfx, ringSfx, staticSfx, bubbleSfx,
   thunderSfx, deepCallSfx, rumbleSfx, knockSfx, revealSfx, musicBoxSfx, breathSfx, honkSfx, dripSfx, clankSfx, dripsSfx, footstepSfx } from './audio.js';
 
 const $ = id => document.getElementById(id);
@@ -1258,8 +1258,8 @@ function throwBucket(){
   B.target.set(.4, water.position.y - .05, rt);
   camera.updateMatrixWorld(); handPos.set(.5,-.58,-.85); camera.localToWorld(handPos);
   const dist = handPos.distanceTo(B.target);
-  B.dist = dist; B.dur = (.55 + dist*.006) * PULLS[S.pull].m; B.t = 0; B.busy = true; B.splashed = false;
-  pullSfx(); if (Math.random()<.15) creakSfx();
+  B.dist = dist; B.dur = (.55 + dist*.006) * PULLS[S.pull].m; B.t = 0; B.busy = true; B.splashed = false; B.reeled = false;
+  castSfx(B.dur*.42); if (Math.random()<.08) creakSfx();
 }
 function finishBucket(){
   B.busy = false; clankSfx(); dripsSfx();
@@ -2126,10 +2126,10 @@ function update(dt){
   if (B.busy){
     B.t += dt; const u = B.t / B.dur;
     if (u < .42){ const e = u/.42; const ee = e*e; bucket.position.lerpVectors(handPos, B.target, ee); bucket.position.y += Math.sin(e*Math.PI)*1.2*(1-e); bucket.rotation.z = e*.5; }
-    else if (u < .58){ if (!B.splashed){ B.splashed = true; ripple(B.target.x, B.target.z, .9); splashSfx(B.dist); doSpray(B.target); if (X_.tugNext){ X_.tugNext = false; X_.tug = 2.6; B.dur += 2.6; } }
+    else if (u < .58){ if (!B.splashed){ B.splashed = true; ripple(B.target.x, B.target.z, .9); splashSfx(B.dist, BUCKETS[S.bucket].s); doSpray(B.target); if (X_.tugNext){ X_.tugNext = false; X_.tug = 2.6; B.dur += 2.6; } }
       if (X_.tug > 0 && Math.random() < dt*4) ripple(B.target.x + rand(-.5,.5), B.target.z + rand(-.5,.5), .6);
       bucket.position.copy(B.target); bucket.position.y = water.position.y - .2 + Math.sin(T*8)*.03; bucket.rotation.z = .9; }
-    else if (u < 1){ const e = (u-.58)/.42; const ee = 1-(1-e)*(1-e); bucket.position.lerpVectors(B.target, handPos, ee); bucket.rotation.z = (1-e)*.6; }
+    else if (u < 1){ if (!B.reeled){ B.reeled = true; reelSfx(B.dur*.42); } const e = (u-.58)/.42; const ee = 1-(1-e)*(1-e); bucket.position.lerpVectors(B.target, handPos, ee); bucket.rotation.z = (1-e)*.6; }
     else { finishBucket(); }
     rope.visible = true;
   } else { bucket.position.copy(handPos); bucket.rotation.set(0, yaw, Math.sin(T*1.3)*.04); rope.visible = false; }
@@ -2149,6 +2149,7 @@ function update(dt){
     AU.pumpG.gain.setTargetAtTime(Math.min(.12, pumpRate()>0 ? .03 + Math.log10(1+pumpRate())*.015 : 0), t, .5);
     AU.choirG.gain.setTargetAtTime(Math.max(0, phase>=2 ? (depthK-.28)*.32 : 0) + (choirBoost>0 ? .3 : 0) + (ending ? .35 : 0), t, 1.5);
     AU.master.gain.setTargetAtTime(.9, t, .5);
+    duck(!$('call').classList.contains('hidden') || !$('prompt').classList.contains('hidden') || !$('card').classList.contains('hidden'));
     if (AU.shepG){ AU.shepG.gain.setTargetAtTime(Math.max(0, depthK - .08)*.16 + (downT > .5 ? .06 : 0), t, 2); AU.deepG.gain.setTargetAtTime(depthK*.55 + (phase>=3 ? .15 : 0), t, 2); }
   }
 
