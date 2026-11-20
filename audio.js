@@ -71,17 +71,27 @@ const VOWELS = [[300,870,2240],[530,1840,2480],[660,1720,2410],[730,1090,2440],[
 const DEFS = {
   // l'impatto del secchio: schiaffo, corpo d'acqua, colpo sordo, bolle, gocce che ricadono
   splash:{ n:3, sec:1.9, build(ctx, out, k){
-    k.burst(out, 0, .07, 'highpass', 1400, .7, .7);
+    k.burst(out, 0, .06, 'bandpass', 1500, .6, .5);
     const body = k.burst(out, .004, .75, 'bandpass', R(420,680), .8, .55); body.frequency.exponentialRampToValueAtTime(260, .6);
     const th = k.osc('sine', 95), tg = k.g(0); th.frequency.exponentialRampToValueAtTime(42, .16); k.perc(tg.gain, 0, .6, .2); th.connect(tg); tg.connect(out); th.start(0); th.stop(.3);
     for (let i=0;i<16;i++){ const t = R(.02,.75); k.blip(out, t, R(260,1100)*(1-t*.35), R(.03,.08), R(.06,.22)*(1-t*.8)); }
-    for (let i=0;i<11;i++){ const t = R(.28,1.6), p = k.pan(R(-.6,.6)); p.connect(out); k.blip(p, t, R(1400,3400), R(.015,.03), R(.03,.08), 1.4); }
+    for (let i=0;i<9;i++){ const t = R(.28,1.5), p = k.pan(R(-.6,.6)); p.connect(out); k.blip(p, t, R(800,1900), R(.02,.04), R(.03,.07), 1.35); }
   }},
-  // la corda che scorre nella carrucola
-  pull:{ n:3, sec:.8, build(ctx, out, k){
-    const s = k.src(k.stick(.75, .014, .03, u=>Math.sin(Math.PI*u))); const b1 = k.f('bandpass', R(700,1000), 6), b2 = k.f('bandpass', R(1800,2600), 8), g = k.g(.9);
-    s.connect(b1); s.connect(b2); b1.connect(g); b2.connect(g); g.connect(out); s.start(0);
-    const sq = k.osc('sine', R(1100,1600)), sg = k.g(0), lfo = k.osc('sine', 28), lg = k.g(25); lfo.connect(lg); lg.connect(sq.frequency); k.adsr(sg.gain, .1, .05, .08, .15, .25); sq.connect(sg); sg.connect(out); sq.start(0); lfo.start(0); sq.stop(.8); lfo.stop(.8);
+  // il lancio: fruscio della corda nell'aria e cricchetto del mulinello che rallenta (nessun suono tonale)
+  cast:{ n:3, sec:1.1, build(ctx, out, k){
+    const sw = k.noise(.7, 'pink'), sb = k.f('bandpass', 1100, .8), sl = k.f('lowpass', 2600, .7), sg = k.g(0);
+    sb.frequency.setValueAtTime(1100, 0); sb.frequency.exponentialRampToValueAtTime(320, .6); sg.gain.setValueAtTime(.0001, 0); sg.gain.exponentialRampToValueAtTime(.7, .07); sg.gain.exponentialRampToValueAtTime(.0001, .62);
+    k.chain(sw, sb, sl, sg, out); sw.start(0);
+    const tk = k.src(k.buf(1.05, (d, sr)=>{ let t = .03, iv = R(.009,.012); while (t < 1){ const s0 = Math.floor(t*sr), a = (1 - t)*R(.6,1), L = Math.floor(sr*.0025);
+      for (let j=0;j<L && s0+j<d.length;j++) d[s0+j] += a*(Math.random()*2-1)*Math.exp(-j/(L*.2)); t += iv; iv *= R(1.06,1.1); } }));
+    const tb = k.f('bandpass', R(1500,2100), 2.5), tl = k.f('lowpass', 3200, .7), tg = k.g(.55); k.chain(tk, tb, tl, tg, out); tk.start(0);
+  }},
+  // il recupero: il mulinello che ticchetta regolare e la corda bagnata che scorre
+  reel:{ n:3, sec:1.4, build(ctx, out, k){
+    const tk = k.src(k.buf(1.35, (d, sr)=>{ let t = .02; const iv = R(.034,.045); while (t < 1.3){ const s0 = Math.floor(t*sr), a = R(.5,1)*Math.min(1, t*8, (1.32-t)*8), L = Math.floor(sr*.003);
+      for (let j=0;j<L && s0+j<d.length;j++) d[s0+j] += a*(Math.random()*2-1)*Math.exp(-j/(L*.22)); t += iv*R(.85,1.15); } }));
+    const tb = k.f('bandpass', R(1100,1500), 3), tl = k.f('lowpass', 2800, .7), tg = k.g(.6); k.chain(tk, tb, tl, tg, out); tk.start(0);
+    const rp = k.noise(1.4, 'brown'), rb = k.f('bandpass', 420, 1.2), rg = k.g(0); k.adsr(rg.gain, 0, .15, .35, .9, .3); k.chain(rp, rb, rg, out); rp.start(0);
   }},
   // il secchio di latta che sbatte: metallo sottile, manico che tintinna
   clank:{ n:3, sec:1.4, build(ctx, out, k){
@@ -243,7 +253,7 @@ const DEFS = {
     const h = k.osc('sine', 48), hg = k.g(.08); k.chain(h, hg, out); h.start(0); h.stop(16);
   }},
 };
-const ORDER = ['bell','creak','splash','pull','whisper','heart','stinger','thunder','rumble','groan','bubble','lap','wind','clank','drip','knock','click','coin','deepcall','breathIn','breathOut','footstep','ring','static','reveal','musicbox','honk','glitch','deep'];
+const ORDER = ['bell','creak','splash','cast','reel','whisper','heart','stinger','thunder','rumble','groan','bubble','lap','wind','clank','drip','knock','click','coin','deepcall','breathIn','breathOut','footstep','ring','static','reveal','musicbox','honk','glitch','deep'];
 
 // cottura a lotti: più suoni nella stessa passata, ognuno spostato nel tempo da un ritardo, poi ritagliati
 function finish(buf, opts){
@@ -291,6 +301,7 @@ export function initAudio(){
     AU.underF = ctx.createBiquadFilter(); AU.underF.type = 'lowpass'; AU.underF.frequency.value = 20000; AU.underF.Q.value = .5; AU.underF.connect(comp);
     AU.master = ctx.createGain(); AU.master.gain.value = .9; AU.master.connect(AU.underF);
     AU.dry = ctx.createGain(); AU.dry.gain.value = 1; AU.dry.connect(AU.master);
+    AU.amb = ctx.createGain(); AU.amb.gain.value = 1; AU.amb.connect(AU.master);
     AU.rev = ctx.createConvolver(); AU.revG = ctx.createGain(); AU.revG.gain.value = .6; AU.rev.connect(AU.revG); AU.revG.connect(AU.master);
     makeIR().then(b=>{ AU.rev.buffer = b; }).catch(()=>{});
     AU.noise = ctx.createBuffer(1, ctx.sampleRate*3, ctx.sampleRate); AU.noise.getChannelData(0).set(noiseData(ctx.sampleRate*3));
@@ -301,23 +312,23 @@ export function initAudio(){
       const m = ctx.createOscillator(); m.frequency.value = f*1.5; const mg = ctx.createGain(); mg.gain.value = f*.04; m.connect(mg); mg.connect(o.frequency); m.start();
       const g = ctx.createGain(); g.gain.value = v; o.connect(g); g.connect(AU.droneF); o.start(); });
     const lfo = ctx.createOscillator(); lfo.frequency.value = .06; const lg = ctx.createGain(); lg.gain.value = 60; lfo.connect(lg); lg.connect(AU.droneF.frequency); lfo.start();
-    AU.droneF.connect(AU.droneG); AU.droneG.connect(AU.master); const ds = ctx.createGain(); ds.gain.value = .4; AU.droneG.connect(ds); ds.connect(AU.rev);
+    AU.droneF.connect(AU.droneG); AU.droneG.connect(AU.amb); const ds = ctx.createGain(); ds.gain.value = .4; AU.droneG.connect(ds); ds.connect(AU.rev);
     // il tono che scende per sempre (Shepard): più vai giù, più lo senti
-    AU.shepG = ctx.createGain(); AU.shepG.gain.value = 0; const shF = ctx.createBiquadFilter(); shF.type = 'lowpass'; shF.frequency.value = 700; shF.connect(AU.shepG); AU.shepG.connect(AU.master); AU.shepG.connect(AU.rev);
+    AU.shepG = ctx.createGain(); AU.shepG.gain.value = 0; const shF = ctx.createBiquadFilter(); shF.type = 'lowpass'; shF.frequency.value = 700; shF.connect(AU.shepG); AU.shepG.connect(AU.amb); AU.shepG.connect(AU.rev);
     AU.shep = []; for (let i=0;i<7;i++){ const o = ctx.createOscillator(); o.type = 'sine'; const g = ctx.createGain(); g.gain.value = 0; o.connect(g); g.connect(shF); o.start(); AU.shep.push({o,g}); }
     let shPh = 0; setInterval(()=>{ if (!AU.ctx || AU.shepG.gain.value < .001) return; shPh = (shPh + .1/45) % 1; const t = ctx.currentTime;
       AU.shep.forEach((s,i)=>{ const oct = (i + 1 - shPh) % 7; s.o.frequency.setTargetAtTime(28*Math.pow(2, oct), t, .05); const w = Math.exp(-Math.pow((oct-3)/1.4, 2)); s.g.gain.setTargetAtTime(w*.25, t, .05); }); }, 100);
     // sub
     AU.sub = ctx.createOscillator(); AU.sub.frequency.value = 27.5; AU.subG = ctx.createGain(); AU.subG.gain.value = 0; AU.sub.connect(AU.subG); AU.subG.connect(AU.master); AU.sub.start();
     // letti in loop (partono quando sono cotti)
-    AU.lapG = ctx.createGain(); AU.lapG.gain.value = .05; AU.lapG.connect(AU.master);
-    AU.windG = ctx.createGain(); AU.windG.gain.value = .06; AU.windG.connect(AU.master);
-    AU.deepG = ctx.createGain(); AU.deepG.gain.value = 0; AU.deepG.connect(AU.master);
+    AU.lapG = ctx.createGain(); AU.lapG.gain.value = .05; AU.lapG.connect(AU.amb);
+    AU.windG = ctx.createGain(); AU.windG.gain.value = .06; AU.windG.connect(AU.amb);
+    AU.deepG = ctx.createGain(); AU.deepG.gain.value = 0; AU.deepG.connect(AU.amb);
     // pompe
     AU.pumpG = ctx.createGain(); AU.pumpG.gain.value = 0;
     const po = ctx.createOscillator(); po.type = 'sawtooth'; po.frequency.value = 48; const pf = ctx.createBiquadFilter(); pf.type = 'lowpass'; pf.frequency.value = 220;
     const pl = ctx.createOscillator(); pl.type = 'square'; pl.frequency.value = 3; const plg = ctx.createGain(); plg.gain.value = .3; pl.connect(plg); plg.connect(AU.pumpG.gain); pl.start();
-    po.connect(pf); pf.connect(AU.pumpG); AU.pumpG.connect(AU.master); po.start();
+    po.connect(pf); pf.connect(AU.pumpG); AU.pumpG.connect(AU.amb); po.start();
     // coro dal profondo
     AU.choirG = ctx.createGain(); AU.choirG.gain.value = 0;
     const vow = ctx.createGain(); const forms = [];
@@ -325,26 +336,31 @@ export function initAudio(){
     const vl = ctx.createOscillator(); vl.frequency.value = .045; const vlg = ctx.createGain(); vlg.gain.value = 210; vl.connect(vlg); forms.slice(0,2).forEach(b=>vlg.connect(b.frequency)); vl.start();
     [73.4, 77.8, 110, 116.5, 146.8, 155.6].forEach((f,i)=>{ for (const dt of [-.35,.35]){ const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f + dt + i*.07; const g = ctx.createGain(); g.gain.value = .07;
       const vib = ctx.createOscillator(); vib.frequency.value = 4.5 + Math.random(); const vg = ctx.createGain(); vg.gain.value = f*.006; vib.connect(vg); vg.connect(o.frequency); vib.start(); o.connect(g); g.connect(vow); o.start(); } });
-    AU.choirG.connect(AU.master); AU.choirG.connect(AU.rev);
+    AU.choirG.connect(AU.amb); AU.choirG.connect(AU.rev);
     bakeAll();
   } catch(e){ console.warn(e); AU.ctx = null; }
 }
 export function setUnder(u){ if (!AU.ctx || AU._under === u) return; AU._under = u; AU.underF.frequency.setTargetAtTime(u ? 520 : 20000, AU.ctx.currentTime, .15); AU.revG.gain.setTargetAtTime(u ? 1.1 : .6, AU.ctx.currentTime, .2); }
 
 /* ---------- riproduzione ---------- */
+const LAST = {}, RECENT = {};
 export function play(name, o={}){
   const ctx = AU.ctx, v = BANK[name]; if (!ctx || !v) return null;
   const { vol=1, rate=1, pan=0, panTo=null, rev=.3, delay=0, dur=0, fade=.3, offset=0, lp=0 } = o;
-  const buf = v[Math.floor(Math.random()*v.length)];
+  // mai la stessa variante due volte di fila; se lo stesso suono si accavalla, il nuovo è più piano
+  let vi = Math.floor(Math.random()*v.length); if (v.length > 1 && vi === LAST[name]) vi = (vi + 1 + Math.floor(Math.random()*(v.length-1))) % v.length; LAST[name] = vi;
+  const buf = v[vi], now = ctx.currentTime, recent = (RECENT[name] || []).filter(t=>now - t < .35); RECENT[name] = recent.concat(now);
+  if (o.max && recent.length >= o.max) return null;
+  const stackK = 1/(1 + recent.length*.6);
   const s = ctx.createBufferSource(); s.buffer = buf; s.playbackRate.value = rate;
-  const g = ctx.createGain(); g.gain.value = vol; let node = s;
+  const g = ctx.createGain(); g.gain.value = vol*stackK; let node = s;
   if (lp){ const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; node.connect(f); node = f; }
   node.connect(g); node = g;
   const t = ctx.currentTime + delay;
   if (pan || panTo !== null){ const p = ctx.createStereoPanner(); p.pan.setValueAtTime(pan, t); if (panTo !== null) p.pan.linearRampToValueAtTime(panTo, t + (dur || buf.duration/rate)); node.connect(p); node = p; }
   node.connect(AU.dry); if (rev){ const r = ctx.createGain(); r.gain.value = rev; node.connect(r); r.connect(AU.rev); }
   const len = Math.max(.01, buf.duration - offset);
-  if (dur && dur < len/rate){ s.start(t, offset, (dur + fade)*rate); g.gain.setValueAtTime(vol, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + fade); }
+  if (dur && dur < len/rate){ s.start(t, offset, (dur + fade)*rate); g.gain.setValueAtTime(vol*stackK, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + fade); }
   else s.start(t, offset);
   return s;
 }
@@ -360,10 +376,20 @@ export function sfxNoise({t=0, dur=.5, f=800, q=1, type='bandpass', vol=.5, a=.0
 }
 
 /* ---------- i suoni del gioco ---------- */
-export function splashSfx(dist){ const v = clamp(1.4 - dist/110, .15, 1); play('splash', { vol:.85*v, rate:R(.9,1.1), delay:dist/340, rev:.45, pan:R(-.15,.15) }); }
-export function pullSfx(){ play('pull', { vol:.45, rate:R(.9,1.15), rev:.12 }); }
-export function clankSfx(){ play('clank', { vol:.28, rate:R(.95,1.06), rev:.25, pan:.35 }); }
-export function dripsSfx(){ const n = 3 + Math.floor(Math.random()*4); for (let i=0;i<n;i++) play('drip', { vol:R(.08,.18), rate:R(.85,1.25), delay:R(.05,1.6), pan:R(.1,.6), rev:.35 }); }
+// suoni "intelligenti": cambiano con la distanza, la grandezza del secchio e quanto spesso li senti
+let lastClank = 0, lastDrips = 0, castN = 0;
+export function splashSfx(dist, size=1){
+  const v = clamp(1.4 - dist/110, .15, 1), big = clamp(Math.log2(size+1)/8, 0, 1);
+  play('splash', { vol:.8*v*(1+big*.5), rate:R(.93,1.07)*(1 - big*.35), delay:dist/340, rev:.35 + clamp(dist/60,0,.4), pan:R(-.15,.15), lp:clamp(9000 - dist*90, 1500, 9000), max:3 });
+}
+export function castSfx(flight=.6){ castN++; play('cast', { vol:.42, rate:clamp(.55/Math.max(.2,flight), .85, 1.25)*R(.96,1.04), rev:.1, pan:.25, max:2 }); }
+export function reelSfx(dur=.6){ play('reel', { vol:.36, dur:Math.min(dur, 1.3), fade:.12, rate:R(.95,1.05), rev:.08, pan:.3, max:2 }); }
+export function pullSfx(){ castSfx(.6); }
+export function clankSfx(){ const n = AU.ctx ? AU.ctx.currentTime : 0; if (n - lastClank < 2.2 && Math.random() < .7) return; lastClank = n; play('clank', { vol:.24, rate:R(.95,1.06), rev:.22, pan:.35 }); }
+export function dripsSfx(){ const now = AU.ctx ? AU.ctx.currentTime : 0, busy = now - lastDrips < 3; lastDrips = now;
+  const n = busy ? 1 + Math.floor(Math.random()*2) : 3 + Math.floor(Math.random()*3); for (let i=0;i<n;i++) play('drip', { vol:R(.06,.14)*(busy?.7:1), rate:R(.85,1.2), delay:R(.05,1.4), pan:R(.1,.6), rev:.3 }); }
+// durante telefonate e scelte i rumori di fondo si abbassano
+export function duck(on){ if (!AU.ctx || AU._duck === on) return; AU._duck = on; AU.amb.gain.setTargetAtTime(on ? .45 : 1, AU.ctx.currentTime, on ? .3 : 1.2); }
 export function coinSfx(){ play('coin', { vol:.32, rev:.2 }); }
 export function bellSfx(far=1){ play('bell', { vol:.75/far, rate:far>1 ? .94 : 1, rev:.55 + (far-1)*.5, lp:far>1 ? 1100 : 0 }); }
 export function groanSfx(vol=.6, dur=4){ play('groan', { vol:vol*1.1, dur:Math.min(dur,7), fade:.9, rate:R(.85,1.05), rev:.55 }); }
