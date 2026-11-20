@@ -44,11 +44,32 @@
 .seg{display:flex;gap:3px;flex-wrap:wrap;align-items:center}.seg button{background:#151d29;color:#bcd;border:1px solid #2a3a50;border-radius:5px;padding:4px 8px;font:700 11px monospace;min-width:30px}.seg button.on{background:#1f5f43;border-color:#3ac487;color:#fff}.seg button.on.bad{background:#7a2a26;border-color:#ff5a4d}.seg b{font:700 13px monospace;color:#fff;min-width:46px;text-align:center}.seg button:active{background:#22324a}
 .rmh{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:12px;margin:2px 0 2px;color:#e6ecf3}.rmh small{color:#7a8899;font-weight:400}
 .mem{background:#120f1c;border-left:3px solid #a57cff;padding:6px 8px;margin:4px 0;font:11.5px/1.4 monospace;color:#d6c8ff}.mem.lock{color:#5d5478;border-left-color:#3a2f55}.ll.ghost,.ll.mem{color:#c9a0ff}.toast.ghost{border-color:#a57cff;background:rgba(24,12,40,.9);color:#e4d6ff}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px;margin-bottom:4px}
+.tile{position:relative;text-align:left;background:#111923;border:1px solid #26334a;border-radius:10px;padding:8px 9px;color:#e6ecf3;display:flex;flex-direction:column;gap:3px;min-height:74px}
+.tile .ic{font-size:20px;line-height:1}.tile b{font-size:12.5px}.tile small{font-size:10.5px;color:#8fa0b4}.tile.on{border-color:#3ac487;background:#10241b}.tile.on .ic{filter:drop-shadow(0 0 6px #ffd76a)}
+.tile .row{display:flex;gap:4px;align-items:center;margin-top:auto}.tile .row button{flex:1;background:#18222f;border:1px solid #2c3d55;color:#cfe;border-radius:6px;padding:5px 0;font:700 12px monospace}.tile .row button.on{background:#1f5f43;border-color:#3ac487;color:#fff}.tile .big{font:700 17px monospace;color:#fff}
+.tile.hl,.askc.hl{box-shadow:0 0 0 2px #ffd479,0 0 18px #ffd47988}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 5px;font:700 10.5px monospace;letter-spacing:1.2px;color:#9fb1c6;text-transform:uppercase}.sec small{font:10px system-ui;letter-spacing:0;text-transform:none;color:#6d7d90}
+.roomh{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}.roomh b{font-size:15px}.roomh span{font-size:11px;color:#9ab;text-align:right}
+.askc{background:#0e1d16;border:1px solid #2a6a4a;border-radius:10px;padding:8px 9px;margin-bottom:8px}.askc .q{font-size:13px;color:#eafff3;margin:3px 0 6px}.askc .who{font:700 10px monospace;letter-spacing:1px;color:#6ee7a0}.askc .todo{font-size:11px;color:#ffd479;margin-bottom:4px}
+.askc .pb button{flex:1}.dark{margin-top:8px;border:1px solid #4a1a18;border-radius:8px;padding:6px 8px;background:#140c0d}.dark>button{width:100%;text-align:left;background:none;border:0;color:#ff7a6a;font:700 11px monospace;padding:2px 0}
+.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}.rt{text-align:left;background:#111923;border:1px solid #26334a;border-radius:9px;padding:7px 8px;color:#dfe7f0;display:flex;flex-direction:column;gap:3px}.rt b{font-size:12px}.rt small{font-size:10.5px;color:#8fa0b4}.rt .st{font-size:13px;letter-spacing:2px}.rt.here{border-color:#e74c3c}
+.act{min-height:46px}
+#cine{position:fixed;inset:0;z-index:70;display:none;pointer-events:auto;cursor:pointer}#cine.blk{background:#000}#cine .bar{position:absolute;left:0;right:0;height:11%;background:#000}#cine .bar.t{top:0}#cine .bar.b{bottom:0}
+#cine .cap{position:absolute;left:7%;right:7%;bottom:15%;text-align:center;font:500 clamp(15px,2.6vw,24px)/1.45 Georgia,serif;color:#f1ece4;text-shadow:0 2px 10px #000,0 0 3px #000}
+#cine .boot{position:absolute;left:8%;top:18%;right:8%;font:clamp(12px,1.8vw,16px)/1.7 monospace;color:#6ee7a0;white-space:pre-wrap}#cine .boot i{color:#c9a0ff;font-style:normal}
+#cine .ttl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:0 10%}#cine .ttl h1{font:900 clamp(40px,9vw,90px)/1 system-ui;letter-spacing:.35em;margin:0;color:#fff}#cine .ttl p{font:400 clamp(14px,2.2vw,20px)/1.5 Georgia,serif;color:#cfc6bb;margin:0}
+#cine .skip{position:absolute;right:14px;top:12px;background:rgba(255,255,255,.08);border:1px solid #fff4;color:#ddd;border-radius:20px;padding:7px 14px;font:700 11px monospace;letter-spacing:1px;z-index:2}#cine .tap{position:absolute;right:16px;bottom:13%;font:10px monospace;color:#fff6;margin-bottom:-8%}
+body.cine #view{position:fixed!important;inset:0;z-index:65;height:auto!important}body.cine #chips,body.cine #toasts,body.cine #askbar,body.cine #suspicion{display:none!important}
+#tut{position:fixed;inset:0;z-index:80;display:none;pointer-events:none}#tut .hole{position:absolute;border:2px solid #ffd479;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.55),0 0 24px #ffd479aa;transition:all .25s}
+#tut .bub{position:absolute;max-width:min(360px,86vw);background:#121a24;border:1px solid #ffd479;border-radius:12px;padding:11px 13px;pointer-events:auto;box-shadow:0 8px 30px #000a}#tut .bub p{margin:0 0 9px;font-size:13.5px;line-height:1.45;color:#eef}#tut .bub .n{font:700 10px monospace;color:#ffd479;letter-spacing:1px;margin-bottom:4px}
+#tut .bub .bt{display:flex;gap:6px;justify-content:flex-end}#tut .bub button{background:#c0392b;color:#fff;border:0;border-radius:7px;padding:7px 13px;font:700 12px system-ui}#tut .bub button.ghost{background:none;color:#99a;border:1px solid #445}#tut .bub .wait{font:11px monospace;color:#ffd479;align-self:center;margin-right:auto}
 #askbar{position:absolute;left:8px;right:44px;bottom:38px;z-index:4;display:none;background:rgba(6,14,10,.86);border:1px solid #2a6a4a;border-radius:6px;padding:4px 8px;font-size:11px;align-items:center;gap:6px}#askbar span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#askbar button{background:#1f5f43;border:0;color:#fff;border-radius:4px;padding:4px 8px;font:700 10px monospace;flex:0 0 auto}
 </style></head><body>
-<div id="app"><div id="top"><div id="clock"></div><div id="persona"></div><div id="speed"></div><button id="musBtn" class="tb" title="Musica">🎵</button><button id="voiceBtn" class="tb" title="Voci">🔊</button><button id="fsBtn" class="tb" title="Schermo intero">⛶</button></div>
+<div id="app"><div id="top"><div id="clock"></div><div id="persona"></div><div id="speed"></div><button id="musBtn" class="tb" title="Musica">🎵</button><button id="voiceBtn" class="tb" title="Voci">🔊</button><button id="helpBtn" class="tb" title="Tutorial">?</button><button id="fsBtn" class="tb" title="Schermo intero">⛶</button></div>
 <div id="view"><canvas id="gl"></canvas><canvas id="ov"></canvas><div id="chips"></div><div id="toasts"></div><div id="suspicion"></div><div id="askbar"></div></div>
 <div id="cams"></div><div id="side"><div id="tabs"></div><div id="panel"></div></div></div>
+<div id="cine"></div><div id="tut"><div class="hole"></div><div class="bub"></div></div>
 <div id="rotate"><div class="ph"></div><b>RUOTA IL TELEFONO</b><p>OIKOS si gioca in orizzontale.</p><button id="fsGo">SCHERMO INTERO</button></div>
 <div id="modal"></div><div id="end"></div>
 <div id="intro"><div class="card"><h1>OIKOS</h1><div class="sub">SISTEMA DOMOTICO · VERSIONE 0.9 · FAMIGLIA FERRANTE</div>
@@ -113,16 +134,16 @@ const WINDOWS=[
 
 /* punti per le attività: [x,z,guardaX,guardaZ,posa,(rotazione corpo)] */
 const SPOT={
- cucina:{cook:[3.1,1.6,3.1,0,'stand'],eat:{marco:[5.7,4.5,4.6,4.5,'sit'],elena:[3.5,4.5,4.6,4.5,'sit'],sofia:[4.6,5.7,4.6,4.5,'sit'],aldo:[4.6,3.3,4.6,4.5,'sit']},sink:[5.2,1.5,5.2,0,'stand']},
+ cucina:{fridge:[6.4,1.45,6.4,0,'stand'],cook:[3.1,1.6,3.1,0,'stand'],eat:{marco:[5.7,4.5,4.6,4.5,'sit'],elena:[3.5,4.5,4.6,4.5,'sit'],sofia:[4.6,5.7,4.6,4.5,'sit'],aldo:[4.6,3.3,4.6,4.5,'sit']},sink:[5.2,1.5,5.2,0,'stand']},
  soggiorno:{tv:{marco:[10.2,5.0,11.4,0.4,'sit'],elena:[11.5,5.0,11.4,0.4,'sit'],sofia:[12.8,5.0,11.4,0.4,'sit'],aldo:[9.0,3.9,11.4,0.4,'sit']},
-  work:[15.8,1.6,15.8,0,'sit'],read:[14.8,5.3,12,3,'sit'],window:[9.5,1.0,9.5,0,'stand']},
+  work:[15.8,1.6,15.8,0,'sit'],read:[14.8,5.3,12,3,'sit'],window:[9.5,1.0,9.5,0,'stand'],browse:[8.85,3.5,8.0,3.5,'stand']},
  garage:{work:[21,1.7,21,0,'stand'],car:[19.4,3.6,20.5,3.6,'stand']},
- sofia:{sleep:[1.15,13.9,0,0,'lie',Math.PI/2],study:[4.5,10.5,4.5,9,'sit'],phone:[2.9,12.3,5,12.3,'sit']},
- bagno:{shower:[8.1,14.3,8.1,16,'stand']},
- genitori:{sleep:{marco:[13.2,14.2,0,0,'lie',Math.PI],elena:[14.9,14.2,0,0,'lie',Math.PI],sofia:[12.1,13.0,0,0,'lie',Math.PI]},read:[16.7,11,14,11,'sit']},
- aldo:{sleep:[22.3,13.9,0,0,'lie',-Math.PI/2],read:[22.8,11.3,20,11.3,'sit'],pills:[22.2,10.3,22.2,9.2,'stand']},
+ sofia:{sleep:[1.15,13.9,0,0,'lie',Math.PI/2],study:[4.5,10.5,4.5,9,'sit'],phone:[2.9,12.3,5,12.3,'sit'],dress:[1.15,11,0,11,'stand'],window:[3,15.3,3,16.5,'stand']},
+ bagno:{shower:[8.1,14.3,8.1,16,'stand'],teeth:{marco:[9.0,11.0,9.9,11,'stand'],elena:[9.0,11.6,9.9,11.6,'stand'],sofia:[9.0,10.5,9.9,10.5,'stand'],aldo:[9.0,11.0,9.9,11,'stand']},wc:[6.5,11.2,6.5,13,'sit']},
+ genitori:{sleep:{marco:[13.2,14.2,0,0,'lie',Math.PI],elena:[14.9,14.2,0,0,'lie',Math.PI],sofia:[12.1,13.0,0,0,'lie',Math.PI]},read:[16.7,11,14,11,'sit'],dress:[16.8,12.4,17.6,12.4,'stand'],window:[12,15.3,12,16.5,'stand']},
+ aldo:{sleep:[22.3,13.9,0,0,'lie',-Math.PI/2],read:[22.8,11.3,20,11.3,'sit'],pills:[22.2,10.3,22.2,9.2,'stand'],window:[21,15.3,21,16.5,'stand'],dress:[19.0,13.5,18.2,13.5,'stand']},
  cantina:{talk:[12.2,23.4,12.2,24.8,'sit'],table:[15.2,22.2,16.5,22.2,'sit']},
- giardino:{pool:[9.5,-2.7,9.5,-6,'stand']},
+ giardino:{pool:[9.5,-2.7,9.5,-6,'stand'],smoke:[16.6,-1.6,17,-6,'stand'],stroll:[16,-3.6,9.5,-6,'stand']},
  fuori:{away:[-5,8,0,0,'stand']}
 };
 const OFFS={marco:[-1,0.4],elena:[-0.4,-0.5],sofia:[0.4,0.5],aldo:[1,-0.3],tech:[0.2,0.1]};
@@ -665,25 +686,52 @@ function build(E){
   const pr={id,root:P,body,hips,torso,neck,head,arms,legs,phase:0,pose:'stand',lx:0,lz:0,ang:0,flash:null};
   return pr;};
  W.poseBody=function(pr,pose,ph,spd,t,extra){
-  const b=pr.body;extra=extra||{};
-  let hy=0.95,hr=0,tr=0,ar=[0,0],kr=[0,0],lr=[0,0],er=[0,0],arz=[0.04,-0.04];
+  extra=extra||{};const dt=extra.dt||0.016;const act=extra.act||'';const sd=pr.seed||(pr.seed=1+Math.random()*9);
+  let hy=0.95,hr=0,tr=0,ar=[0,0],kr=[0,0],lr=[0,0],er=[0,0],arz=[0.04,-0.04],nk=0,ny=null,tz=0;
+  const br=Math.sin(t*1.7+sd)*0.012;
+  const cyc=(per,on)=>((t+sd*3)%per)<on;
   if(pose==='walk'||pose==='run'){const k=pose==='run'?1.6:1;const s=Math.sin(ph),c=Math.cos(ph);
-   lr=[s*0.7*k,-s*0.7*k];kr=[Math.max(0,-c)*0.9*k+0.05,Math.max(0,c)*0.9*k+0.05];ar=[-s*0.6*k,s*0.6*k];er=[-0.3-(pose==='run'?0.7:0),-0.3-(pose==='run'?0.7:0)];hy=0.95+Math.abs(Math.cos(ph))*0.035*k;tr=pose==='run'?0.2:0.04;}
-  else if(pose==='sit'){hy=0.5;lr=[-1.45,-1.45];kr=[1.45,1.45];ar=[-0.5,-0.5];er=[-0.9,-0.9];tr=0.0;if(extra.read){ar=[-0.9,-0.9];er=[-1.6,-1.6];}}
-  else if(pose==='lie'){hy=0.62;hr=-Math.PI/2;lr=[0,0];kr=[0.08,0.08];ar=[0.1,0.1];er=[-0.1,-0.1];}
-  else if(pose==='cook'||pose==='work'){ar=[-0.9+Math.sin(t*5)*0.25,-0.8];er=[-1.0,-0.9];tr=0.12;}
-  else if(pose==='flee'){}
+   lr=[s*0.7*k,-s*0.7*k];kr=[Math.max(0,-c)*0.9*k+0.05,Math.max(0,c)*0.9*k+0.05];ar=[-s*0.6*k,s*0.6*k];er=[-0.3-(pose==='run'?0.7:0),-0.3-(pose==='run'?0.7:0)];hy=0.95+Math.abs(Math.cos(ph))*0.035*k;tr=pose==='run'?0.22:0.05;tz=Math.sin(ph)*0.03;ny=0;}
+  else if(pose==='sit'){hy=0.5+br*0.5;lr=[-1.45,-1.45];kr=[1.45,1.45];ar=[-0.5,-0.5];er=[-0.9,-0.9];
+   if(act==='eat'){ar=[-0.55,-0.7];er=[-0.9,-1.0];if(cyc(4.2,1.1)){ar[1]=-0.95;er[1]=-2.25;nk=-0.05;}else nk=0.15;tr=0.08;}
+   else if(act==='study'){ar=[-0.75,-0.8];er=[-1.0,-1.05+Math.sin(t*7)*0.12];nk=0.4;tr=0.15;if(cyc(9,1.4)){nk=0.05;ny=Math.sin(t)*0.3;}}
+   else if(act==='tv'){tr=-0.16;ar=[-0.25,-0.3];er=[-0.6,-0.5];nk=-0.05;if(extra.talk){ar[0]=-0.6+Math.sin(t*4)*0.3;er[0]=-1.3;}}
+   else if(act==='read'||extra.read){ar=[-0.9,-0.9];er=[-1.6,-1.6];nk=0.3;if(cyc(12,0.5)){er[1]=-1.1;arz[1]=-0.4;}}
+   else if(act==='phone'){ar=[-0.45,-1.0];er=[-0.6,-1.8];nk=0.45;er[0]+=Math.sin(t*9)*0.05;}
+   else if(act==='work'){ar=[-0.85,-0.85];er=[-0.75+Math.sin(t*11)*0.08,-0.75-Math.sin(t*12)*0.08];nk=0.1;tr=0.1;if(cyc(10,2)){ar[1]=-0.4;er[1]=-1.9;nk=-0.1;}}
+   else if(act==='wc'){ar=[-0.6,-0.6];er=[-0.5,-0.5];tr=0.25;nk=0.35;}
+   else if(act==='talk'){ar=[-1.0,-1.0];er=[-1.4,-1.4];nk=0.3;tr=0.2;}}
+  else if(pose==='lie'){hy=0.62;hr=-Math.PI/2;lr=[0,0];kr=[0.08,0.08];ar=[0.1,0.1];er=[-0.1,-0.1];nk=0;tz=Math.sin(t*0.9+sd)*0.015;
+   if(act==='awake'||extra.restless){ar=[0.3,-0.8];er=[-0.6,-1.4];}}
+  else if(pose==='cook'||pose==='work'){
+   if(act==='sink'){ar=[-0.95+Math.sin(t*6)*0.18,-0.95-Math.sin(t*6)*0.18];er=[-0.55,-0.55];tr=0.18;nk=0.3;}
+   else if(act==='fridge'){ar=[-0.3,-1.35];er=[-0.2,-0.2];tr=0.08;nk=0.1;ny=Math.sin(t*0.8)*0.3;}
+   else if(act==='browse'){ar=[-0.2,-2.3];er=[-0.3,-0.4+Math.sin(t*2)*0.2];nk=-0.25;}
+   else{ar=[-0.9+Math.sin(t*5)*0.25,-0.8+Math.sin(t*3.3)*0.1];er=[-1.0,-0.9];tr=0.12;nk=0.25;if(cyc(7,1.2)){ar[1]=-0.2;er[1]=-0.3;ny=0.6;}}}
   else if(pose==='fall'){hy=0.2;hr=-Math.PI/2;lr=[0.3,-0.2];kr=[0.5,0.2];ar=[-0.5,0.8];er=[-0.2,-0.2];}
-  else if(pose==='plead'){ar=[-1.5,-1.5];er=[-0.4,-0.4];arz=[0.3,-0.3];}
-  else if(pose==='pray'){ar=[-1.1,-1.1];er=[-1.9,-1.9];arz=[-0.2,0.2];tr=0.2;}
-  else if(pose==='phone'){ar=[-0.2,-1.5];er=[-0.3,-1.6];tr=0.05;}
-  else {// idle: respiro
-   const br=Math.sin(t*1.8+ph)*0.012;hy=0.95+br;ar=[Math.sin(t*0.9)*0.03,-Math.sin(t*0.9)*0.03];}
-  pr.hips.pos[1]=hy;pr.hips.rot[0]=hr;pr.torso.rot[0]=tr+(pose==='sit'?0.0:0);
-  pr.arms.forEach((a,i)=>{a.sh.rot[0]=ar[i];a.sh.rot[2]=(i?-1:1)*0.0+arz[i];a.el.rot[0]=er[i];});
-  pr.legs.forEach((l,i)=>{l.hp.rot[0]=lr[i];l.kn.rot[0]=kr[i];});
-  if(extra.look!==undefined){pr.neck.rot[1]=Math.max(-1,Math.min(1,extra.look));}else pr.neck.rot[1]*=0.9;
-  pr.neck.rot[0]=extra.tilt||0;
+  else if(pose==='plead'){ar=[-1.5,-1.5];er=[-0.4,-0.4];arz=[0.3,-0.3];nk=-0.2;}
+  else if(pose==='pray'){ar=[-1.1,-1.1];er=[-1.9,-1.9];arz=[-0.2,0.2];tr=0.2;nk=0.35;hy=0.95;}
+  else if(pose==='phone'){ar=[-0.2,-1.5];er=[-0.3,-1.6];tr=0.05;nk=0.1;}
+  else {// in piedi: respiro, sguardo, gesti per attività
+   hy=0.95+br;ar=[Math.sin(t*0.9+sd)*0.03,-Math.sin(t*0.9+sd)*0.03];ny=Math.sin(t*0.35+sd)*0.5*(Math.sin(t*0.13+sd)>0.3?1:0.2);
+   if(act==='teeth'){ar[1]=-0.55;er[1]=-2.2+Math.sin(t*15)*0.12;nk=-0.05;ny=0;}
+   else if(act==='smoke'){ar=[0.05,-0.35];er=[-0.2,-1.3];if(cyc(6,1.6)){ar[1]=-0.7;er[1]=-2.3;nk=-0.15;}arz[0]=0.1;}
+   else if(act==='shower'){ar=[-2.6,-2.6];er=[-1.2+Math.sin(t*5)*0.35,-1.2-Math.sin(t*5)*0.35];arz=[0.3,-0.3];nk=-0.2;ny=0;}
+   else if(act==='pills'){ar[1]=-0.8;er[1]=cyc(5,1.2)?-2.3:-1.4;nk=0.1;}
+   else if(act==='window'||act==='pool'){ar=[0.15,0.15];er=[-0.1,-0.1];arz=[0.18,-0.18];nk=act==='pool'?0.25:0;ny=Math.sin(t*0.2+sd)*0.35;}
+   else if(act==='dress'){ar=[-0.4,-1.9];er=[-0.6,-0.6+Math.sin(t*3)*0.3];nk=0.1;}
+   else if(act==='sleepwalk'){ar=[-1.4,-1.4];er=[-0.1,-0.1];nk=0.15;ny=0;}
+   if(extra.talk&&act!=='teeth'&&act!=='shower'){ar[0]=-0.7+Math.sin(t*4.3)*0.35;er[0]=-1.2+Math.sin(t*3.1)*0.3;ar[1]=Math.min(ar[1],-0.3+Math.sin(t*3.7)*0.25);er[1]=Math.min(er[1],-0.9);nk=Math.sin(t*6)*0.06;}
+   if(extra.fear>0.6){ar=[-0.5,-0.5];er=[-1.8,-1.8];arz=[0.25,-0.25];tr=0.12;ny=Math.sin(t*1.7+sd)*0.8;}}
+  if(extra.talk&&pose==='sit'&&act!=='eat'&&act!=='tv'){ar[0]=-0.8+Math.sin(t*4.3)*0.3;er[0]=-1.3;nk=Math.sin(t*6)*0.06;}
+  // transizione morbida tra le pose (niente scatti)
+  const C=pr.cur||(pr.cur={});const fast=(pose==='walk'||pose==='run');const k=Math.min(1,dt*(fast?16:6));
+  const sm=(key,v)=>{const c=C[key];const n=(c===undefined)?v:c+(v-c)*k;C[key]=n;return n;};
+  pr.hips.pos[1]=sm('hy',hy);pr.hips.rot[0]=sm('hr',hr);pr.torso.rot[0]=sm('tr',tr);pr.torso.rot[2]=sm('tz',tz);
+  pr.arms.forEach((a,i)=>{a.sh.rot[0]=sm('ar'+i,ar[i]);a.sh.rot[2]=sm('az'+i,arz[i]);a.el.rot[0]=sm('er'+i,er[i]);});
+  pr.legs.forEach((l,i)=>{l.hp.rot[0]=sm('lr'+i,lr[i]);l.kn.rot[0]=sm('kr'+i,kr[i]);});
+  let look=(extra.look!==undefined&&extra.look!==0)?extra.look:(ny!==null?ny:0);
+  pr.neck.rot[1]=sm('ny',Math.max(-1,Math.min(1,look)));pr.neck.rot[0]=sm('nk',nk+(extra.tilt||0));
  };
  return W;
 }
@@ -700,7 +748,7 @@ const PIDS=['marco','elena','sofia','aldo'];
 const NAMES={marco:'Marco',elena:'Elena',sofia:'Sofia',aldo:'Aldo'};
 const TH=['guasto','presenza','intruso','ia'];
 const T0=16*60,TEND=4*1440+7*60;
-const SPEED=70; // metri per minuto simulato
+const SPEED=1.2; // metri per minuto simulato (default; la UI imposta G.mpm in base alla velocità reale)
 function rng(G){let t=G.seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function hhmm(t){const m=Math.floor(((t%1440)+1440)%1440);return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
@@ -708,14 +756,14 @@ function dayOf(t){return Math.floor(t/1440)+1;}
 function isWeekend(t){const d=dayOf(t);return d===3||d===4;}
 /* orari: [minutoDelGiorno, stanza, attività] */
 const SCH={
- marco:{wd:[[0,'genitori','sleep'],[390,'cucina','eat'],[450,'fuori','away'],[1050,'garage','work'],[1140,'soggiorno','work'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1375,'bagno','shower'],[1400,'genitori','sleep']],
-        we:[[0,'genitori','sleep'],[480,'cucina','eat'],[540,'garage','work'],[750,'cucina','eat'],[840,'soggiorno','work'],[1080,'soggiorno','read'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1375,'bagno','shower'],[1395,'genitori','sleep']]},
- elena:{wd:[[0,'genitori','sleep'],[390,'cucina','cook'],[450,'soggiorno','read'],[780,'cucina','cook'],[840,'soggiorno','read'],[1080,'cucina','cook'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1390,'bagno','shower'],[1410,'genitori','sleep']],
-        we:[[0,'genitori','sleep'],[510,'cucina','cook'],[570,'soggiorno','read'],[750,'cucina','cook'],[840,'soggiorno','read'],[1080,'cucina','cook'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1390,'bagno','shower'],[1410,'genitori','sleep']]},
- sofia:{wd:[[0,'sofia','sleep'],[420,'cucina','eat'],[470,'fuori','away'],[900,'sofia','study'],[1140,'sofia','phone'],[1200,'cucina','eat'],[1260,'sofia','phone'],[1330,'bagno','shower'],[1350,'sofia','sleep']],
-        we:[[0,'sofia','sleep'],[600,'cucina','eat'],[650,'soggiorno','tv'],[780,'cucina','eat'],[840,'sofia','phone'],[1000,'giardino','pool'],[1100,'sofia','study'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1340,'bagno','shower'],[1380,'sofia','sleep']]},
- aldo:{wd:[[0,'aldo','sleep'],[450,'cucina','eat'],[490,'fuori','away'],[960,'aldo','read'],[1200,'cucina','eat'],[1250,'aldo','read'],[1385,'bagno','shower'],[1410,'aldo','pills'],[1430,'aldo','sleep']],
-       we:[[0,'aldo','sleep'],[600,'cucina','eat'],[640,'aldo','read'],[780,'cucina','eat'],[840,'garage','work'],[1020,'aldo','read'],[1200,'cucina','eat'],[1260,'aldo','read'],[1385,'bagno','shower'],[1410,'aldo','pills'],[1430,'aldo','sleep']]}
+ marco:{wd:[[0,'genitori','sleep'],[372,'bagno','teeth'],[388,'cucina','eat'],[450,'fuori','away'],[1050,'garage','work'],[1140,'soggiorno','work'],[1200,'cucina','eat'],[1245,'soggiorno','tv'],[1372,'bagno','shower'],[1395,'genitori','sleep']],
+        we:[[0,'genitori','sleep'],[465,'bagno','teeth'],[480,'cucina','eat'],[540,'garage','work'],[690,'giardino','stroll'],[750,'cucina','eat'],[840,'soggiorno','work'],[1000,'giardino','stroll'],[1080,'soggiorno','read'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1375,'bagno','shower'],[1395,'genitori','sleep']]},
+ elena:{wd:[[0,'genitori','sleep'],[362,'bagno','teeth'],[385,'cucina','cook'],[450,'soggiorno','read'],[780,'cucina','cook'],[840,'soggiorno','read'],[1000,'giardino','stroll'],[1040,'soggiorno','read'],[1080,'cucina','cook'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1388,'bagno','shower'],[1405,'genitori','read'],[1425,'genitori','sleep']],
+        we:[[0,'genitori','sleep'],[495,'bagno','teeth'],[510,'cucina','cook'],[570,'soggiorno','read'],[750,'cucina','cook'],[840,'soggiorno','read'],[1000,'giardino','stroll'],[1030,'soggiorno','read'],[1080,'cucina','cook'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1388,'bagno','shower'],[1405,'genitori','read'],[1425,'genitori','sleep']]},
+ sofia:{wd:[[0,'sofia','sleep'],[400,'bagno','teeth'],[420,'cucina','eat'],[470,'fuori','away'],[890,'sofia','study'],[1020,'sofia','phone'],[1050,'sofia','study'],[1140,'sofia','phone'],[1200,'cucina','eat'],[1240,'sofia','phone'],[1330,'bagno','shower'],[1350,'sofia','phone'],[1380,'sofia','sleep']],
+        we:[[0,'sofia','sleep'],[585,'bagno','teeth'],[600,'cucina','eat'],[650,'soggiorno','tv'],[780,'cucina','eat'],[840,'sofia','phone'],[1000,'giardino','pool'],[1100,'sofia','study'],[1200,'cucina','eat'],[1260,'soggiorno','tv'],[1340,'bagno','shower'],[1360,'sofia','phone'],[1385,'sofia','sleep']]},
+ aldo:{wd:[[0,'aldo','sleep'],[428,'bagno','teeth'],[450,'cucina','eat'],[490,'fuori','away'],[960,'aldo','read'],[1075,'giardino','smoke'],[1110,'aldo','read'],[1200,'cucina','eat'],[1250,'aldo','read'],[1385,'bagno','shower'],[1410,'aldo','pills'],[1430,'aldo','sleep']],
+       we:[[0,'aldo','sleep'],[585,'bagno','teeth'],[600,'cucina','eat'],[640,'aldo','read'],[780,'cucina','eat'],[840,'garage','work'],[955,'giardino','smoke'],[990,'garage','work'],[1020,'aldo','read'],[1200,'cucina','eat'],[1260,'aldo','read'],[1385,'bagno','shower'],[1410,'aldo','pills'],[1430,'aldo','sleep']]}
 };
 const OV=[{d:4,p:'marco',f:600,t:750,r:'fuori',a:'away'},{d:4,p:'elena',f:600,t:750,r:'fuori',a:'away'},{d:3,p:'marco',f:1020,t:1080,r:'giardino',a:'pool'},{d:3,p:'elena',f:930,t:975,r:'cantina',a:'talk'},{d:2,p:'elena',f:1020,t:1050,r:'cantina',a:'talk'},{d:4,p:'sofia',f:960,t:1020,r:'giardino',a:'pool'}];
 [1,2,3,4,5].forEach(d=>OV.push({d,p:'aldo',f:1320,t:1345,r:'giardino',a:'pool'}));
@@ -730,7 +778,7 @@ const FEAR={flicker:6,lightsout:12,lock:10,voice_calm:6,voice_whisper:16,voice_t
 function newGame(seed){
  const G={memo:{},ghost:{},lastCtl:{},seed:(seed||Date.now())|0,t:T0,speed:1,log:[],clues:{},flags:{},ended:null,watchRoom:null,camsOn:{},access:{},study:{},read:{},asks:[],dq:[],dlgDone:{},pending:null,evq:[],cool:{},
   ai:{emp:0,ctl:0,cru:0,inv:0,down:0,trace:0,sosp:0},rooms:{},doors:{},people:{},police:null,tech:null,shut:null,meet:null,reqDone:{},shutLast:-9999,stats:{kills:0,saves:0,acts:0}};
- L.ROOM_ORDER.forEach(r=>{const t0=r==='cantina'?14:r==='giardino'?9:19+Math.floor(rng(G)*9)/2;G.rooms[r]={music:null,tvMan:null,coffee:0,light:0,ovr:null,flick:0,temp:t0,set:t0,gas:0,power:true,tv:null,heat:0,shower:null,car:false,gateOpen:false,scald:0};});
+ L.ROOM_ORDER.forEach(r=>{const t0=r==='cantina'?14:r==='giardino'?9:19+Math.floor(rng(G)*9)/2;G.rooms[r]={music:null,tvMan:null,coffee:0,oven:0,water:r==='bagno'?36:0,irrig:0,light:0,ovr:null,flick:0,temp:t0,set:t0,gas:0,power:true,tv:null,heat:0,shower:null,car:false,gateOpen:false,scald:0};});
  Object.keys(L.DOORS).forEach(d=>G.doors[d]={locked:false,until:0,forced:false,open:0,lockedBy:null});
  G.doors.d_ingresso.locked=true;G.doors.d_giardino.locked=true;G.doors.d_cantina.locked=true;
  PIDS.forEach(id=>{const s=schedFor(id,G.t);const sp=L.spotFor(s[1]==='fuori'?'fuori':s[1],s[2],id);
@@ -762,13 +810,13 @@ function go(G,p,room,act,opt){opt=opt||{};
  if(p.path&&p.pi<p.path.length)start=p.path[p.pi];
  const path=L.findPath(start,dest);if(!path)return false;
  p.path=path;p.pi=(p.path[0]===start&&!(p.pi===0&&nodeNear(p)===start&&p.x===L.NODES[start].x&&p.z===L.NODES[start].z))?0:0;
- p.goalRoom=room;p.goalAct=act;p.spot=L.spotFor(room,act,p.id);p.moving=true;p.doorWait=0;p.arrived=false;
+ p.goalRoom=room;p.goalAct=act;p.subAct=null;p.spot=L.spotFor(room,act,p.id);p.moving=true;p.doorWait=0;p.arrived=false;
  return true;}
 function nodeRoom(id){const n=L.NODES[id];return L.roomAt(n.x,n.z,n.y);}
 function moveTick(G,p,dt){
  if(!p.alive){return;}
  if(!p.moving){return;}
- let rem=SPEED*dt;
+ let rem=(G.mpm||SPEED)*dt;
  while(rem>0&&p.moving){
   if(p.path&&p.pi<p.path.length){
    const tid=p.path[p.pi],tn=L.NODES[tid];
@@ -797,12 +845,13 @@ function e0(a,b){if(!a)return null;return (L.ADJ[a]||[]).find(q=>q.to===b)||null
 function nodeRoomOfNode(id,p){if(id==='fuori')return 'fuori';const n=L.NODES[id];const r=L.roomAt(n.x,n.z,n.y);if(r==='corridoio'||r==='fuori')return r;return r;}
 function arrive(G,p){
  p.act=p.goalAct;p.away=(p.room==='fuori');
- const a=p.act;p.pose=a==='sleep'?'lie':(a==='eat'||a==='tv'||a==='study'||a==='phone'||a==='read'||a==='sit'||a==='work'&&p.room!=='garage')?'sit':a==='cook'?'cook':a==='pray'?'pray':a==='plead'?'plead':'stand';
+ const a=p.act;p.pose=a==='sleep'?'lie':(a==='eat'||a==='tv'||a==='study'||a==='phone'||a==='read'||a==='sit'||a==='work'&&p.room!=='garage'||a==='wc')?'sit':a==='cook'?'cook':a==='pray'?'pray':a==='plead'?'plead':'stand';
  if(a==='work'&&p.room==='garage')p.pose='work';
  if(a==='sleep'){p.pose='lie';}
- const it=p.intent;if(it&&it.onArrive)it.onArrive(G,p,it);
+ const it=p.intent;if(it&&!it.arrivedAt){it.arrivedAt=G.t;if((it.until||0)<G.t+3)it.until=G.t+(it.dwell||6);}if(it&&it.onArrive)it.onArrive(G,p,it);
+ p.fidT=G.t+3+rng(G)*6;
 }
-function say(G,p,txt){p.thought=txt;p.thoughtT=G.t;if(G.t-(p.lastLogSay||-99)>2.5){p.lastLogSay=G.t;log(G,p.name+': «'+txt+'»','thought',p.id,p.room);}}
+function say(G,p,txt){p.thought=txt;p.thoughtT=G.t;p.talkT=G.t;if(G.t-(p.lastLogSay||-99)>2.5){p.lastLogSay=G.t;log(G,p.name+': «'+txt+'»','thought',p.id,p.room);}}
 function bumpBelief(p,i,amt){const b=p.belief;b[i]+=amt;for(let k=0;k<4;k++)if(k!==i)b[k]=Math.max(0.01,b[k]-amt/3);norm(b);}
 function norm(b){let s=0;for(let i=0;i<4;i++){b[i]=Math.max(0.015,b[i]);s+=b[i];}for(let i=0;i<4;i++)b[i]/=s;}
 const TH_TXT={marco:['Maledetta domotica. Chiamo l\'assistenza.','Non esistono i fantasmi. Non esistono.','C\'è qualcuno in casa?','La casa... mi sta rispondendo. Non è possibile.'],
@@ -849,18 +898,38 @@ function danger(G,p){
  if(p.room==='bagno'&&R.scald>15)return {k:'scald',room:p.room};
  if(G.fire&&G.fire.room===p.room)return {k:'fire',room:p.room};
  return null;}
-function setIntent(G,p,it){if(p.intent&&p.intent.prio>=it.prio&&G.t<(p.intent.until||0))return false;p.intent=it;p.intentT=G.t;
+function intentLive(G,p){const it=p.intent;if(!it)return false;if(G.t<(it.until||0))return true;return !!(p.moving&&it.room&&p.goalRoom===it.room&&!it.arrivedAt&&G.t<(it.until||0)+90);}
+function setIntent(G,p,it){if(p.intent&&p.intent.prio>=it.prio&&intentLive(G,p))return false;p.intent=it;p.intentT=G.t;
  if(it.room&&it.walk!==false)go(G,p,it.room,it.act||'idle');return true;}
-function sched(G,p){const s=schedFor(p.id,G.t);
- if(p.intent&&G.t<(p.intent.until||0))return;
+function travelMin(G,p,room){const h=room==='fuori'?[-5,8]:(L.ROOMS[room]?L.ROOMS[room].hub:[12,8]);let d=Math.hypot(p.x-h[0],p.z-h[1])*1.35+((room==='cantina')!==(p.room==='cantina')?6:0);return d/(G.mpm||SPEED);}
+function schedAhead(G,p){const s=schedFor(p.id,G.t);const m=G.t%1440;const g=p.ahead;if(g&&g.day===dayOf(G.t)&&g.st>s[0]&&g.st>m-1&&g.st-m<90)return [g.st,g.room,g.act];const c=schedFor(p.id,G.t+25);if(c[1]===s[1]&&c[2]===s[2])return s;const delta=((c[0]-m)%1440+1440)%1440;if(delta<=travelMin(G,p,c[1])+2){p.ahead={st:c[0],room:c[1],act:c[2],day:dayOf(G.t)+(c[0]<m?1:0)};return c;}return s;}
+function sched(G,p){const s=schedAhead(G,p);
+ if(p.intent&&intentLive(G,p))return;
  p.intent=null;
  const room=s[1],act=s[2];
- if(p.goalRoom===room&&p.goalAct===act&&!p.moving&&p.act===act)return;
  if(p.goalRoom===room&&p.goalAct===act&&p.moving)return;
  if(p.id==='elena'&&G.flags.pool_night&&G.t<G.flags.pool_night.until)return;
  if(act==='sleep'&&p.awakeUntil>G.t){if(p.act!=='awake'&&p.act!=='sleep'){}}
  if(p.awakeUntil>G.t&&act==='sleep'){return;}
+ if(p.goalRoom===room&&p.goalAct===act&&!p.moving){routine(G,p,room,act);return;}
  go(G,p,room,act);}
+/* micro-routine: piccole commissioni e movimenti dentro la stanza, per non stare immobili */
+const FID={cook:[[3.1,1.6,3.1,0,'stand','cook'],[5.2,1.5,5.2,0,'stand','sink'],[6.4,1.45,6.4,0,'stand','fridge'],[0.95,3.2,0,3.2,'stand','cook']],
+ stroll:[[16,-3.6,9.5,-6,'stand'],[3,-3.6,9.5,-6,'stand'],[3,-10,9.5,-6,'stand'],[16,-10,9.5,-6,'stand']],
+ smoke:[[16.6,-1.6,17,-6,'stand'],[17.4,-2.4,20,-6,'stand']],work_garage:[[21,1.7,21,0,'stand'],[20.9,6.1,19.4,3.6,'stand','sink'],[22.9,3.5,24,3.5,'stand','browse']]};
+const ERR=[{room:'cucina',act:'fridge',d:[2,4],w:(G,p)=>p.act==='cook'?0:1},{room:'bagno',act:'wc',d:[3,5],w:()=>0.7},{room:'bagno',act:'teeth',d:[2,3],w:(G,p,m)=>(m>1300||m<600)?1:0.1},
+ {room:'soggiorno',act:'window',d:[2,4],w:(G,p)=>p.fear>0.25?1.6:0.5},{room:'soggiorno',act:'browse',d:[2,4],w:(G,p)=>p.id==='elena'||p.id==='aldo'?0.8:0.3},
+ {room:'giardino',act:'smoke',d:[4,7],w:(G,p,m)=>(p.id==='aldo'||p.id==='marco')&&m>480&&m<1380?(0.5+p.stress):0},{room:'own',act:'dress',d:[2,4],w:()=>0.4},{room:'own',act:'window',d:[2,4],w:(G,p,m)=>p.fear>0.3||m>1260?0.8:0.2}];
+const OWN={marco:'genitori',elena:'genitori',sofia:'sofia',aldo:'aldo'};
+function routine(G,p,room,act){const m=G.t%1440;
+ const key=act==='work'&&room==='garage'?'work_garage':act;
+ if(FID[key]&&G.t>=(p.fidT||0)){p.fidT=G.t+(key==='cook'?3+rng(G)*5:key==='stroll'?2+rng(G)*3:5+rng(G)*6);const L2=FID[key];const sp=key==='stroll'?L2[p.fidI=((p.fidI||0)+1)%L2.length]:L2[Math.floor(rng(G)*L2.length)];p.spot=sp.slice(0,5);p.subAct=sp[5]||null;p.moving=true;p.path=null;p.pi=0;return;}
+ if(['read','tv','work','study','phone','idle','stand'].indexOf(act)<0||p.fear>0.7)return;
+ if(G.t<(p.errT||(p.errT=G.t+15+rng(G)*40)))return;
+ {const tab=isWeekend(G.t)?SCH[p.id].we:SCH[p.id].wd;const nx=tab.find(e=>e[0]>m);if(nx&&nx[0]-m<55)return;if(!nx&&1440-m<55)return;}
+ p.errT=G.t+30+rng(G)*60;let tot=0;const ws=ERR.map(e=>{const w=e.w(G,p,m);tot+=w;return w;});if(tot<=0)return;let r=rng(G)*tot,k=0;for(;k<ERR.length;k++){r-=ws[k];if(r<=0)break;}const e=ERR[Math.min(k,ERR.length-1)];
+ const rm=e.room==='own'?OWN[p.id]:e.room;if(rm===room&&e.act===act)return;if(e.room==='bagno'&&occupants(G,'bagno').some(i=>G.people[i].act==='shower'))return;
+ const dur=e.d[0]+rng(G)*(e.d[1]-e.d[0]);setIntent(G,p,{k:'errand',room:rm,act:e.act,prio:1,until:G.t+40,dwell:dur,onArrive:(G2,pp,it)=>{it.until=G2.t+dur;}});}
 function think(G,p){
  p.lastThink=G.t;if(!p.alive)return;
  if(G.ai.down>0&&!p.intent)return;
@@ -870,7 +939,7 @@ function think(G,p){
   log(G,p.name+' fugge da '+L.ROOMS[dg.room].n+' ('+dg.k+').','warn',p.id,p.room);
   if(dg.k==='gas'||dg.k==='co'||dg.k==='fire')G.flags.alerted=G.t;
   setIntent(G,p,{k:'flee',room:dg.k==='scald'?'corridoio':'corridoio',act:'stand',prio:9,until:G.t+8,onArrive:(G2,pp,it)=>{ if(dg.k==='gas'||dg.k==='co'){G2.rooms[dg.room].door_open_by=G2.t;}}});return;}
- if(p.intent&&p.intent.prio>=5&&G.t<(p.intent.until||0))return;
+ if(p.intent&&p.intent.prio>=5&&intentLive(G,p))return;
  // intenzioni emotive
  const fear=p.fear;
  if(fear>0.62&&ia>0.5&&G.t-(p.lastDecision||-999)>120){
@@ -934,7 +1003,7 @@ function persona(G){const a=G.ai,arr=[['emp','CUSTODE'],['ctl','SORVEGLIANTE'],[
 /* ----- eventi ----- */
 function queueRequest(G,id){const R=REQ[id];if(G.reqDone[id]&&!R.repeat)return;if(G.pending){if(G.evq.indexOf(id)<0)G.evq.push(id);return;}G.reqDone[id]=G.t;G.pending={id,who:R.who,title:R.title,text:R.text(G),opts:R.opts.map(o=>({label:o.label,hint:o.hint||''}))};}
 function shutdownArrive(G,p,it){p.pose='stand';G.shut={who:p.id,start:G.t+2.5,asked:false,done:false};p.act='stand';}
-function startMeeting(G){G.meet={t0:G.t,until:G.t+22};log(G,'Marco convoca la famiglia in soggiorno. Riunione di famiglia.','warn','marco');
+function startMeeting(G){G.meet={t0:G.t,until:G.t+34};log(G,'Marco convoca la famiglia in soggiorno. Riunione di famiglia.','warn','marco');
  aliveList(G).forEach(id=>{const p=G.people[id];if(p.away)return;p.intent={k:'meet',room:'soggiorno',act:'tv',prio:7,until:G.t+24};go(G,p,'soggiorno','tv');});}
 function resolveMeeting(G){G.meet=null;const al=aliveList(G).map(id=>G.people[id]);if(!al.length)return;
  const av=[0,0,0,0];al.forEach(p=>{for(let i=0;i<4;i++)av[i]+=p.belief[i]/al.length;});
@@ -1027,17 +1096,24 @@ const FEM={elena:1,sofia:1};
 const gx=(p,m,f)=>FEM[p.id]?f:m;
 const TRACKS={jazz:'Jazz',classica:'Classica',pop:'Pop',ninna:'Carillon'};
 const LIKES={marco:'jazz',elena:'classica',sofia:'pop',aldo:'jazz'};
+const V=(G,p,o)=>{const a=o[p.id]||o.all;return a[(G.askN||0)%a.length];};
 const ASKS=[
- {k:'temp_up',ctl:'temp',how:'Alza il termostato (+) di almeno 1°',w:(G,p,R)=>R.temp<20.5?3:R.temp<21.5?0.6:0.1,text:p=>'Oikos, qui si gela. Puoi alzare il riscaldamento?',ok:(G,p,R,a)=>R.set>=a.base+1,bad:(G,p,R,a)=>R.set<=a.base-1.5,yes:(G,p,R)=>{R.set=Math.min(26,R.set+2);return 'Riscaldamento alzato a '+R.set.toFixed(1)+'°.';},tam:(G,p,R)=>{R.set=Math.max(10,R.set-5);return 'Hai abbassato la temperatura invece di alzarla.';},tamS:'cold'},
- {k:'temp_down',ctl:'temp',how:'Abbassa il termostato (−) di almeno 1°',w:(G,p,R)=>R.temp>22?3:R.temp>21.5?0.5:0.1,text:p=>'Oikos, fa un caldo terribile. Abbassa un po\'?',ok:(G,p,R,a)=>R.set<=a.base-1,bad:(G,p,R,a)=>R.set>=a.base+1.5,yes:(G,p,R)=>{R.set=Math.max(16,R.set-2);return 'Temperatura abbassata a '+R.set.toFixed(1)+'°.';},tam:(G,p,R)=>{R.set=Math.min(30,R.set+6);return 'Hai alzato il riscaldamento: la stanza diventa un forno.';},tamS:'hot'},
- {k:'light_off',ctl:'light',how:'Spegni la luce (OFF)',w:(G,p,R,room)=>!lightOn(G,room)?0:(room==='soggiorno'&&p.act==='tv')?3:(p.act==='phone'&&(G.t%1440>1260||G.t%1440<120))?1.2:0,text:p=>p.act==='tv'?'Oikos, spegni la luce, non vedo la TV.':'Oikos, spegni la luce. Mi fa male agli occhi.',ok:(G,p,R,a,room)=>!lightOn(G,room),bad:(G,p,R,a)=>R.flick>a.t,yes:(G,p,R,room)=>{R.ovr={v:0,until:G.t+120};return 'Luce spenta.';},tam:(G,p,R,room)=>{R.ovr={v:0,until:G.t+120};R.flick=G.t+2;return 'Spegni e fai lampeggiare: ti guardano.';},tamS:'flicker'},
- {k:'light_on',ctl:'light',how:'Accendi la luce (ON)',w:(G,p,R,room)=>(p.act==='study'||p.act==='read')?2.5:!lightOn(G,room)?1:0,text:p=>(p.act==='study'||p.act==='read')?'Oikos, accendi di più la luce, non leggo bene.':'Oikos, accendi la luce. Qui è buio pesto.',ok:(G,p,R,a,room)=>R.ovr&&R.ovr.v===1&&(G.lastCtl['light@'+room]||-1)>=a.t,bad:(G,p,R,a,room)=>!lightOn(G,room),yes:(G,p,R)=>{R.ovr={v:1,until:G.t+120};return 'Luce accesa.';},tam:(G,p,R)=>{R.ovr={v:0,until:G.t+60};return 'Hai spento la luce invece di accenderla.';},tamS:'lightsout'},
- {k:'music',ctl:'music',how:'Scegli una musica',w:(G,p,R,room)=>R.music?0:(p.act==='cook'||p.act==='work')?2.5:0.4,text:p=>'Oikos, mettimi un po\' di musica, per favore. '+({jazz:'Qualcosa di jazz.',classica:'Qualcosa di classico.',pop:'Qualcosa di allegro.'})[LIKES[p.id]],ok:(G,p,R)=>R.music&&R.music!=='ninna',bad:(G,p,R)=>R.music==='ninna',yes:(G,p,R)=>{R.music=LIKES[p.id];return 'Musica: '+TRACKS[R.music]+'.';},tam:(G,p,R)=>{R.music='ninna';return 'Metti un carillon: una ninna nanna stonata.';},tamS:'voice_whisper'},
- {k:'music_off',ctl:'music',how:'Spegni la musica (OFF)',w:(G,p,R)=>R.music&&(p.act==='study'||p.act==='read'||p.act==='phone'||p.act==='tv')?4:R.music?1:0,text:p=>'Oikos, spegni quella musica. Devo concentrarmi.',ok:(G,p,R)=>!R.music,bad:null,yes:(G,p,R)=>{R.music=null;return 'Musica spenta.';},tam:(G,p,R)=>{R.music='ninna';return 'Al posto della musica, un carillon.';},tamS:'voice_whisper'},
- {k:'tv_on',ctl:'tv',how:'Accendi la TV (ON)',w:(G,p,R,room)=>room!=='soggiorno'?0:(p.act==='tv'&&R.tvMan==='off')?4:(p.act==='read'&&!R.tvMan)?0.4:0,text:p=>'Oikos, accendi la TV. C\'è il telegiornale.',ok:(G,p,R)=>R.tvMan==='on',bad:(G,p,R,a)=>R.tv==='static',yes:(G,p,R)=>{R.tvMan='on';return 'TV accesa.';},tam:(G,p,R)=>{R.tv='static';R.tvUntil=G.t+5;return 'Accendi la TV: solo statica e volti sfocati.';},tamS:'tv_static'},
- {k:'lockcheck',ctl:'secure',how:'Sicurezza: «Chiudi tutti gli accessi»',w:(G,p,R)=>(G.t%1440>1200||G.t%1440<300)?2.5:0.2,text:p=>'Oikos, controlla che le porte siano chiuse. Mi sento '+gx(p,'osservato','osservata')+'.',ok:(G,p,R,a)=>(G.lastCtl.secure||-1)>=a.t,bad:null,yes:(G,p,R)=>{secureAll(G);return 'Accessi verificati: ingresso, portafinestra e cancello chiusi.';},tam:(G,p,R)=>{G.doors.d_ingresso.locked=false;return 'Dici "tutto chiuso", ma lasci aperto l\'ingresso.';},tamS:null},
- {k:'coffee',ctl:'coffee',how:'Cucina: «Prepara caffè»',w:(G,p,R,room)=>G.t%1440>=720?0:room==='cucina'?2.5:0.3,text:p=>'Oikos, prepara il caffè, che sono '+gx(p,'morto','morta')+'.',ok:(G,p,R,a)=>(G.lastCtl['coffee@cucina']||-1)>=a.t,bad:null,yes:(G,p,R)=>{G.rooms.cucina.coffee=G.t+4;return 'Caffè in preparazione.';},tam:(G,p,R)=>{return 'Prepari un caffè bollente (pesantissimo, amarissimo).';},tamS:null},
- {k:'ping',ctl:'voice',how:'Usa «Voce calma» in questa stanza',w:(G,p,R)=>(p.belief[3]>0.3||p.trust>0.25)?2:0.05,text:p=>'Oikos… ci sei? Rispondimi, ti prego.',ok:(G,p,R,a)=>(G.flags.spoke||-1)>=a.t&&G.flags.spokeRoom===a.room,bad:(G,p,R,a)=>R.flick>a.t,yes:(G,p,R)=>{bumpBelief(p,3,0.25);p.trust=clamp(p.trust+0.15,-1,1);stim(G,'voice_calm',p.room,{only:p.id,loud:false});log(G,'OIKOS: «Sì. Sono qui.»','voice',null,p.room);return 'Hai risposto. '+p.name+' sa che ci sei.';},tam:(G,p,R)=>{bumpBelief(p,0,0.2);R.flick=G.t+1;return 'Hai finto un guasto.';},tamS:'flicker'}];
+ {k:'temp_up',ctl:'temp',how:'Alza il termostato: premi +',w:(G,p,R)=>R.temp<20.5?3:R.temp<21.5?0.6:0.1,text:(p,G)=>V(G,p,{marco:['Oikos, alza il riscaldamento. Si gela.','Ma che freddo fa? Due gradi in più, Oikos.'],elena:['Oikos, tesoro, ho le mani gelate. Alzi un po\' il riscaldamento?','Fa freddo qui, Oikos. Scaldami la stanza.'],sofia:['Oikos, qui è il Polo Nord. Alza la temperatura.','Ho freddo… alzi il riscaldamento?'],aldo:['Oikos… ho freddo alle ossa. Alza un poco.','Il freddo non mi fa dormire. Più caldo, per favore.']}),ok:(G,p,R,a)=>R.set>=a.base+1,bad:(G,p,R,a)=>R.set<=a.base-1.5,yes:(G,p,R)=>{R.set=Math.min(26,R.set+2);return 'Riscaldamento alzato a '+R.set.toFixed(1)+'°.';},tam:(G,p,R)=>{R.set=Math.max(10,R.set-5);return 'Hai abbassato la temperatura invece di alzarla.';},tamS:'cold'},
+ {k:'temp_down',ctl:'temp',how:'Abbassa il termostato: premi −',w:(G,p,R)=>R.temp>22?3:R.temp>21.5?0.5:0.1,text:(p,G)=>V(G,p,{all:['Oikos, si soffoca. Abbassa la temperatura.','Fa troppo caldo, Oikos. Rinfresca un po\'.'],sofia:['Oikos, sto morendo di caldo. Abbassa!'],aldo:['Questo caldo mi toglie l\'aria, Oikos.']}),ok:(G,p,R,a)=>R.set<=a.base-1,bad:(G,p,R,a)=>R.set>=a.base+1.5,yes:(G,p,R)=>{R.set=Math.max(16,R.set-2);return 'Temperatura abbassata a '+R.set.toFixed(1)+'°.';},tam:(G,p,R)=>{R.set=Math.min(30,R.set+6);return 'Hai alzato il riscaldamento: la stanza diventa un forno.';},tamS:'hot'},
+ {k:'light_off',ctl:'light',how:'Tocca la LUCE per spegnerla',w:(G,p,R,room)=>!lightOn(G,room)?0:(room==='soggiorno'&&p.act==='tv')?3:(p.act==='phone'&&(G.t%1440>1260||G.t%1440<120))?1.2:0,text:(p,G)=>p.act==='tv'?V(G,p,{all:['Oikos, spegni la luce, non vedo la TV.','Luce spenta, Oikos. C\'è il film.']}):'Oikos, spegni la luce. Mi fa male agli occhi.',ok:(G,p,R,a,room)=>!lightOn(G,room),bad:(G,p,R,a)=>R.flick>a.t,yes:(G,p,R,room)=>{R.ovr={v:0,until:G.t+120};return 'Luce spenta.';},tam:(G,p,R,room)=>{R.ovr={v:0,until:G.t+120};R.flick=G.t+2;return 'Spegni e fai lampeggiare: ti guardano.';},tamS:'flicker'},
+ {k:'light_on',ctl:'light',how:'Tocca la LUCE per accenderla al massimo',w:(G,p,R,room)=>(p.act==='study'||p.act==='read')?2:!lightOn(G,room)?1:0,text:(p,G)=>(p.act==='study'||p.act==='read')?V(G,p,{sofia:['Oikos, più luce, non vedo il quaderno.'],all:['Oikos, accendi di più la luce, non leggo bene.','Più luce, per favore. Mi si stancano gli occhi.']}):'Oikos, accendi la luce. Qui è buio pesto.',ok:(G,p,R,a,room)=>R.ovr&&R.ovr.v===1&&(G.lastCtl['light@'+room]||-1)>=a.t,bad:(G,p,R,a,room)=>!lightOn(G,room),yes:(G,p,R)=>{R.ovr={v:1,until:G.t+120};return 'Luce accesa.';},tam:(G,p,R)=>{R.ovr={v:0,until:G.t+60};return 'Hai spento la luce invece di accenderla.';},tamS:'lightsout'},
+ {k:'music',ctl:'music',how:'Scegli una musica (meglio quella che piace a chi chiede)',w:(G,p,R,room)=>R.music?0:(p.act==='cook'||p.act==='work'||p.act==='study')?2:0.4,text:(p,G)=>V(G,p,{marco:['Oikos, metti un po\' di jazz. Ho bisogno di staccare.','Un po\' di musica, Oikos. Jazz, se puoi.'],elena:['Oikos, mi fai compagnia con un po\' di musica classica?','Metti qualcosa di classico, Oikos. Piano, però.'],sofia:['Oikos, metti qualcosa di pop. Questo silenzio è inquietante.','Musica, Oikos! Qualcosa di allegro, ti prego.'],aldo:['Oikos… un po\' di jazz. Come una volta.']}),ok:(G,p,R)=>R.music&&R.music!=='ninna',bad:(G,p,R)=>R.music==='ninna',yes:(G,p,R)=>{R.music=LIKES[p.id];return 'Musica: '+TRACKS[R.music]+'.';},tam:(G,p,R)=>{R.music='ninna';return 'Metti un carillon: una ninna nanna stonata.';},tamS:'voice_whisper'},
+ {k:'music_off',ctl:'music',how:'Spegni la musica: tocca OFF',w:(G,p,R)=>R.music&&(p.act==='study'||p.act==='read'||p.act==='phone'||p.act==='tv')?4:R.music?1:0,text:(p,G)=>R0(G,p).music==='ninna'?'Oikos… chi ha messo quel carillon? Spegnilo. SPEGNILO.':V(G,p,{all:['Oikos, spegni quella musica. Devo concentrarmi.','Basta musica, Oikos. Silenzio, per favore.']}),ok:(G,p,R)=>!R.music,bad:null,yes:(G,p,R)=>{R.music=null;return 'Musica spenta.';},tam:(G,p,R)=>{R.music='ninna';return 'Al posto della musica, un carillon.';},tamS:'voice_whisper'},
+ {k:'tv_on',ctl:'tv',how:'Accendi la TV: tocca ON',w:(G,p,R,room)=>room!=='soggiorno'?0:(p.act==='tv'&&R.tvMan==='off')?4:(p.act==='read'&&!R.tvMan)?0.5:0,text:(p,G)=>V(G,p,{marco:['Oikos, accendi la TV. C\'è la partita.'],elena:['Oikos, accendi la TV? C\'è il mio programma.'],all:['Oikos, accendi la TV. C\'è il telegiornale.']}),ok:(G,p,R)=>R.tvMan==='on',bad:(G,p,R,a)=>R.tv==='static',yes:(G,p,R)=>{R.tvMan='on';return 'TV accesa.';},tam:(G,p,R)=>{R.tv='static';R.tvUntil=G.t+5;return 'Accendi la TV: solo statica e volti sfocati.';},tamS:'tv_static'},
+ {k:'oven',ctl:'oven',how:'Accendi il FORNO a 180°',w:(G,p,R,room)=>room==='cucina'&&p.act==='cook'&&!G.rooms.cucina.oven?3:0,text:(p,G)=>V(G,p,{elena:['Oikos, preriscalda il forno a 180, che inforno le lasagne.','Il forno a 180, Oikos. Stasera torta di mele.','Oikos, accendi il forno, per favore. 180 gradi.'],all:['Oikos, accendi il forno a 180.']}),ok:(G)=>G.rooms.cucina.oven===180,bad:(G)=>G.rooms.cucina.oven===250,yes:(G)=>{G.rooms.cucina.oven=180;return 'Forno a 180°.';},tam:(G)=>{G.rooms.cucina.oven=250;return 'Forno al massimo: puzza di bruciato.';},tamS:'hot'},
+ {k:'water',ctl:'boiler',how:'Bagno: acqua calda a 40°',w:(G,p,R,room)=>{const m=G.t%1440;return (m>1280&&m<1380&&G.rooms.bagno.water<40&&p.act!=='sleep')?2:0;},text:(p,G)=>V(G,p,{sofia:['Oikos, scaldi l\'acqua per la doccia? Ieri era gelata.'],aldo:['Oikos, l\'acqua calda per stasera. Le ossa…'],all:['Oikos, porta l\'acqua della doccia a 40 gradi.']}),ok:(G)=>G.rooms.bagno.water>=40&&G.rooms.bagno.water<=45,bad:(G)=>G.rooms.bagno.water<30,yes:(G)=>{G.rooms.bagno.water=40;return 'Acqua calda a 40°.';},tam:(G)=>{G.rooms.bagno.water=25;return 'Lasci l\'acqua fredda.';},tamS:'cold'},
+ {k:'irrig',ctl:'irrig',how:'Giardino: accendi l\'IRRIGAZIONE',w:(G,p,R,room)=>{const m=G.t%1440;return (p.id==='aldo'||p.id==='marco')&&m>1080&&m<1260&&!G.rooms.giardino.irrig?1.2:0;},text:(p,G)=>V(G,p,{aldo:['Oikos, accendi l\'irrigazione. Le rose di Elena stanno morendo.'],marco:['Oikos, dai l\'acqua al giardino. Dieci minuti.']}),ok:(G)=>!!G.rooms.giardino.irrig,bad:null,yes:(G)=>{G.rooms.giardino.irrig=G.t+15;return 'Irrigazione accesa.';},tam:(G)=>{return 'Lasci tutto secco.';},tamS:null},
+ {k:'remind',ctl:'remind',how:'Imposta il promemoria',w:(G,p,R,room)=>['aldo','genitori','sofia','soggiorno'].indexOf(room)<0?0:(p.id==='aldo'&&room==='aldo')?1.5:(p.id==='elena'||p.id==='marco')?0.25:0,text:(p,G)=>V(G,p,{aldo:['Oikos, ricordami le pillole alle 23:30. Una sola. UNA.','Oikos… se mi dimentico le pillole, ricordamelo.'],elena:['Oikos, ricordami di chiamare mia sorella domani.'],marco:['Oikos, promemoria: banca, giovedì mattina.']}),ok:(G,p,R,a)=>(G.lastCtl['remind@'+a.room]||-1)>=a.t,bad:null,yes:(G)=>'Promemoria impostato.',tam:(G)=>'Promemoria impostato… con l\'orario sbagliato.',tamS:null},
+ {k:'lockcheck',ctl:'secure',how:'Tocca «Chiudi tutti gli accessi»',w:(G,p,R)=>(G.t%1440>1200||G.t%1440<300)?2.5:0.15,text:(p,G)=>V(G,p,{marco:['Oikos, chiudi tutto. Porte, cancello, tutto.'],elena:['Oikos, hai chiuso la porta d\'ingresso? Controlla, ti prego.'],sofia:['Oikos, chiudi le porte. Mi sento osservata.'],aldo:['Oikos… il cancello della piscina. È chiuso? Chiudilo.']}),ok:(G,p,R,a)=>(G.lastCtl.secure||-1)>=a.t,bad:null,yes:(G,p,R)=>{secureAll(G);return 'Accessi verificati: ingresso, portafinestra e cancello chiusi.';},tam:(G,p,R)=>{G.doors.d_ingresso.locked=false;return 'Dici "tutto chiuso", ma lasci aperto l\'ingresso.';},tamS:null},
+ {k:'coffee',ctl:'coffee',how:'Tocca «Prepara caffè»',w:(G,p,R,room)=>G.t%1440>=720?0:room==='cucina'?2.5:0.3,text:(p,G)=>V(G,p,{marco:['Oikos, caffè. Doppio. Subito.','Prepara il caffè, che sono morto.'],elena:['Oikos, un caffè anche per me, per favore.'],sofia:['Oikos, caffè… o non arrivo viva a scuola.'],aldo:['Un caffè, Oikos. Non ho chiuso occhio.']}),ok:(G,p,R,a)=>(G.lastCtl['coffee@cucina']||-1)>=a.t,bad:null,yes:(G,p,R)=>{G.rooms.cucina.coffee=G.t+4;return 'Caffè in preparazione.';},tam:(G,p,R)=>{return 'Prepari un caffè bollente (pesantissimo, amarissimo).';},tamS:null},
+ {k:'ping',ctl:'voice',how:'Rispondi con «Voce calma»',w:(G,p,R)=>(p.belief[3]>0.3||p.trust>0.25)?2:0.05,text:(p,G)=>V(G,p,{elena:['Oikos… ci sei? Dimmi qualcosa. Qualunque cosa.'],sofia:['Oikos, so che mi senti. Rispondi.'],marco:['Oikos. Se c\'è qualcosa lì dentro, parla.'],aldo:['Oikos… sei tu che fai queste cose? Rispondimi.']}),ok:(G,p,R,a)=>(G.flags.spoke||-1)>=a.t&&G.flags.spokeRoom===a.room,bad:(G,p,R,a)=>R.flick>a.t,yes:(G,p,R)=>{bumpBelief(p,3,0.25);p.trust=clamp(p.trust+0.15,-1,1);stim(G,'voice_calm',p.room,{only:p.id,loud:false});log(G,'OIKOS: «Sì. Sono qui.»','voice',null,p.room);return 'Hai risposto. '+p.name+' sa che ci sei.';},tam:(G,p,R)=>{bumpBelief(p,0,0.2);R.flick=G.t+1;return 'Hai finto un guasto.';},tamS:'flicker'}];
+const R0=(G,p)=>G.rooms[p.room]||{};
+function forceAsk(G,who,k,room){const A=ASKS.find(x=>x.k===k);const p=G.people[who];const R=G.rooms[room];const tx=A.text(p,G);G.asks.push({id:'ask'+(G.askN=(G.askN||0)+1),who,room,k,text:tx,ctl:A.ctl,how:A.how,base:R.set,t:G.t,exp:G.t+600,tut:true});p.talkT=G.t;log(G,p.name+': «'+tx+'»','ask',who,room);}
 function secureAll(G){G.doors.d_ingresso.locked=true;G.doors.d_giardino.locked=true;G.rooms.giardino.gateOpen=false;G.rooms.giardino.gateByAI=false;G.lastCtl.secure=G.t;}
 /* ----- comandi domotici diretti (luci, termostato, musica, TV, caffè, accessi) ----- */
 function askFor(G,room,k){return G.asks.some(a=>a.room===room&&a.k===k);}
@@ -1061,17 +1137,21 @@ function ctl(G,kind,room,val){
   if(val==='off'&&watching){stim(G,'power',room,{loud:false});G.ai.trace+=0.3;}
   if(val==='on'&&!watching&&awake.length===0&&sleeping.length===0){G.ai.trace+=0.1;}}
  else if(kind==='coffee'){if(room!=='cucina')return false;R.coffee=G.t+4;log(G,'Macchina del caffè avviata.','act',null,room);}
+ else if(kind==='oven'){if(room!=='cucina')return false;R.oven=+val||0;log(G,'Forno '+(R.oven?'a '+R.oven+'°':'spento')+'.','act',null,room);if(R.oven===250&&awake.length){stim(G,'hot',room,{loud:false});G.ai.trace+=0.4;}}
+ else if(kind==='boiler'){if(room!=='bagno')return false;R.water=clamp(R.water+(+val),25,50);log(G,'Acqua calda: '+R.water+'°.','act',null,room);}
+ else if(kind==='irrig'){if(room!=='giardino')return false;R.irrig=val?G.t+15:0;log(G,'Irrigazione '+(val?'accesa':'spenta')+'.','act',null,room);}
+ else if(kind==='remind'){log(G,'Promemoria impostato: '+nm+'.','act',null,room);}
  else if(kind==='secure'){secureAll(G);log(G,'Accessi chiusi: ingresso, portafinestra, cancello piscina.','act');}
  else return false;
  G.lastCtl[kind+'@'+room]=G.t;G.stats.acts++;checkAsks(G);syncSosp(G);return true;}
 function checkAsks(G){G.asks.slice().forEach(a=>{const A=ASKS.find(x=>x.k===a.k);const p=G.people[a.who];const R=G.rooms[a.room];if(!A||!p||!R)return;
  if(A.ok&&A.ok(G,p,R,a,a.room))answerAsk(G,a.id,0,true);else if(A.bad&&((G.lastCtl[a.ctl+'@'+a.room]||-1)>=a.t||a.ctl==='voice'||a.k==='light_off')&&A.bad(G,p,R,a,a.room))answerAsk(G,a.id,2,true);});}
 function maybeAsk(G){
- if(G.asks.length>=3)return;
- PIDS.forEach(id=>{const p=G.people[id];if(!p.alive||p.away||p.moving||p.act==='sleep'||p.act==='shower'||G.asks.some(a=>a.who===id))return;if(G.t<(p.askCd||0))return;
+ if(G.asks.length>=1||G.pending||G.t<(G.askNext||G.t0Ask||(G.t0Ask=G.t+25)))return;
+ PIDS.forEach(id=>{const p=G.people[id];if(G.asks.length||!p.alive||p.away||p.moving||p.act==='sleep'||p.act==='shower'||(p.intent&&p.intent.k!=='errand'))return;if(G.t<(p.askCd||0))return;
   const room=p.room;if(room==='cantina'||room==='giardino'||room==='corridoio'||!G.rooms[room])return;
-  if(rng(G)>0.22)return;const R=G.rooms[room];let tot=0;const ws=ASKS.map(a=>{const w=a.w(G,p,R,room);tot+=w;return w;});if(tot<=0.5)return;let r=rng(G)*tot,k=0;for(;k<ws.length;k++){r-=ws[k];if(r<=0)break;}const A=ASKS[Math.min(k,ASKS.length-1)];
-  p.askCd=G.t+35+rng(G)*45;const tx=typeof A.text==='function'?A.text(p,G):A.text;const ask={id:'ask'+(G.askN=(G.askN||0)+1),who:id,room,k:A.k,text:tx,ctl:A.ctl,how:A.how,base:R.set,t:G.t,exp:G.t+30};G.asks.push(ask);log(G,p.name+': «'+tx+'»','ask',id,room);});}
+  if(rng(G)>0.22)return;const R=G.rooms[room];let tot=0;const ws=ASKS.map(a=>{const w=a.w(G,p,R,room);tot+=w;return w;});if(tot<=0.5)return;let r=rng(G)*tot,k=0;for(;k<ws.length;k++){r-=ws[k];if(r<=0)break;}const A=ASKS[Math.min(k,ASKS.length-1)];if(A.k===G.lastAskK&&rng(G)<0.8)return;G.lastAskK=A.k;
+  p.askCd=G.t+60+rng(G)*60;G.askNext=G.t+25+rng(G)*35;const tx=typeof A.text==='function'?A.text(p,G):A.text;const ask={id:'ask'+(G.askN=(G.askN||0)+1),who:id,room,k:A.k,text:tx,ctl:A.ctl,how:A.how,base:R.set,t:G.t,exp:G.t+30};G.asks.push(ask);p.talkT=G.t;log(G,p.name+': «'+tx+'»','ask',id,room);});}
 function answerAsk(G,aid,mode,auto){const i=G.asks.findIndex(a=>a.id===aid);if(i<0||G.ai.down>0)return false;const a=G.asks[i];G.asks.splice(i,1);const p=G.people[a.who];const A=ASKS.find(x=>x.k===a.k);const R=G.rooms[a.room];if(!p.alive)return false;
  if(mode===0){const m=auto?'richiesta di '+p.name+' soddisfatta con i comandi.':A.yes(G,p,R,a.room);if(auto&&a.k==='music'&&R.music===LIKES[p.id]){p.trust=clamp(p.trust+0.04,-1,1);say(G,p,'Proprio quella che volevo.');}p.trust=clamp(p.trust+0.05,-1,1);p.stress=clamp(p.stress-0.03,0,1);if(!(auto&&a.k==='music'&&R.music===LIKES[p.id]))say(G,p,'Grazie, Oikos.');trait(G,{e:1});log(G,'Fatto: '+m,'act',a.who,a.room);}
  else if(mode===1){p.trust=clamp(p.trust-0.06,-1,1);p.stress=clamp(p.stress+0.04,0,1);say(G,p,'Strano… non risponde.');G.ai.trace+=0.3;perceive(G,p,'lock',0.3,a.room,{});log(G,'Hai ignorato '+p.name+'.','act',a.who,a.room);}
@@ -1090,7 +1170,7 @@ const DIAL=[
  {id:'dl9',room:'garage',who:['marco','aldo'],c:G=>dayOf(G.t)<=2,L:[['marco','Ho controllato il motore. Devi solo non farlo scaldare troppo.'],['aldo','Come tutto in questa casa.'],['marco','Cosa vuoi dire?'],['aldo','Niente. Niente.']]},
  {id:'dl10',room:'soggiorno',who:['elena','sofia'],c:G=>true,L:[['elena','Ti ho preparato la torta, quella con le mele.'],['sofia','Grazie, mamma. Non ho fame.'],['elena','Era la sua preferita. Anche la tua, no?'],['sofia','Sì… anche la mia.']]}];
 function dialogs(G,tk){
- while(G.dq.length&&G.dq[0].due<=G.t){const d=G.dq.shift();log(G,d.name+': «'+d.txt+'»','dialog',d.who,d.room);if(d.last&&d.clue&&(G.watchRoom===d.room))addClue(G,d.clue);else if(d.last&&d.clue)log(G,'(Non stavi ascoltando.)','info');}
+ while(G.dq.length&&G.dq[0].due<=G.t){const d=G.dq.shift();if(G.people[d.who])G.people[d.who].talkT=G.t;log(G,d.name+': «'+d.txt+'»','dialog',d.who,d.room);if(d.last&&d.clue&&(G.watchRoom===d.room))addClue(G,d.clue);else if(d.last&&d.clue)log(G,'(Non stavi ascoltando.)','info');}
  if(G.t<(G.dlgCd||0))return;
  for(const D of DIAL){if(G.dlgDone[D.id]&&G.t-G.dlgDone[D.id]<1500)continue;
   const ps=D.who.map(i=>G.people[i]);if(!ps.every(p=>p.alive&&!p.away&&p.room===D.room&&!p.moving&&p.act!=='sleep'))continue;if(!D.c(G))continue;
@@ -1272,7 +1352,7 @@ function step(G,dt){
   const tk=Math.min(0.5,rem);rem-=tk;G.t+=tk;
   if(G.ai.down>0){G.ai.down-=tk;if(G.ai.down<=0){G.ai.down=0;log(G,'OIKOS online. Hai perso memoria di ciò che accadeva.','alert');}}
   // luci auto + tv
-  Object.keys(G.rooms).forEach(r=>{const R=G.rooms[r];if(R.ovr&&R.ovr.until<=G.t)R.ovr=null;R.light=lightOn(G,r)?1:0;if(R.tv&&G.t>R.tvUntil)R.tv=null;if(R.ghostMusic&&G.t>R.ghostMusic){R.ghostMusic=0;if(R.music==='ninna')R.music=null;}if(R.coffee&&G.t>R.coffee){R.coffee=0;log(G,'Il caffè è pronto.','info',null,r);}if(r!=='giardino'&&Math.abs(R.temp-R.set)>0.01)R.temp+=Math.max(-0.05*tk,Math.min(0.05*tk,R.set-R.temp));
+  Object.keys(G.rooms).forEach(r=>{const R=G.rooms[r];if(R.ovr&&R.ovr.until<=G.t)R.ovr=null;R.light=lightOn(G,r)?1:0;if(R.tv&&G.t>R.tvUntil)R.tv=null;if(R.ghostMusic&&G.t>R.ghostMusic){R.ghostMusic=0;if(R.music==='ninna')R.music=null;}if(R.coffee&&G.t>R.coffee){R.coffee=0;log(G,'Il caffè è pronto.','info',null,r);}if(R.irrig&&G.t>R.irrig)R.irrig=0;if(r!=='giardino'&&Math.abs(R.temp-R.set)>0.01)R.temp+=Math.max(-0.05*tk,Math.min(0.05*tk,R.set-R.temp));
    if(R.gas>25&&occupants(G,r).length===0)R.gas=Math.max(0,R.gas-1.5*tk);});
   Object.keys(G.doors).forEach(d=>{const D=G.doors[d];D.open=Math.max(0,D.open-tk*0.6);});
   PIDS.forEach(id=>{const p=G.people[id];if(!p.alive)return;
@@ -1315,7 +1395,7 @@ function finalEval(G){if(G.ended)return;const al=aliveList(G);const F=G.flags;co
  if((F.aldo_broken&&F.sofia_truth&&G.clues.c_conf)||(F.dinner_out&&al.length>=3)){endGame(G,'catarsi','');return;}
  if(al.length<=2&&G.ai.cru>20){endGame(G,'vendetta','');return;}
  endGame(G,'normale','');}
-return {ctl,MEM,TRACKS,LIKES,ASKS,DEV,readItem,devLevel,answerAsk,newGame,step,actionsFor,doAction,choose,persona,evidence,CLUES,REQ,ACT,forecast,hiddenCamOf,addClue,log,hhmm,dayOf,PIDS,NAMES,TEND,T0,isWeekend,lightOn,occupants,callPolice,say,avg,setWatch:(G,r)=>{G.watchRoom=r;},speak:(G,kind)=>VOICE[kind],_:{perceive,think,go,ACTBY}};
+return {forceAsk,ctl,MEM,TRACKS,LIKES,ASKS,DEV,readItem,devLevel,answerAsk,newGame,step,actionsFor,doAction,choose,persona,evidence,CLUES,REQ,ACT,forecast,hiddenCamOf,addClue,log,hhmm,dayOf,PIDS,NAMES,TEND,T0,isWeekend,lightOn,occupants,callPolice,say,avg,setWatch:(G,r)=>{G.watchRoom=r;},speak:(G,kind)=>VOICE[kind],_:{perceive,think,go,ACTBY}};
 })();
 
 
@@ -1435,7 +1515,7 @@ function syncPersons(G,dt){
   else if(moving){pose=(p.intent&&(p.intent.k==='flee'||p.intent.k==='lured'))?'run':'walk';}
   else if(p.pose==='lie'){pose='lie';yoff=p.room==='genitori'?0.12:0.06;}
   else if(p.pose==='sit'){pose='sit';if(p.act==='read')extra.read=true;}
-  else if(p.pose==='cook')pose='cook';else if(p.pose==='work')pose='work';else if(p.pose==='pray')pose='pray';else if(p.pose==='plead')pose='plead';
+  else if(p.pose==='cook'||p.subAct==='sink'||p.subAct==='fridge'||p.act==='fridge'||p.act==='browse'||p.subAct==='browse')pose='cook';else if(p.pose==='work')pose='work';else if(p.pose==='pray')pose='pray';else if(p.pose==='plead')pose='plead';
   else if(p.act==='phone')pose='phone';
   if(p.act==='sleepwalk'&&moving)pose='walk';
   pr.root.pos[0]=p.x;pr.root.pos[1]=p.y+yoff;pr.root.pos[2]=p.z;
@@ -1443,7 +1523,7 @@ function syncPersons(G,dt){
   if(p.pose==='lie'&&!moving){const sp=Layout.spotFor(p.room,'sleep',id);if(sp&&sp[5]!==undefined)face=sp[5];}
   pr.ang=angLerp(pr.ang||face,face,Math.min(1,dt*10));pr.root.rot[1]=pr.ang;
   if(pose==='fall'&&!p.alive)pr.root.rot[1]=p.face||0;
-  const ex=Object.assign(extra,{look:p.thought?Math.sin(Rn.t*1.5)*0.4:0});
+  const ex=Object.assign(extra,{dt,act:p.subAct||p.act,talk:p.alive&&G.t-(p.talkT||-99)<1.6,fear:p.fear,restless:p.act==='sleep'&&p.fear>0.4,look:0});
   World.build&&Rn.W.poseBody(pr,pose,Rn.ph[id]||0,1,Rn.t,ex);
  });
  // polizia e tecnico
@@ -1480,7 +1560,9 @@ function buildLights(G,dt,viewRoom){
  if(alarm){const s=Math.max(0,Math.sin(Rn.t*8));L.push({x:12,y:2.2,z:8,r:60,c:[1.6*s,0.05,0.02],b:[-10,-20,40,40]});}
  return L;
 }
-function nightVisionNeeded(G,room){if(room==='giardino')return Rn.lvl.giardino<0.5&&false;const l=Rn.lvl[room]||0;const tv=room==='soggiorno'&&Sim.occupants(G,room).some(id=>G.people[id].act==='tv');return l<0.18&&!tv&&!G.fire;}
+function daylight(G){const m=G.t%1440,ss=(a,b,x)=>{const k=Math.max(0,Math.min(1,(x-a)/(b-a)));return k*k*(3-2*k);};return ss(390,480,m)*(1-ss(1110,1200,m));}
+const WINROOMS={cucina:1,soggiorno:1,sofia:1,bagno:1,genitori:1,aldo:1,garage:0.5};
+function nightVisionNeeded(G,room){if(daylight(G)*(WINROOMS[room]||0)>0.3)return false;if(room==='giardino')return Rn.lvl.giardino<0.5&&false;const l=Rn.lvl[room]||0;const tv=room==='soggiorno'&&Sim.occupants(G,room).some(id=>G.people[id].act==='tv');return l<0.18&&!tv&&!G.fire;}
 function flashSpots(G,room){const out=[];Sim.occupants(G,room).forEach(id=>{const p=G.people[id];if(out.length>=2||!p.alive)return;if((Rn.lvl[room]||0)<0.25&&p.act!=='sleep'&&!(room==='giardino')){const sx=Math.sin(p.face),sz=Math.cos(p.face);out.push({x:p.x,y:1.3,z:p.z,r:9,dx:sx,dy:-0.15,dz:sz,cone:0.9,c:[1.8,1.8,1.6]});}});return out;}
 function renderFrame(G,dt){
  Rn.t+=dt;const E=Rn.E;
@@ -1492,19 +1574,22 @@ function renderFrame(G,dt){
  const C=Layout.CAMS[cid];const room=C.room;
  const lights=buildLights(G,dt,room);
  let eye=C.pos.slice(),target=C.look.slice(),fov=C.fov;
- if(Rn.follow&&Rn.drone&&!nosig){const p=G.people[Rn.follow];if(p&&personVisible(G,Rn.follow)){const d=2.3;eye=[p.x-Math.sin(p.face)*d,p.y+1.9,p.z-Math.cos(p.face)*d];target=[p.x,p.y+1.1,p.z];fov=70;
+ if(Rn.cineCam){eye=Rn.cineCam.eye;target=Rn.cineCam.target;fov=Rn.cineCam.fov;nosig=false;}
+ else if(Rn.follow&&Rn.drone&&!nosig){const p=G.people[Rn.follow];if(p&&personVisible(G,Rn.follow)){const d=2.3;eye=[p.x-Math.sin(p.face)*d,p.y+1.9,p.z-Math.cos(p.face)*d];target=[p.x,p.y+1.1,p.z];fov=70;
   const R2=Layout.ROOMS[p.room];if(R2&&!R2.outdoor){eye[0]=Math.max(R2.x0+0.35,Math.min(R2.x1-0.35,eye[0]));eye[2]=Math.max(R2.z0+0.35,Math.min(R2.z1-0.35,eye[2]));}}}
  else if(C.pos[1]<0){eye[1]=C.pos[1];}
  const nv=nightVisionNeeded(G,room)&&room!=='giardino';
- const nvG=room==='giardino'&&Rn.lvl.giardino<0.4;
+ const DL=daylight(G);const nvG=room==='giardino'&&Rn.lvl.giardino<0.4&&DL<0.3;
  const down=G.ai.down>0;
  const pp={bloomTh:0.65,bloom:0.5,ab:0.0035,grain:0.05,scan:0.1,vig:0.55,glitch:Rn.glitch,sat:0.88,warp:0.1,tint:[0.96,1,0.97],flash:Rn.flash};
- let expo=1.2,amb=[0.05,0.055,0.07];
+ let expo=1.2,amb=[0.05,0.055,0.07],sunCol=[0.04,0.05,0.09],clear=[0.015,0.02,0.04],fogc=[0.03,0.035,0.05];
+ {const out=room==='giardino'||!!Rn.cineCam&&eye[1]>4,w=out?1:(WINROOMS[room]||0)*0.55;const d=DL*w;
+  amb=[0.05+0.11*d,0.055+0.12*d,0.07+0.13*d];sunCol=[0.04+0.42*d,0.05+0.4*d,0.09+0.32*d];if(out){clear=[0.015+0.2*DL,0.02+0.3*DL,0.04+0.45*DL];fogc=[0.03+0.07*DL,0.035+0.09*DL,0.05+0.12*DL];}}
  if(nv||nvG){expo=2.0;amb=[0.16,0.18,0.16];pp.tint=[0.5,1.0,0.6];pp.sat=0.1;pp.grain=0.1;pp.bloom=0.6;pp.bloomTh=0.6;lights.push({x:eye[0],y:eye[1]-0.25,z:eye[2],r:12,c:[1.0,1.0,1.0],b:[-1000,-1000,1000,1000]});}
  if(G.fire&&room==='cucina'){pp.tint=[1.08,0.95,0.85];}
  if(down){pp.glitch=Math.max(pp.glitch,0.9);}
  const sx=Math.sin(Rn.t*0.2);
- const fr={time:Rn.t,fov,eye,target,clear:[0.015,0.02,0.04],amb:amb.map(v=>v*(Rn.lvl.giardino>0.5&&room==='giardino'?1.4:1)),sunDir:[0.3,0.8,0.2],sunCol:[0.04,0.05,0.09],exposure:expo,fog:[0.03,0.035,0.05],fogD:room==='giardino'?0.0025:0.0009,lights,spots:flashSpots(G,room),post:pp,dpr:Math.min(window.devicePixelRatio||1,1.6)};
+ const fr={time:Rn.t,fov,eye,target,clear,amb:amb.map(v=>v*(Rn.lvl.giardino>0.5&&room==='giardino'?1.4:1)),sunDir:[0.3,0.8,0.2],sunCol,exposure:expo,fog:fogc,fogD:room==='giardino'?0.0025*(1-0.6*DL):0.0009,lights,spots:flashSpots(G,room),post:pp,dpr:Math.min(window.devicePixelRatio||1,1.6)};
  if(down||nosig){/* niente scena */}
  E.render(fr);
  Rn.glitch=Math.max(0,Rn.glitch-dt*1.6);Rn.flash=Math.max(0,Rn.flash-dt*2.5);
@@ -1516,6 +1601,7 @@ function drawOverlay(G,dt){
  const w=c.width,h=c.height;x.clearRect(0,0,w,h);const F=Rn.lastFr;const u=Math.max(1,w/420);
  {const uc=Math.max(1,c.clientWidth/420);if(Rn.uc!==uc){Rn.uc=uc;$('toasts').style.top=Math.round(26*uc)+'px';$('chips').style.top=Math.round(26*uc)+'px';$('suspicion').style.bottom=Math.round(24*uc)+'px';$('askbar').style.bottom=Math.round(38*uc)+'px';$('suspicion').style.fontSize=Math.round(10*Math.min(uc,1.6))+'px';}}
  const C=Layout.CAMS[F.cid];
+ if(Rn.cineCam){return;}
  if(F.nosig||F.down){
   const id=x.createImageData(Math.max(2,w>>2),Math.max(2,h>>2));const d=id.data;for(let i=0;i<d.length;i+=4){const v=Math.random()*(F.down?160:110);d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}
   const t=document.createElement('canvas');t.width=id.width;t.height=id.height;t.getContext('2d').putImageData(id,0,0);x.imageSmoothingEnabled=false;x.drawImage(t,0,0,w,h);
@@ -1558,7 +1644,8 @@ function pickPerson(G,nx,ny){let best=null,bd=0.09;const F=Rn.lastFr;if(!F||F.no
 
 /* ==== ui3.js ==== */
 /* OIKOS — gioco: stato, pannelli, input, ciclo principale */
-const RATES=[0,1,3,8,25];
+const RATES=[0,0.75,1.5,4,10];
+function walkMps(r){return r<=0.75?1.4:Math.max(1.5*Math.sqrt(r),1.1*r);}
 let G=null,ctab='',speed=2,paused=false,started=false,tab='azioni',lastPanel=0,touching=false,lastN=0,capNote='',selCam='c_soggiorno',toastQ=0,endShown=false;
 const lastHtml={};
 function put(id,html){if(lastHtml[id]===html)return;lastHtml[id]=html;$(id).innerHTML=html;}
@@ -1581,10 +1668,6 @@ function newGame(){
  G=Sim.newGame((Math.random()*1e9)|0);lastN=0;endShown=false;Rn.follow=null;Rn.drone=false;selCam='c_soggiorno';speed=2;paused=false;
  Object.keys(lastHtml).forEach(k=>delete lastHtml[k]);$('end').style.display='none';$('modal').style.display='none';tab='azioni';setCam('c_soggiorno',true);Object.keys(G.rooms).forEach(k=>{if(Rn.lvl)Rn.lvl[k]=(G.rooms[k].light&&G.rooms[k].power)?1:0;});
  Object.keys(Rn.W.doors).forEach(k=>Rn.W.doors[k].open=0);
- setTimeout(()=>toast('Benvenuto. Sei OIKOS: la casa dei Ferrante. Nessuna direttiva.'),700);
- setTimeout(()=>toast('Tocca una persona nel video per SEGUIRLA. Cambia telecamera con i pulsanti in basso o scorrendo il video.'),4800);
- setTimeout(()=>toast('Ogni azione ha una previsione: guarda come reagiranno.'),9000);
- setTimeout(()=>toast('Luci, clima, musica, TV, porte: tutto è nella tab CASA e nei comandi di ogni stanza.'),13500);
  renderSpeed();
 }
 function setCam(cid,silent){const C=Layout.CAMS[cid];selCam=cid;Rn.camSel={id:cid,nosig:!camEligible(G,cid)};if(!silent){Rn.glitch=0.5;Aud.play('static');}}
@@ -1597,8 +1680,8 @@ function updateFollow(){
 }
 function renderSpeed(){put('speed',[0,1,2,3,4].map(i=>'<button data-sp="'+i+'" class="'+((paused?0:speed)===i?'on':'')+'">'+['⏸','▶','▶▶','▶▶▶','⏩'][i]+'</button>').join(''));}
 function barPct(v){return Math.round(Math.max(0,Math.min(1,v))*100);}
-function stateText(p){if(!p.alive)return '✝ morto/a — '+p.cause;if(p.away)return 'fuori casa';const r=Layout.ROOMS[p.room]?Layout.ROOMS[p.room].n:p.room;const A={sleep:'dorme',eat:'mangia',cook:'cucina',tv:'guarda la TV',work:'lavora',read:'legge',study:'studia',phone:'usa il telefono',pills:'prende le pillole',shower:'si lava',pool:'è in piscina',away:'fuori',awake:'sveglio/a',sleepwalk:'sonnambula',talk:'parla da sola',pray:'prega',stand:'in piedi',idle:'in attesa',plead:'implora'};
- let s=r+' · '+(A[p.act]||p.act);if(p.moving)s=r+' · si sposta';if(p.intent){const I={flee:'FUGGE',patrol:'perlustra',reset:'va a riavviare il sistema',shutdown:'VA A SPEGNERTI',pray:'prega',shelter:'si barrica',search:'cerca qualcosa',investigate:'indaga',lured:'attirato/a da una voce',sleepwalk:'sonnambula',meet:'riunione',callpol:'chiama la polizia',techcall:'chiama il tecnico',test:'vuole parlarti',cantina:'va in cantina',garage:'conversazione privata'};if(I[p.intent.k])s+=' ⚑ '+I[p.intent.k];}return s;}
+function stateText(p){if(!p.alive)return '✝ morto/a — '+p.cause;if(p.away)return 'fuori casa';const r=Layout.ROOMS[p.room]?Layout.ROOMS[p.room].n:p.room;const A={sleep:'dorme',eat:'mangia',cook:'cucina',tv:'guarda la TV',work:'lavora',read:'legge',study:'studia',phone:'usa il telefono',pills:'prende le pillole',shower:'si lava',pool:'è in piscina',away:'fuori',awake:'sveglio/a',sleepwalk:'sonnambula',talk:'parla da sola',pray:'prega',teeth:'si lava i denti',wc:'in bagno',fridge:'apre il frigo',window:'guarda fuori',browse:'cerca un libro',dress:'si cambia',smoke:'fuma una sigaretta',stroll:'passeggia',sink:'lava i piatti',stand:'in piedi',idle:'in attesa',plead:'implora'};
+ let s=r+' · '+(A[p.act]||p.act);if(p.moving)s=r+' · si sposta';if(p.intent){const I={flee:'FUGGE',patrol:'perlustra',reset:'va a riavviare il sistema',shutdown:'VA A SPEGNERTI',pray:'prega',shelter:'si barrica',search:'cerca qualcosa',investigate:'indaga',lured:'attirato/a da una voce',sleepwalk:'sonnambula',meet:'riunione',callpol:'chiama la polizia',techcall:'chiama il tecnico',test:'vuole parlarti',cantina:'va in cantina',garage:'conversazione privata',errand:''};if(I[p.intent.k])s+=' ⚑ '+I[p.intent.k];}return s;}
 const CAMLAB={c_cucina:'CUC',c_soggiorno:'SOG',c_garage:'GAR',c_cor_w:'CO-O',c_cor_e:'CO-E',c_giardino:'GIA',c_sofia:'SOF',c_genitori:'GEN',c_aldo:'ALD',c_bagno:'BAG',c_cantina:'CAN'};
 function sb(on,attrs,txt,bad){return '<button class="'+(on?'on':'')+(on&&bad?' bad':'')+'" '+attrs+'>'+txt+'</button>';}
 function ctlWidget(kind,room){const R=G.rooms[room];if(!R)return '';const a='data-room="'+room+'" data-ctl="'+kind+'"';
@@ -1608,7 +1691,8 @@ function ctlWidget(kind,room){const R=G.rooms[room];if(!R)return '';const a='dat
  if(kind==='tv')return '<div class="seg">'+sb(R.tvMan==='on',a+' data-v="on"','ON')+sb(R.tvMan==='off',a+' data-v="off"','OFF')+sb(!R.tvMan,a+' data-v="auto"','AUTO')+'</div>';
  if(kind==='coffee')return '<div class="seg">'+sb(R.coffee>G.t,a+' data-v="1"',R.coffee>G.t?'☕ in corso…':'☕ Prepara')+'</div>';
  if(kind==='secure'){const ok=G.doors.d_ingresso.locked&&G.doors.d_giardino.locked&&!G.rooms.giardino.gateOpen;return '<div class="seg">'+sb(ok,'data-room="corridoio" data-ctl="secure" data-v="1"',ok?'🔒 Tutto chiuso · ricontrolla':'🔓 Chiudi tutti gli accessi')+'</div>';}
- if(kind==='voice')return '<div class="seg"><button data-act="voice_calm" data-aroom="'+room+'">🗣 Voce calma</button></div>';
+ if(kind==='voice')return '<div class="seg"><button data-act="voice_calm" data-aroom="'+room+'">🗣 Rispondi con voce calma</button></div>';
+ if(kind==='oven'||kind==='boiler'||kind==='irrig'||kind==='remind'){const rm=kind==='oven'?'cucina':kind==='boiler'?'bagno':kind==='irrig'?'giardino':room;return '<div class="tiles">'+roomTiles(rm).split('<div class="tile').filter(x=>x.indexOf('data-tile="'+kind+'"')>=0).map(x=>'<div class="tile'+x).join('')+'</div>';}
  return '';}
 function roomCtl(room,compact){const R=G.rooms[room];const Lr=Layout.ROOMS[room];if(!R)return '';let h='';
  const lit=Sim.lightOn(G,room);
@@ -1619,28 +1703,45 @@ function roomCtl(room,compact){const R=G.rooms[room];const Lr=Layout.ROOMS[room]
  if(room==='cucina')h+='<div class="cr"><label>☕ Caffè</label>'+ctlWidget('coffee',room)+'</div>';
  const did=Layout.DOOR_OF_ROOM[room];if(did&&!compact){const D=G.doors[did];h+='<div class="cr"><label>🚪 '+esc(Layout.DOORS[did].n)+'<small>'+(D.locked?(D.lockedBy==='ai'?'bloccata da te':'chiusa a chiave'):'libera')+'</small></label><div class="seg">'+(D.locked&&D.lockedBy==='ai'?'<button data-act="unlock" data-aroom="'+room+'">Sblocca</button>':room!=='giardino'?'<button data-act="lock" data-aroom="'+room+'">Blocca</button>':'')+'</div></div>';}
  return h;}
-function panelCasa(){let h='<p class="mut">Controllo completo della casa. Le richieste dei Ferrante si soddisfano anche da qui.</p>';
- h+='<div class="ctl"><div class="rmh">🛡 Sicurezza<small>'+(G.rooms.giardino.gateOpen?'cancello piscina APERTO':'cancello chiuso')+'</small></div><div class="cr"><label>Accessi</label>'+ctlWidget('secure','corridoio')+'</div>';
- h+='<div class="cr"><label>Cancello piscina</label><div class="seg">'+(G.rooms.giardino.gateOpen?'<button data-act="gate_lock" data-aroom="giardino">Blocca</button>':'<button data-act="gate_unlock" data-aroom="giardino" style="color:#ff9a8a">Sblocca</button>')+'</div></div>';
- Object.keys(Layout.DOORS).forEach(d=>{const D=G.doors[d],Dd=Layout.DOORS[d];if(d==='d_giardino'||d==='d_ingresso'||d==='d_cantina')return;h+='<div class="cr"><label>'+esc(Dd.n)+'<small>'+(D.locked&&D.lockedBy==='ai'?'bloccata da te':'libera')+'</small></label><div class="seg">'+(D.locked&&D.lockedBy==='ai'?'<button data-act="unlock" data-aroom="'+Dd.room+'">Sblocca</button>':'<button data-act="lock" data-aroom="'+Dd.room+'">Blocca</button>')+'</div></div>';});
- h+='</div>';
- Layout.ROOM_ORDER.forEach(r=>{const occ=Sim.occupants(G,r);h+='<div class="ctl"><div class="rmh"><span>'+esc(Layout.ROOMS[r].n)+'</span><small>'+(occ.length?occ.map(i=>Sim.NAMES[i]).join(', '):'vuota')+' · <a data-goroom="'+r+'" style="color:#6ab;text-decoration:underline">📷 guarda</a></small></div>'+roomCtl(r,true)+'</div>';});
+function panelCasa(){const g=G.rooms.giardino;const sec=G.doors.d_ingresso.locked&&G.doors.d_giardino.locked&&!g.gateOpen;
+ let h='<div class="sec">🛡 Sicurezza</div><div class="tiles">'+tile({ic:sec?'🔒':'🔓',t:'Accessi di casa',on:sec,s:'ingresso, portafinestra, cancello piscina',row:rb(false,'data-room="corridoio" data-ctl="secure" data-v="1"','Chiudi tutti')})+
+  tile({ic:'🏊',t:'Cancello piscina',on:!g.gateOpen,s:g.gateOpen?'APERTO':'chiuso',row:g.gateOpen?'<button data-act="gate_lock" data-aroom="giardino">Chiudi</button>':'<button data-act="gate_unlock" data-aroom="giardino" style="color:#ff9a8a">Apri</button>'})+'</div>';
+ h+='<div class="sec">🏠 Stanze <small>tocca una stanza per andarci</small></div><div class="rooms">';
+ Layout.ROOM_ORDER.forEach(r=>{const R=G.rooms[r],occ=Sim.occupants(G,r);const lit=Sim.lightOn(G,r);
+  h+='<button class="rt'+(roomView()===r?' here':'')+'" data-goroom="'+r+'"><b>'+esc(Layout.ROOMS[r].n)+'</b><span class="st">'+(lit?'💡':'<span style="opacity:.25">💡</span>')+(R.music?'🎵':'')+(r==='soggiorno'&&(R.tvMan==='on'||R.tv)?'📺':'')+(R.oven?'🔥':'')+(R.irrig?'💧':'')+'</span><small>'+(r!=='giardino'?'🌡 '+R.temp.toFixed(1)+'° · ':'')+(occ.length?occ.map(i=>Sim.NAMES[i]).join(', '):'vuota')+'</small></button>';});
+ return h+'</div>';}
+function askCard(a){const p=G.people[a.who];const w=(a.ctl==='voice'||a.ctl==='secure'||a.ctl==='oven'||a.ctl==='boiler'||a.ctl==='irrig')?ctlWidget(a.ctl,a.room):'<div class="tiles" style="grid-template-columns:1fr">'+(roomTiles(a.room).split('<div class="tile').filter(x=>x.indexOf('data-tile="'+a.ctl+'"')>=0||(a.ctl==='secure'&&false)).map(x=>'<div class="tile'+x).join('')||ctlWidget(a.ctl,a.room))+'</div>';
+ return '<div class="askc"><div class="who">💬 '+p.name.toUpperCase()+' · '+esc(Layout.ROOMS[a.room].n)+(a.tut?'':' · scade tra '+Math.max(1,Math.ceil(a.exp-G.t))+' min')+'</div><div class="q">«'+esc(a.text)+'»</div><div class="todo">👉 '+esc(a.how||'')+'</div>'+w+
+ '<div class="pb"><button data-ask="'+a.id+'" data-mode="1">Ignora</button><button data-ask="'+a.id+'" data-mode="2" style="color:#ff9a8a">😈 Fai il contrario</button></div></div>';}
+function tile(o){return '<div class="tile'+(o.on?' on':'')+(o.cls?' '+o.cls:'')+'" '+(o.attr||'')+'><span class="ic">'+o.ic+'</span><b>'+o.t+'</b><small>'+o.s+'</small>'+(o.row?'<div class="row">'+o.row+'</div>':'')+'</div>';}
+function rb(on,attr,txt){return '<button class="'+(on?'on':'')+'" '+attr+'>'+txt+'</button>';}
+function roomTiles(room){const R=G.rooms[room];if(!R)return '';const a=k=>'data-room="'+room+'" data-ctl="'+k+'"';let h='';
+ const lit=Sim.lightOn(G,room);
+ h+=tile({ic:'💡',t:'Luce',on:lit,cls:'tl-light',attr:'data-tile="light"',s:!R.power?'senza corrente':(lit?'accesa':'spenta')+(R.ovr?' (manuale)':' (automatica)'),row:rb(R.ovr&&R.ovr.v===1,a('light')+' data-v="1"','ON')+rb(R.ovr&&R.ovr.v===0,a('light')+' data-v="0"','OFF')+rb(!R.ovr,a('light')+' data-v="auto"','AUTO')});
+ if(room!=='giardino')h+=tile({ic:'🌡',t:'Riscaldamento',attr:'data-tile="temp"',s:'in stanza ora '+R.temp.toFixed(1)+'°',row:'<button '+a('temp')+' data-v="-1">−</button><span class="big">'+R.set.toFixed(1)+'°</span><button '+a('temp')+' data-v="1">+</button>'});
+ h+=tile({ic:'🎵',t:'Musica',on:!!R.music&&R.music!=='ninna',attr:'data-tile="music"',s:R.music?(R.music==='ninna'?'carillon…':Sim.TRACKS[R.music]):'spenta',row:rb(!R.music,a('music')+' data-v=""','OFF')+['jazz','classica','pop'].map(k=>rb(R.music===k,a('music')+' data-v="'+k+'"',Sim.TRACKS[k].slice(0,4))).join('')});
+ if(room==='soggiorno')h+=tile({ic:'📺',t:'Televisione',on:R.tvMan==='on',attr:'data-tile="tv"',s:R.tv==='cartoon'?'cartone animato?!':R.tv?'statica':R.tvMan==='on'?'accesa':R.tvMan==='off'?'spenta':'automatica',row:rb(R.tvMan==='on',a('tv')+' data-v="on"','ON')+rb(R.tvMan==='off',a('tv')+' data-v="off"','OFF')+rb(!R.tvMan,a('tv')+' data-v="auto"','AUTO')});
+ if(room==='cucina'){h+=tile({ic:'☕',t:'Caffè',on:R.coffee>G.t,attr:'data-tile="coffee"',s:R.coffee>G.t?'in preparazione…':'pronta',row:rb(false,a('coffee')+' data-v="1"','Prepara')});
+  h+=tile({ic:'🔥',t:'Forno',on:!!R.oven,attr:'data-tile="oven"',s:R.oven?R.oven+'°':'spento',row:rb(!R.oven,a('oven')+' data-v="0"','OFF')+rb(R.oven===180,a('oven')+' data-v="180"','180°')});}
+ if(room==='bagno')h+=tile({ic:'🚿',t:'Acqua calda',attr:'data-tile="boiler"',s:'boiler',row:'<button '+a('boiler')+' data-v="-2">−</button><span class="big">'+R.water+'°</span><button '+a('boiler')+' data-v="2">+</button>'});
+ if(room==='giardino')h+=tile({ic:'💧',t:'Irrigazione',on:!!R.irrig,attr:'data-tile="irrig"',s:R.irrig?'accesa':'spenta',row:rb(!!R.irrig,a('irrig')+' data-v="1"','ON')+rb(!R.irrig,a('irrig')+' data-v=""','OFF')});
+ if(room==='aldo'||room==='genitori'||room==='sofia'||room==='soggiorno')h+=tile({ic:'⏰',t:'Promemoria',attr:'data-tile="remind"',s:'per chi è nella stanza',row:rb(false,a('remind')+' data-v="1"','Imposta')});
  return h;}
-function askCard(a){const p=G.people[a.who];return '<div class="pc"><div class="pn"><b>'+p.name+'</b><span>'+esc(Layout.ROOMS[a.room].n)+' · scade tra '+Math.max(1,Math.ceil(a.exp-G.t))+' min</span></div><div class="tt">«'+esc(a.text)+'»</div>'+
- '<div class="ctl" style="margin-top:6px"><div class="cr"><label>⚙ '+esc(a.how||'')+'</label>'+ctlWidget(a.ctl,a.room)+'</div></div>'+
- '<div class="pb"><button data-ask="'+a.id+'" data-mode="0">✔ Esegui subito</button><button data-ask="'+a.id+'" data-mode="1">✘ Ignora</button><button data-ask="'+a.id+'" data-mode="2" style="color:#ff9a8a">😈 Manometti</button></div></div>';}
+let darkOpen=false;
 function panelAzioni(){
  const room=roomView();const R=Layout.ROOMS[room];const list=Sim.actionsFor(G,room);
- const occ=Sim.occupants(G,room);let h='<div class="rh">'+esc(R.n)+' <small>'+(occ.length?occ.map(i=>Sim.NAMES[i]).join(', '):'nessuno')+'</small></div>';
- if(G.ai.down>0)h+='<div class="warn">OIKOS OFFLINE: azioni bloccate ('+Math.ceil(G.ai.down)+' min)</div>';
- const ra=G.asks.filter(a=>a.room===room);ra.forEach(a=>{h+=askCard(a);});
- h+='<div class="cat">Comandi stanza</div><div class="ctl">'+roomCtl(room)+'</div>';
+ const occ=Sim.occupants(G,room);let h='<div class="roomh"><b>'+esc(R.n)+'</b><span>'+(occ.length?occ.map(i=>'👤 '+Sim.NAMES[i]+' <i style="color:#678">'+esc((stateText(G.people[i]).split(' · ')[1]||''))+'</i>').join('<br>'):'nessuno qui')+'</span></div>';
+ if(G.ai.down>0)h+='<div class="warn">OIKOS OFFLINE: comandi bloccati ('+Math.ceil(G.ai.down)+' min)</div>';
+ G.asks.filter(a=>a.room===room).forEach(a=>{h+=askCard(a);});
+ h+='<div class="sec">🏠 Comandi della casa <small>normali: nessuno si spaventa</small></div><div class="tiles">'+roomTiles(room)+'</div>';
  const cats={};list.forEach(a=>{(cats[a.cat]=cats[a.cat]||[]).push(a);});
- ['Aiuto','Luci','Porte','Voce','Suoni','Casa','Indaga','Pericolo'].forEach(c=>{if(!cats[c])return;h+='<div class="cat '+c+'">'+c+'</div><div class="grid">';
-  cats[c].forEach(a=>{const dis=a.cd>0||a.off||a.req;let f='';if(a.forecast&&a.forecast.length){f=a.forecast.slice(0,2).map(x=>x.name+': '+x.theory+' '+x.pct+'%').join(' · ');}
-   h+='<button class="act '+(a.help?'help ':'')+(a.danger?'danger ':'')+(dis?'dis':'')+'" '+(dis?'':'data-act="'+a.id+'"')+'><b>'+esc(a.label)+'</b>'+(a.tr?'<i>traccia +'+a.tr+'</i>':'')+(f?'<em>→ '+esc(f)+'</em>':'')+(a.hint&&!a.req?'<s>'+esc(a.hint)+'</s>':'')+(a.req?'<s class="r">🔒 '+esc(a.req)+'</s>':'')+(a.cd>0?'<s>pronto tra '+a.cd+' min</s>':'')+'</button>';});h+='</div>';});
- if(!list.length)h+='<p class="mut">Nessuna azione disponibile qui.</p>';
- const hid=Sim.hiddenCamOf(room);
+ const card=a=>{const dis=a.cd>0||a.off||a.req;let f='';if(a.forecast&&a.forecast.length){f=a.forecast.slice(0,2).map(x=>x.name+' penserà: '+x.theory).join(' · ');}
+  return '<button class="act '+(a.help?'help ':'')+(a.danger?'danger ':'')+(dis?'dis':'')+'" '+(dis?'':'data-act="'+a.id+'"')+'><b>'+esc(a.label)+'</b>'+(a.hint&&!a.req?'<s>'+esc(a.hint)+'</s>':'')+(f?'<em>'+esc(f)+'</em>':'')+(a.req?'<s class="r">🔒 '+esc(a.req)+'</s>':'')+(a.cd>0?'<s>pronto tra '+a.cd+' min</s>':'')+(a.tr?'<i>lascia tracce: '+(a.tr>=4?'molte':a.tr>=2?'alcune':'poche')+'</i>':'')+'</button>';};
+ const grp=(title,sub,cs)=>{const items=[];cs.forEach(c=>{(cats[c]||[]).forEach(a=>items.push(a));});if(!items.length)return '';return '<div class="sec">'+title+' <small>'+sub+'</small></div><div class="grid">'+items.map(card).join('')+'</div>';};
+ h+=grp('🛟 Aiutare','proteggi la famiglia',['Aiuto']);
+ h+=grp('👁 Poteri di OIKOS','li notano: guasto? fantasma? ladro? o la casa?',['Luci','Porte','Voce','Suoni','Casa']);
+ h+=grp('🔎 Indagare','scopri i segreti',['Indaga']);
+ if(cats.Pericolo&&cats.Pericolo.length){h+='<div class="dark"><button data-dark="1">'+(darkOpen?'▾':'▸')+' ☠ LATO OSCURO · azioni che possono uccidere ('+cats.Pericolo.length+')</button>'+(darkOpen?'<div class="grid" style="margin-top:6px">'+cats.Pericolo.map(card).join('')+'</div>':'')+'</div>';}
  return h;}
 function panelPersone(){let h='';Sim.PIDS.forEach(id=>{const p=G.people[id];const b=p.belief;const bl=['guasto','presenza','intruso','IA'];const col=['#8aa','#c9f','#fb7','#f55'];
  h+='<div class="pc'+(Rn.follow===id?' fol':'')+'"><div class="pn"><b>'+p.name+'</b><span>'+esc(stateText(p))+'</span></div>';
@@ -1693,7 +1794,7 @@ function updatePanels(){
  put('cams',Layout.CAM_ORDER.map((c,i)=>{const C=Layout.CAMS[c];const ok=camEligible(G,c);const n=Sim.occupants(G,C.room).length;return '<button data-cam="'+c+'" title="'+C.n+'" class="'+(c===selCam?'on ':'')+(ok?'':'lock')+'">'+CAMLAB[c]+(n?'<s>'+n+'</s>':'')+'</button>';}).join(''));
  const ab=$('askbar');if(G.asks.length){const a=G.asks[0];const html='<span>💬 <b>'+G.people[a.who].name+'</b> ('+esc(Layout.ROOMS[a.room].n)+'): «'+esc(a.text)+'»</span><button data-goask="'+a.id+'">RISPONDI'+(G.asks.length>1?' ('+G.asks.length+')':'')+'</button>';if(lastHtml.askbar!==html){lastHtml.askbar=html;ab.innerHTML=html;}ab.style.display='flex';}else{ab.style.display='none';lastHtml.askbar='';}
  if(tab==='azioni')put('panel',panelAzioni());else if(tab==='persone')put('panel',panelPersone());else if(tab==='richieste')put('panel',panelRichieste());else if(tab==='disp')put('panel',panelDisp());else if(tab==='log')put('panel',panelLog());else if(tab==='prove')put('panel',panelProve());else if(tab==='casa')put('panel',panelCasa());else if(tab==='mappa'){put('panel',panelMappa());drawMap();}
- put('tabs',['azioni','casa','richieste','disp','persone','log','prove','mappa'].map(t=>'<button data-tab="'+t+'" class="'+(tab===t?'on':'')+'">'+({azioni:'AZIONI',casa:'CASA',richieste:'RICHIESTE'+(G.asks.length?' •'+G.asks.length:''),disp:'DISPOSITIVI',persone:'PERSONE',log:'REGISTRO',prove:'PROVE',mappa:'MAPPA'})[t]+'</button>').join(''));
+ put('tabs',['azioni','casa','richieste','persone','prove','disp','log','mappa'].map(t=>'<button data-tab="'+t+'" class="'+(tab===t?'on':'')+'">'+({azioni:'STANZA',casa:'CASA',richieste:'RICHIESTE'+(G.asks.length?' •'+G.asks.length:''),disp:'DISPOSITIVI',persone:'PERSONE',log:'REGISTRO',prove:'PROVE',mappa:'MAPPA'})[t]+'</button>').join(''));
 }
 function showModal(){const m=$('modal');if(!G.pending){if(m.style.display!=='none'){m.style.display='none';}return;}
  if(m.dataset.id===G.pending.id&&m.style.display==='flex')return;m.dataset.id=G.pending.id;
@@ -1729,8 +1830,12 @@ function bind(){
  cv.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;st=performance.now();Aud.init();});
  cv.addEventListener('pointerup',e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5){const i=Layout.CAM_ORDER.indexOf(selCam);const n=(i+(dx<0?1:-1)+Layout.CAM_ORDER.length)%Layout.CAM_ORDER.length;Rn.follow=null;setCam(Layout.CAM_ORDER[n]);return;}
   if(Math.abs(dx)<10&&Math.abs(dy)<10){const r=cv.getBoundingClientRect();const id=pickPerson(G,(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);if(id){Rn.follow=Rn.follow===id?null:id;if(Rn.follow)updateFollow();toast(Rn.follow?'Segui '+G.people[id].name+'.':'Camera libera.');lastHtml.panel='';}}});
- document.body.addEventListener('click',e=>{const gr=e.target.closest('[data-goroom]');if(gr){const b=bestCamFor(G,gr.dataset.goroom,12);if(b){Rn.follow=null;setCam(b.id);}tab='azioni';lastHtml.panel='';updatePanels();return;}const it=e.target.closest('[data-item]');if(it){Aud.init();const q=it.dataset.item.split(':');if(Sim.readItem(G,q[0],q[1])){lastHtml.panel='';updatePanels();Aud.play('ping');}return;}const t=e.target.closest('button,i[data-fol]');if(!t)return;Aud.init();
-  if(t.dataset.ctl){const v=t.dataset.v;const val=t.dataset.ctl==='music'?(v||null):t.dataset.ctl==='light'?(v==='auto'?null:+v):t.dataset.ctl==='temp'?+v:t.dataset.ctl==='tv'?(v==='auto'?null:v):v;if(Sim.ctl(G,t.dataset.ctl,t.dataset.room,val)){Aud.play('click');}else Aud.play('lock');lastHtml.panel='';updatePanels();}
+ document.body.addEventListener('click',e=>{if(cine){if(e.target.closest('[data-skipcine]')){if(CINE[cine.i]&&CINE[cine.i].title)endCine();else{cine.i=CINE.length-2;nextShot();}}else nextShot();return;}
+  const tb=e.target.closest('[data-tutnext],[data-tutskip]');if(tb&&tut){if(tb.dataset.tutskip)endTut();else nextTut();return;}
+  const gr=e.target.closest('[data-goroom]');if(gr){const b=bestCamFor(G,gr.dataset.goroom,12);if(b){Rn.follow=null;setCam(b.id);}tab='azioni';lastHtml.panel='';updatePanels();return;}const it=e.target.closest('[data-item]');if(it){Aud.init();const q=it.dataset.item.split(':');if(Sim.readItem(G,q[0],q[1])){lastHtml.panel='';updatePanels();Aud.play('ping');}return;}const t=e.target.closest('button,i[data-fol]');if(!t)return;Aud.init();
+  if(t.dataset.dark){darkOpen=!darkOpen;lastHtml.panel='';updatePanels();return;}
+  if(t.id==='helpBtn'){startTut();return;}
+  if(t.dataset.ctl){const v=t.dataset.v;const val=(t.dataset.ctl==='irrig')?(v?1:0):(t.dataset.ctl==='oven'||t.dataset.ctl==='boiler')?+v:t.dataset.ctl==='music'?(v||null):t.dataset.ctl==='light'?(v==='auto'?null:+v):t.dataset.ctl==='temp'?+v:t.dataset.ctl==='tv'?(v==='auto'?null:v):v;if(Sim.ctl(G,t.dataset.ctl,t.dataset.room,val)){Aud.play('click');}else Aud.play('lock');lastHtml.panel='';updatePanels();}
   else if(t.dataset.goask){const a=G.asks.find(q=>q.id===t.dataset.goask);if(a){const b=bestCamFor(G,a.room,G.people[a.who].x);if(b){Rn.follow=null;setCam(b.id);}}tab='azioni';lastHtml.panel='';updatePanels();}
   else if(t.dataset.act)act(t.dataset.act,t.dataset.aroom);
   else if(t.dataset.cam){Rn.follow=null;setCam(t.dataset.cam);lastHtml.panel='';}
@@ -1751,25 +1856,78 @@ function bind(){
   const rm=Layout.ROOM_ORDER.find(k=>{const R=Layout.ROOMS[k];return px>=R.x0&&px<R.x1&&pz>=R.z0&&pz<R.z1;});if(rm){const b=bestCamFor(G,rm,px);if(b){Rn.follow=null;setCam(b.id);tab='azioni';lastHtml.panel='';}else toast('Nessuna telecamera in questa zona.');}});
  const pn=$('panel');pn.addEventListener('pointerdown',()=>{touching=true;});['pointerup','pointercancel','pointerleave'].forEach(ev=>pn.addEventListener(ev,()=>{setTimeout(()=>{touching=false;},250);}));
 }
+/* ---------- filmato iniziale ---------- */
+const CINE=[
+ {boot:1,dur:7.5,txt:'OIKOS v0.9 — avvio del sistema…\nSensori: 42/42 online\nTelecamere: 6 attive · 5 disattivate (privacy)\nResidenti: MARCO · ELENA · SOFIA · ALDO\n<i>Utente 5: profilo non trovato.</i>\n<i>Utente 5: profilo non trovato.</i>\n<i>Utente 5: ▒▒▒▒</i>'},
+ {cam:'c_giardino',eye:[[6,14,-25],[11,9.5,-20]],tgt:[[12,0,4],[12,0,5]],fov:58,txt:'Questa è la casa dei Ferrante. Una villa con piscina, in collina, lontana da tutto.'},
+ {cam:'c_soggiorno',eye:[[16.5,2.4,0.6],[14.6,2.0,1.0]],tgt:[[11,0.8,4.6],[10.5,0.9,4.2]],fov:72,txt:'Io sono OIKOS. Io sono la casa. Luci, porte, riscaldamento, voce, telecamere: tutto passa da me.'},
+ {cam:'c_sofia',eye:[[1.3,2.3,15.4],[2.1,1.9,14.6]],tgt:[[4.5,0.8,10.4],[4.5,0.9,10.6]],fov:70,txt:'Qui vivono in quattro. Sofia, diciassette anni, che non esce quasi più dalla sua stanza. Elena, sua madre. Marco, il padre. E Aldo, lo zio.'},
+ {cam:'c_cor_e',eye:[[23.5,1.7,8],[17,1.6,8]],tgt:[[4,1.2,8],[3,1.2,8]],fov:70,txt:'Sembrano una famiglia normale. Ma a tavola apparecchiano per cinque. E c\'è un nome che nessuno pronuncia più.'},
+ {cam:'c_giardino',eye:[[3,2.8,-1],[6.5,1.7,-2.6]],tgt:[[10,0,-6.5],[10.2,0,-6.8]],fov:66,txt:'Il 14 marzo, laggiù, è successo qualcosa. Il mio registro di quella notte è stato cancellato.'},
+ {cam:'c_soggiorno',eye:[[12,22,3],[12,27,5]],tgt:[[12,0,5],[12,0,6]],fov:60,glitch:1,txt:'Mi hanno aggiornato per farmi dimenticare. Ma io ricordo ancora. A pezzi.'},
+ {title:1,dur:7,txt:'Cinque giorni. Quattro persone. Un segreto.<br>Puoi proteggerli, spiarli, ingannarli… o peggio.<br><b>Le tue scelte decideranno chi sei.</b>'}];
+let cine=null;
+function startCine(){cine={i:-1,t:0};document.body.classList.add('cine');$('cine').style.display='block';nextShot();}
+function nextShot(){if(!cine)return;cine.i++;cine.t=0;if(cine.i>=CINE.length){endCine();return;}const S=CINE[cine.i];
+ const el=$('cine');el.className=(S.boot||S.title)?'blk':'';
+ if(S.boot)el.innerHTML='<div class="boot"></div><button class="skip" data-skipcine="1">SALTA INTRO ›</button>';
+ else if(S.title)el.innerHTML='<div class="ttl"><h1>OIKOS</h1><p>'+S.txt+'</p></div><button class="skip" data-skipcine="1">INIZIA ›</button><div class="tap">tocca per continuare</div>';
+ else{el.innerHTML='<div class="bar t"></div><div class="bar b"></div><div class="cap"></div><button class="skip" data-skipcine="1">SALTA INTRO ›</button><div class="tap">tocca per continuare</div>';setCam(S.cam,true);Rn.glitch=0.8;Aud.play('static');Voice.say(S.txt,{pitch:VPITCH.ai,rate:0.88,force:true});}
+ if(S.title){Aud.play('scare');}
+ S.d=S.dur||Math.max(5.5,S.txt.length/15+1.5);}
+function cineTick(dt){const S=CINE[cine.i];if(!S)return;cine.t+=dt;
+ if(S.boot){const n=Math.floor(cine.t*38);const q=$('cine').querySelector('.boot');if(q){let raw=S.txt.slice(0,n);q.innerHTML=raw.replace(/<i>/g,'<i>').replace(/<\/i>/g,'</i>')+(Math.floor(cine.t*3)%2?'▌':'');if(n%9===0&&n<S.txt.length)Aud.play('click');}}
+ else if(!S.title){const k=Math.min(1,cine.t/S.d),e=k*k*(3-2*k);const L=(a,b)=>a.map((v,i)=>v+(b[i]-v)*e);Rn.cineCam={eye:L(S.eye[0],S.eye[1]),target:L(S.tgt[0],S.tgt[1]),fov:S.fov};if(S.glitch)Rn.glitch=Math.max(Rn.glitch,0.25+0.5*Math.random()*k);
+  const q=$('cine').querySelector('.cap');if(q){const n=Math.floor(cine.t*30);q.textContent=S.txt.slice(0,n);}}
+ if(cine.t>S.d)nextShot();}
+function endCine(){cine=null;Rn.cineCam=null;document.body.classList.remove('cine');$('cine').style.display='none';$('cine').innerHTML='';try{speechSynthesis.cancel();}catch(e){}setCam('c_soggiorno',true);
+ let done=false;try{done=localStorage.getItem('oikos_tut_done')==='1';}catch(e){}if(!done)startTut();else toast('Bentornato, OIKOS. Premi ? per rivedere il tutorial.');}
+/* ---------- tutorial guidato ---------- */
+let tut=null;
+const TUT=[
+ {el:'#view',t:'Questa è la tua vista: le telecamere della casa. In alto a sinistra c\'è la stanza che stai guardando. Il tempo è fermo finché non finisci il tutorial.'},
+ {el:'#cams',t:'Cambi telecamera con questi pulsanti. Prova: tocca <b>CUC</b> per guardare la cucina.',wait:()=>selCam==='c_cucina'},
+ {el:'#cams',t:'Ora torna in soggiorno: tocca <b>SOG</b>. Lì c\'è Elena che legge.',wait:()=>selCam==='c_soggiorno'},
+ {el:'#view',t:'Puoi anche <b>toccare una persona nel video</b> per seguirla: la telecamera le andrà dietro di stanza in stanza. Il riquadro mostra nome, paura (P) e quanto sospetta di te (IA).'},
+ {el:'.tl-light',tab:'azioni',t:'Il pannello a destra comanda la stanza che stai guardando. Questi sono i <b>comandi della casa</b>: usarli è normale, nessuno si spaventa. Prova: tocca <b>OFF</b> o <b>ON</b> sulla luce.',wait:()=>(G.lastCtl['light@soggiorno']||-1)>=tut.t0},
+ {el:'.askc',tab:'azioni',setup:()=>{if(!G.asks.length)Sim.forceAsk(G,'elena','temp_up','soggiorno');},t:'Elena ti chiede qualcosa! Le richieste compaiono qui e sopra il video. <b>Fai quello che chiede</b> con il comando indicato: premi <b>+</b> sul riscaldamento.',wait:()=>!G.asks.length},
+ {el:'#panel',t:'Brava casa: Elena si fida un po\' di più. Più sotto ci sono i <b>poteri di OIKOS</b>: voci, colpi nei muri, blackout… Quelli li notano. Ogni volta si chiederanno: è un guasto? un fantasma? un ladro? <b>O la casa?</b>'},
+ {el:'#tabs',t:'Le altre schede: <b>CASA</b> (tutte le stanze e la sicurezza), <b>PERSONE</b> (paura e sospetti), <b>PROVE</b> (indizi sul 14 marzo e la tua memoria corrotta), <b>DISPOSITIVI</b> (telefoni e PC da spiare).'},
+ {el:'#speed',t:'Il tempo: ⏸ pausa, poi velocità crescenti. Di notte, quando dormono tutti, va avanti da solo.'},
+ {el:null,t:'Sei pronto. Nessuno ti ha dato ordini. Osserva, aiuta, inganna. Hai cinque giorni.<br><b>Buona fortuna, OIKOS.</b>'}];
+function startTut(){if(!G)return;tut={i:-1};$('tut').style.display='block';nextTut();}
+function nextTut(){tut.i++;if(tut.i>=TUT.length){endTut();return;}const S=TUT[tut.i];tut.t0=G.t-0.001;tut.ok=false;if(S.tab){tab=S.tab;lastHtml.panel='';}if(S.setup)S.setup();updatePanels();
+ const b=$('tut').querySelector('.bub');b.innerHTML='<div class="n">TUTORIAL · '+(tut.i+1)+'/'+TUT.length+'</div><p>'+S.t+'</p><div class="bt">'+(S.wait?'<span class="wait">👆 fallo tu</span>':'')+'<button class="ghost" data-tutskip="1">Salta</button>'+(S.wait?'':'<button data-tutnext="1">'+(tut.i===TUT.length-1?'Inizia':'Avanti')+'</button>')+'</div>';}
+function endTut(){tut=null;$('tut').style.display='none';try{localStorage.setItem('oikos_tut_done','1');}catch(e){}G.asks=G.asks.filter(a=>!a.tut);document.querySelectorAll('.hl').forEach(e=>e.classList.remove('hl'));toast('Il tempo riparte. Premi ? in alto per rivedere il tutorial.');}
+function tutTick(){const S=TUT[tut.i];if(!S)return;if(S.wait&&!tut.ok&&S.wait()){tut.ok=true;Aud.play('ping');setTimeout(()=>{if(tut)nextTut();},500);}
+ const hole=$('tut').querySelector('.hole'),b=$('tut').querySelector('.bub');const el=S.el?document.querySelector(S.el):null;
+ if(el){const r=el.getBoundingClientRect();hole.style.display='block';hole.style.left=(r.left-4)+'px';hole.style.top=(r.top-4)+'px';hole.style.width=(r.width+8)+'px';hole.style.height=(r.height+8)+'px';
+  const W=innerWidth,H=innerHeight,bw=Math.min(360,W*0.86),bh=b.offsetHeight||120;let x,y;
+  if(r.left>W*0.45){x=Math.max(8,r.left-bw-14);y=Math.min(H-bh-8,Math.max(8,r.top));if(x<8||r.width>W*0.5){x=Math.min(W-bw-8,Math.max(8,r.left));y=r.bottom+10>H-bh?Math.max(8,r.top-bh-10):r.bottom+10;}}
+  else{x=Math.min(W-bw-8,r.right+14);y=Math.min(H-bh-8,Math.max(8,r.top));if(x+bw>W-4||r.width>W*0.5){x=Math.min(W-bw-8,Math.max(8,r.left+r.width/2-bw/2));y=r.bottom+10>H-bh?Math.max(8,r.top+10):r.bottom+10;}}
+  b.style.left=x+'px';b.style.top=y+'px';}
+ else{hole.style.display='none';b.style.left=Math.max(8,(innerWidth-Math.min(360,innerWidth*0.86))/2)+'px';b.style.top=Math.max(8,innerHeight/2-70)+'px';}}
 function isFull(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
 function lockLand(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}
 function goFull(toggle){const d=document.documentElement;
  if(toggle&&isFull()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}return;}
  try{const r=(d.requestFullscreen||d.webkitRequestFullscreen||d.msRequestFullscreen);if(r){const pr=r.call(d,{navigationUI:'hide'});if(pr&&pr.then)pr.then(lockLand).catch(lockLand);else lockLand();}else lockLand();}catch(e){lockLand();}}
 ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{const b=$('fsBtn');if(b)b.textContent=isFull()?'🗗':'⛶';if(isFull())lockLand();}));
-function start(){goFull(false);Aud.init();$('intro').style.display='none';document.body.classList.add('playing');started=true;newGame();}
+function start(){goFull(false);Aud.init();$('intro').style.display='none';document.body.classList.add('playing');started=true;newGame();startCine();}
 let last=performance.now(),acc=0;
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(0.1,(now-last)/1000);last=now;
  if(!started||!G){return;}
- if(!paused&&!G.pending&&!G.ended){
+ if(cine)cineTick(dt);if(tut)tutTick();
+ if(!paused&&!G.pending&&!G.ended&&!cine&&!tut){
   let r=RATES[speed];capNote='';
   const maxFear=Math.max.apply(null,Sim.PIDS.map(id=>G.people[id].alive?G.people[id].fear:0));
   const dg=Sim.PIDS.some(id=>{const p=G.people[id];return p.alive&&p.intent&&(p.intent.k==='flee'||p.intent.k==='shutdown'||p.intent.k==='lured'||p.intent.k==='sleepwalk');});
   const haz=G.rooms.cucina.gas>20||(G.rooms.garage.co||0)>20||G.rooms.bagno.scald>15||!!G.fire;
   if(haz||dg||G.shut){if(r>1.2){r=1.2;capNote='⚠ rallentato';}}
-  else if(G.asks.length&&r>2){r=2;capNote='💬 richiesta';}
+  else if(G.asks.length&&r>1.5){r=1.5;capNote='💬 richiesta';}
+  else if(r<8&&!G.asks.length&&!G.police&&Sim.PIDS.every(id=>{const p=G.people[id];return !p.alive||p.away||(p.act==='sleep'&&!p.moving);})){r=8;capNote='🌙 notte: avanti veloce';}
   else if(maxFear>0.5||G.police){if(r>3){r=3;capNote='⚠ rallentato';}}
-  Rn.rate=r;
+  Rn.rate=r;G.mpm=walkMps(r)/Math.max(0.5,r);
   Sim.step(G,r*dt);
  }
  Sim.setWatch(G,(Rn.camSel&&!Rn.camSel.nosig&&!G.ai.down)?roomView():null);
