@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { AU, initAudio, setUnder, sfxNoise, play, splashSfx, castSfx, reelSfx, duck, coinSfx, bellSfx, groanSfx, whisperSfx, stingerSfx, heartSfx, creakSfx, ringSfx, staticSfx, bubbleSfx,
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { AU, initAudio, setUnder, sfxNoise, play, splashSfx, castSfx, reelSfx, duck, silence, coinSfx, bellSfx, groanSfx, whisperSfx, stingerSfx, heartSfx, creakSfx, ringSfx, staticSfx, bubbleSfx,
   thunderSfx, deepCallSfx, rumbleSfx, knockSfx, revealSfx, musicBoxSfx, breathSfx, honkSfx, dripSfx, clankSfx, dripsSfx, footstepSfx } from './audio.js';
 
 const $ = id => document.getElementById(id);
@@ -74,7 +74,7 @@ function glitchStr(s){ return s.replace(/[0-9]/g, ()=> Math.random()<.5 ? String
 const SAVE_KEY = 'ilfondo_v1';
 function freshState(cycle=1){
   return { d:0, money:0, tank:0, total:0, luc:100, time:70, bucket:0, pull:0, tankLv:0, contract:0,
-    pumps:PUMPS.map(()=>0), torch:0, lumino:0, story:[], found:[], revealed:[], relics:[], cycle, ended:false, torchOn:true };
+    pumps:PUMPS.map(()=>0), torch:0, lumino:0, story:[], found:[], revealed:[], relics:[], evc:{}, evRecent:[], cycle, ended:false, torchOn:true };
 }
 let S = freshState();
 function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
@@ -130,10 +130,10 @@ const blurMat = new THREE.ShaderMaterial({ uniforms:{ tDiffuse:{value:null}, uDi
     gl_FragColor=vec4(c,1.); }` });
 const postMat = new THREE.ShaderMaterial({
   uniforms:{ tDiffuse:{value:rt.texture}, tBloom:{value:bloomA.texture}, uBloomK:{value:.9}, uTime:{value:0}, uInsane:{value:0}, uFlash:{value:0}, uExposure:{value:1.4}, uRes:{value:new THREE.Vector2(innerWidth,innerHeight)}, uDark:{value:0},
-    uOld:{value:0}, uUnder:{value:0}, uTent:{value:0}, uSick:{value:0} },
+    uOld:{value:0}, uUnder:{value:0}, uTent:{value:0}, uSick:{value:0}, uPulse:{value:0} },
   vertexShader:FS_VS,
   fragmentShader:`
-  uniform sampler2D tDiffuse,tBloom; uniform float uTime,uInsane,uFlash,uExposure,uDark,uBloomK,uOld,uUnder,uTent,uSick; uniform vec2 uRes; varying vec2 vUv;
+  uniform sampler2D tDiffuse,tBloom; uniform float uTime,uInsane,uFlash,uExposure,uDark,uBloomK,uOld,uUnder,uTent,uSick,uPulse; uniform vec2 uRes; varying vec2 vUv;
   vec3 aces(vec3 x){ return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.); }
   float hh(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
   void main(){
@@ -162,8 +162,9 @@ const postMat = new THREE.ShaderMaterial({
       col=mix(col,sep,uOld);
     }
     float v=smoothstep(1.05,.2,length(cc*vec2(1.,1.2)));
-    col*=mix(.1,1.,v);
-    col=mix(col,col*vec3(1.3,.45,.42),uInsane*.6*(1.-v));
+    col*=mix(.1,1.,v)*(1.-uPulse*.22*(1.-v*.6));
+    col=mix(col,col*vec3(1.15,.7,.68),uInsane*.35*(1.-v));
+    col=mix(col, vec3(dot(col,vec3(.3,.59,.11))), uInsane*.45);
     if(uTent>0.){
       vec2 q=cc*vec2(uRes.x/uRes.y,1.); float r=length(q), a=atan(q.y,q.x);
       float reach=1.08-uTent*.6+.11*sin(a*6.+uTime*.22+sin(a*11.+uTime*.37)*1.6)+.05*sin(a*19.-uTime*.6)+.03*sin(a*37.+uTime);
@@ -225,7 +226,7 @@ const lamp = new THREE.PointLight(0xffaa66, 4, 30, 2); lamp.position.set(.95, 2.
 const LAMP_COL = new THREE.Color(0xffaa66);
 const flash = new THREE.SpotLight(0xdfe7ff, 60, 0, .42, .55, 1.2);
 flash.position.set(-.18,.12,.1); camera.add(flash);
-flash.castShadow = true; flash.shadow.mapSize.set(MOBILE?512:1024, MOBILE?512:1024); flash.shadow.camera.near = .4; flash.shadow.camera.far = 70; flash.shadow.bias = -.0004; flash.shadow.normalBias = .04;
+flash.castShadow = true; flash.shadow.mapSize.set(MOBILE?512:1024, MOBILE?512:1024); flash.shadow.camera.near = .4; flash.shadow.camera.far = 70; flash.shadow.bias = -.0015; flash.shadow.normalBias = .09;
 const flashTarget = new THREE.Object3D(); flashTarget.position.set(0,-.05,-10); camera.add(flashTarget); flash.target = flashTarget;
 
 /* =====================================================================
@@ -344,11 +345,11 @@ if (uEyes > 0. && vWP.y < -42.) {
    CIELO
    ===================================================================== */
 const skyU = { uTop:{value:new THREE.Color()}, uHor:{value:new THREE.Color()}, uMoon:{value:new THREE.Vector3(-.4,.55,-.7).normalize()}, uNight:{value:1}, uTime:{value:0}, uRed:{value:0},
-  uWrong:{value:0}, uSkyEye:{value:0}, uLight:{value:0} };
+  uWrong:{value:0}, uSkyEye:{value:0}, uLight:{value:0}, uOut:{value:0} };
 const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
   uniforms: skyU, side:THREE.BackSide, depthWrite:false, fog:false,
   vertexShader:`varying vec3 vD; void main(){ vD=position; vec4 p=projectionMatrix*modelViewMatrix*vec4(position,1.); gl_Position=p.xyww; gl_Position.z=p.w*.99995; }`,
-  fragmentShader:`uniform vec3 uTop,uHor,uMoon; uniform float uNight,uTime,uRed,uWrong,uSkyEye,uLight; varying vec3 vD;
+  fragmentShader:`uniform vec3 uTop,uHor,uMoon; uniform float uNight,uTime,uRed,uWrong,uSkyEye,uLight,uOut; varying vec3 vD;
   float h(vec3 p){ return fract(sin(dot(p,vec3(12.9898,78.233,45.164)))*43758.5453); }
   float n2(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f); float a=h(vec3(i,0)),b=h(vec3(i+vec2(1,0),0)),c=h(vec3(i+vec2(0,1),0)),d=h(vec3(i+1.,0)); return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
   void main(){ vec3 d=normalize(vD); float t=clamp(d.y,0.,1.);
@@ -362,10 +363,10 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.Shad
     cloudCol+=uLight*vec3(.7,.75,.95)*(.4+cl);
     c=mix(c,cloudCol,cm*.85);
     vec3 sd=d; float ra=uWrong*uTime*.04; sd.xz=mat2(cos(ra),-sin(ra),sin(ra),cos(ra))*sd.xz;
-    float s=step(.9982-uWrong*.001,h(floor(sd*260.)))*uNight*smoothstep(.05,.4,d.y)*(1.-cm);
+    float s=step(.9982-uWrong*.001,h(floor(sd*260.)))*uNight*smoothstep(.05,.4,d.y)*(1.-cm)*step(uOut*1.02,h(floor(sd*260.)+7.));
     c+=s*mix(vec3(.5,.55,.6),vec3(.55,.95,.35),uWrong)*(.6+.4*sin(uTime*3.+h(floor(sd*260.))*50.));
     float md=smoothstep(.99935,.9996,m); float cr=n2(d.xy*1800.)*.35+n2(d.zy*700.)*.2;
-    c+=md*vec3(.62,.61,.52)*(1.-cr)*mix(.3,1.,uNight)*(1.-cm*.75);
+    c+=md*vec3(.62,.61,.52)*(1.-cr)*mix(.3,1.,uNight)*(1.-cm*.75)*(1.-smoothstep(.6,1.,uOut));
     c+=pow(max(m,0.),70.)*.07*vec3(.55,.6,.62)+pow(max(m,0.),8.)*.012*vec3(.45,.5,.5)*uNight;
     if(uSkyEye>0.){ vec3 E=normalize(vec3(0.,.42,-1.)); float me=dot(d,E);
       if(me>0.){ vec3 rt=normalize(cross(E,vec3(0.,1.,0.))); vec3 up=cross(rt,E); vec2 p=vec2(dot(d,rt),dot(d,up))/.34;
@@ -598,22 +599,62 @@ const DOCK_END = 82;
 }
 
 /* ---------- figure umanoidi ---------- */
-function figureGeo(tall=2.2){
-  const parts = [];
-  const body = new THREE.CapsuleGeometry(.17, tall*.36, 3, 8); body.scale(1,1,.7); body.translate(0, tall*.55, 0); parts.push(body);
-  const head = new THREE.SphereGeometry(.15, 10, 8); head.scale(.9,1.35,1); head.rotateZ(.35); head.translate(.05, tall*.86, .07); parts.push(head);
-  const neck = new THREE.CylinderGeometry(.04,.05,tall*.08,5); neck.rotateZ(.25); neck.translate(.02, tall*.8, .04); parts.push(neck);
-  for (let s of [-1,1]){
-    const arm = new THREE.CylinderGeometry(.03,.018,tall*.64,5); arm.translate(0,-tall*.32,0); arm.rotateZ(s*.06); arm.rotateX(-.08); arm.translate(s*.22, tall*.75, .02); parts.push(arm);
-    const hand = new THREE.CylinderGeometry(.012,.004,tall*.1,4); hand.translate(s*.25, tall*.1, .05); parts.push(hand);
-    const leg = new THREE.CylinderGeometry(.06,.045,tall*.42,5); leg.translate(s*.1, tall*.21, 0); parts.push(leg);
+// figure: corpi scheletrici, curvi, bagnati. Niente manichini.
+function tube(pts, r0, r1, seg=10, rad=6){ const cv = new THREE.CatmullRomCurve3(pts), g = new THREE.TubeGeometry(cv, seg, 1, rad, false), p = g.attributes.position;
+  for (let v=0; v<p.count; v++){ const ring = Math.floor(v/(rad+1)), t = ring/seg, c = cv.getPointAt(t), r = r0 + (r1-r0)*t; p.setXYZ(v, c.x+(p.getX(v)-c.x)*r, c.y+(p.getY(v)-c.y)*r, c.z+(p.getZ(v)-c.z)*r); }
+  g.computeVertexNormals(); return g; }
+function figureGeo(tall=2.2, hunch=1){
+  const t = tall, P = [], V = (x,y,z)=>new THREE.Vector3(x*t, y*t, z*t);
+  // busto: bacino stretto, costole, spalle cadenti
+  const prof = [[.0,.43],[.068,.44],[.074,.48],[.058,.54],[.066,.6],[.078,.67],[.086,.72],[.07,.755],[.03,.77],[0,.775]].map(([r,y])=>new THREE.Vector2(r*t, y*t));
+  const torso = new THREE.LatheGeometry(prof, 14); torso.scale(1,1,.62); P.push(torso);
+  P.push(tube([V(.0,.76,0), V(.008,.8,.012), V(.012,.83,.03)], .022*t, .018*t, 4, 6));
+  const head = new THREE.SphereGeometry(.052*t, 12, 10); head.scale(.82,1.22,.95); head.translate(.012*t, .868*t, .045*t); P.push(head);
+  const jaw = new THREE.SphereGeometry(.036*t, 10, 6, 0, Math.PI*2, Math.PI*.5, Math.PI*.5); jaw.scale(.9,1.5,1); jaw.rotateX(.35); jaw.translate(.012*t, .838*t, .058*t); P.push(jaw);
+  for (const s of [-1,1]){
+    // braccia lunghe fino alle ginocchia, gomiti piegati, dita sottili
+    const sh = V(s*.088,.735,0), el = V(s*.104,.53,.03), wr = V(s*.098,.34,.06+(hunch-1)*.08);
+    P.push(tube([sh, V(s*.1,.64,.01), el], .02*t, .015*t, 8, 6), tube([el, V(s*.102,.44,.05), wr], .015*t, .011*t, 8, 6));
+    for (let f=0; f<4; f++){ const a = (f-1.5)*.012; P.push(tube([wr, V(s*.099+a,.3,.07), V(s*.1+a*1.4,.255,.075+f*.004)], .0045*t, .002*t, 4, 4)); }
+    // gambe magre, ginocchia sporgenti
+    const hp = V(s*.042,.44,0), kn = V(s*.048,.24,.022), an = V(s*.05,.04,0);
+    P.push(tube([hp, V(s*.046,.34,.01), kn], .03*t, .02*t, 8, 6), tube([kn, V(s*.05,.14,.0), an], .02*t, .014*t, 8, 6));
+    const foot = new THREE.BoxGeometry(.04*t, .018*t, .1*t); foot.translate(s*.05*t, .012*t, .03*t); P.push(foot);
   }
-  return mergeGeometries(parts);
+  // sudario stracciato
+  const sp = []; for (let i=0;i<=6;i++){ const u = i/6; sp.push(new THREE.Vector2((.07 + u*.06)*t, (.62 - u*.4)*t)); }
+  const shroud = new THREE.LatheGeometry(sp, 18); { const p = shroud.attributes.position; for (let v=0; v<p.count; v++){ const y = p.getY(v); if (y < .3*t){ const a = Math.atan2(p.getZ(v), p.getX(v)); p.setY(v, y + (Math.sin(a*7)*.5+.5)*Math.random()*.09*t); } p.setZ(v, p.getZ(v)*.75); } shroud.computeVertexNormals(); }
+  P.push(shroud);
+  // capelli fradici che pendono sul viso
+  for (let k=0;k<12;k++){ const a = rand(-1.4,1.4), x0 = Math.sin(a)*.045, z0 = Math.cos(a)*.03; P.push(tube([V(.012+x0,.9,.04+z0*.4), V(.012+x0*1.3,.84,.05+z0*1.1), V(.012+x0*1.1,rand(.7,.78),.06+z0)], .006*t, .002*t, 5, 3)); }
+  const g = mergeGeometries(P.map(q=>q.index ? q.toNonIndexed() : q));
+  // postura: schiena curva in avanti, testa piegata; superficie irregolare
+  const p = g.attributes.position;
+  for (let v=0; v<p.count; v++){ let x = p.getX(v), y = p.getY(v), z = p.getZ(v); const hy = Math.max(0, y/t - .5);
+    z += hy*hy*.55*t*hunch; if (y/t > .8){ x += (y/t-.8)*.25*t; }
+    const n = Math.sin(x*41.3+y*17.1)*Math.sin(z*37.7-y*23.3)*.004*t; p.setXYZ(v, x+n, y, z+n); }
+  g.deleteAttribute('normal'); g.deleteAttribute('uv'); const gm = mergeVertices(g, 1e-4); gm.computeVertexNormals(); return gm;
 }
+const eyeAt = (t, h=1) => [ .03*t, .876*t, (.096 + .0752*h)*t + .004 ];
+const ghoulU = { uTime:{value:0} };
+const ghoulMat = new THREE.MeshStandardMaterial({ color:0x0a0c0b, roughness:.55, metalness:.05, side:THREE.DoubleSide });
+ghoulMat.onBeforeCompile = sh => { sh.uniforms.uTime = ghoulU.uTime;
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime;').replace('#include <begin_vertex>', `#include <begin_vertex>
+    float gph = 0.;
+    #ifdef USE_INSTANCING
+    gph = instanceMatrix[3].x*.7 + instanceMatrix[3].z*.31;
+    #else
+    gph = modelMatrix[3].x*.7 + modelMatrix[3].z*.31;
+    #endif
+    float gh = clamp(position.y/2.3, 0., 1.2);
+    transformed.x += sin(uTime*.55 + gph)*.05*gh*gh;
+    transformed.z += sin(uTime*.41 + gph*1.3)*.04*gh*gh;
+    float tw = step(.93, fract(sin(floor(uTime*2.3 + gph)*12.9898)*43758.5453));
+    transformed.x += smoothstep(1.7,1.95,position.y)*tw*.07;`); };
 const FIG = figureGeo(2.3);
 // sonnambuli sulla riva
 const WALKERS = 70;
-const walkers = new THREE.InstancedMesh(FIG, M.black, WALKERS);
+const walkers = new THREE.InstancedMesh(FIG, ghoulMat, WALKERS);
 walkers.count = 0; walkers.frustumCulled = false; scene.add(walkers);
 const walkerPos = [];
 {
@@ -631,13 +672,13 @@ const walkerPos = [];
 const eyeGlowMat = new THREE.MeshBasicMaterial({ color:new THREE.Color(2.4,2.2,1.3) });
 const eyePairGeo = (()=>{ const p=[]; for (const s of [-1,1]){ const e = new THREE.SphereGeometry(.035,6,4); e.scale(1.3,.6,.4); e.translate(s*.06,0,0); p.push(e); } return mergeGeometries(p); })();
 const walkerEyes = new THREE.InstancedMesh(eyePairGeo, eyeGlowMat, WALKERS); walkerEyes.count = 0; walkerEyes.frustumCulled = false; walkerEyes.userData.noCast = true; scene.add(walkerEyes);
-{ const off = new THREE.Matrix4().makeTranslation(.05*1.1, 2.3*.87, .22); walkerPos.forEach((m,i)=> walkerEyes.setMatrixAt(i, m.clone().multiply(off))); walkerEyes.instanceMatrix.needsUpdate = true; }
+{ const off = new THREE.Matrix4().makeTranslation(...eyeAt(2.3)); walkerPos.forEach((m,i)=> walkerEyes.setMatrixAt(i, m.clone().multiply(off))); walkerEyes.instanceMatrix.needsUpdate = true; }
 // occhi nel buio sulla riva (allucinazioni)
 const SE_N = 26;
 const shoreEyeMat = new THREE.MeshBasicMaterial({ color:new THREE.Color(3,2.4,.7) });
 const shoreEyes = new THREE.InstancedMesh(eyePairGeo, shoreEyeMat, SE_N); shoreEyes.count = 0; shoreEyes.frustumCulled = false; shoreEyes.userData.noCast = true; scene.add(shoreEyes);
 const SE = { t:0, list:[] };
-const waterFigure = mesh(FIG, M.black); waterFigure.visible = false; scene.add(waterFigure);
+const waterFigure = mesh(FIG, ghoulMat); waterFigure.visible = false; scene.add(waterFigure);
 const paleFigure = mesh(figureGeo(2.0), M.pale); paleFigure.visible = false; scene.add(paleFigure);
 
 /* ---------- oggetti di lore ---------- */
@@ -1016,7 +1057,16 @@ const raft = new THREE.Group();
 bakeStatic(raft, o=>o===raft.userData.lantern); scene.add(raft); raft.position.set(0,0,79.4);
 const RAFT_MAX = 79.4, RAFT_MIN = 12.5;
 const raftPos = new THREE.Vector3(0,0,RAFT_MAX), raftTmp = new THREE.Vector3();
-function raftTarget(wy){ const r = Math.max(Math.min(RAFT_MAX, shoreR(-wy) - 3), RAFT_MIN); return raftTmp.set(0, Math.max(wy, H(0,r) + .12), r); }
+// profilo del fondale lungo il percorso della zattera, reso monotono: la zattera galleggia sempre e scivola senza scatti
+const RAFT_PROF = (()=>{ const N = 700, zs = [], gs = []; let gm = Infinity;
+  for (let i=0;i<=N;i++){ const z = RAFT_MAX - (RAFT_MAX-RAFT_MIN)*i/N; let g = -Infinity; for (const x of [-1.6,0,1.6]) for (const dz of [-1.9,0,1.9]) g = Math.max(g, H(x, z+dz)); gm = Math.min(gm, g); zs.push(z); gs.push(gm - i*1e-4); }
+  return {zs, gs}; })();
+function raftTarget(wy){
+  const {zs, gs} = RAFT_PROF, need = wy - .85;
+  let z = RAFT_MIN; for (let i=0;i<gs.length;i++){ if (gs[i] <= need){ if (i === 0){ z = zs[0]; } else { const k = (need - gs[i-1])/(gs[i]-gs[i-1]); z = zs[i-1] + (zs[i]-zs[i-1])*clamp(k,0,1); } break; } }
+  const y = Math.max(wy, (z <= RAFT_MIN + .01) ? H(0, RAFT_MIN) + .12 : wy);
+  return raftTmp.set(0, y, z); }
+const raftVel = new THREE.Vector3();
 const lifeGeo = new THREE.BufferGeometry(); lifeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(30*3),3));
 const lifeline = new THREE.Line(lifeGeo, new THREE.LineBasicMaterial({color:0x4a3e30})); lifeline.frustumCulled = false; scene.add(lifeline);
 const DOCK_HOOK = new THREE.Vector3(.6, 1.4, 82.05);
@@ -1063,7 +1113,7 @@ const LORE_ORDER = ['shoes','bike','corpse','colossus','car','bell','house','sta
 function openLore(id){
   const L = LORE[id]; if (!L) return;
   const first = !S.found.includes(id);
-  if (first){ S.found.push(id); S.luc = Math.max(0, S.luc - L.cost); whisperSfx(1.8,.18); }
+  if (first){ S.found.push(id); loseLuc(L.cost, `una scoperta`); whisperSfx(1.8,.18); }
   let x = L.x;
   if (id==='corpse' && S.cycle>1) x = `Due corpi a faccia in giù nel fango, sotto il pontile. Entrambi indossano la tua tuta. Entrambi hanno il tuo nome cucito sul taschino.\n\nUno dei due è ancora tiepido.`;
   $('cardTitle').textContent = L.t; $('cardText').textContent = x;
@@ -1100,7 +1150,14 @@ const STORY = [
    UI
    ===================================================================== */
 function toast(msg, cls=''){ const el = document.createElement('div'); el.className = 'toast '+cls; el.textContent = msg; $('toasts').appendChild(el); while ($('toasts').children.length>3) $('toasts').firstChild.remove(); setTimeout(()=>{ el.style.transition='opacity 1s'; el.style.opacity=0; setTimeout(()=>el.remove(),1000); }, 5200); }
-let subT = 0;
+/* ---------- lucidità: ogni perdita e ogni recupero ha un motivo, e lo vedi ---------- */
+let lucPopN = 0;
+function lucPop(txt, good){ const el = document.createElement('div'); el.className = 'lp ' + (good ? 'up' : 'dn'); el.textContent = txt; $('lucPop').appendChild(el);
+  while ($('lucPop').children.length > 3) $('lucPop').firstChild.remove(); setTimeout(()=>el.remove(), 3800); }
+function loseLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.max(0, S.luc - x); if (x >= 1) lucPop(`−${Math.round(x)} · ${why}`, false);
+  if (!S.tipLuc && S.luc < 85){ S.tipLuc = 1; setTimeout(()=>toast(`La tua LUCIDITÀ è scesa. Le cose che vedi e senti la consumano. Tocca RESPIRA o guarda il DIARIO › MENTE per capire come recuperarla.`, 'lore'), 1500); } }
+function gainLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.min(100, S.luc + x); if (x >= 1) lucPop(`+${Math.round(x)} · ${why}`, true); }
+let subT = 0; const LUCWHY = { dn:[], up:[], net:0 }; let breathT = 0, breathCd = 0;
 function sub(text, dur=3){ const s = $('subs'); s.textContent = text; s.style.opacity = 1; subT = dur; }
 const callQ = []; let inCall = false, callTimer = null;
 function call(who, text, radio=false){ callQ.push({who,text,radio}); if (!inCall) nextCall(); }
@@ -1134,7 +1191,7 @@ function shopItems(){
   const nt = TANKS[S.tankLv+1];
   if (nt) it.push({id:'tank', n:`Cisterna da ${fmt(nt.cap)} L`, d:`Più acqua prima di dover vendere`, c:nt.c, buy:()=>{ S.tankLv++; }});
   const nc = CONTRACTS[S.contract+1];
-  if (nc && (!nc.org || phase>=2)) it.push({id:'contract', n:nc.n, d: nc.org ? `Il Compratore paga più del valore. Si firma con quello che hai. (−15 lucidità)` : `Il Compratore ritira l'acqua da solo al ${Math.round(nc.p*100)}% del prezzo`, c:nc.c, org:nc.org, buy:()=>{ S.contract++; if (nc.org){ S.luc = Math.max(0,S.luc-15); groanSfx(.5,3); } }});
+  if (nc && (!nc.org || phase>=2)) it.push({id:'contract', n:nc.n, d: nc.org ? `Il Compratore paga più del valore. Si firma con quello che hai. (−15 lucidità)` : `Il Compratore ritira l'acqua da solo al ${Math.round(nc.p*100)}% del prezzo`, c:nc.c, org:nc.org, buy:()=>{ S.contract++; if (nc.org){ loseLuc(15, `contratto di sangue`); groanSfx(.5,3); } }});
   PUMPS.forEach((p,i)=>{ if ((p.ph||0) <= phase) it.push({id:'pump'+i, n:p.n + (S.pumps[i]?` (${S.pumps[i]})`:''), d:`+${fmt(p.r)} L/s · ${p.d}`, c:pumpCost(i), org:p.org, buy:()=>{ S.pumps[i]++; rebuildPipes(true); creakSfx(); }}); });
   const nto = TORCHES[S.torch+1];
   if (nto) it.push({id:'torch', n:nto.n, d:`Illumina più a fondo. Sei sicuro di voler vedere?`, c:nto.c, buy:()=>{ S.torch++; }});
@@ -1167,6 +1224,11 @@ function renderDiary(){
   } else if (diaryTab==='relic'){
     L.innerHTML = S.relics.length ? `<div class="relics">${S.relics.map(i=>`<div data-relic="${i}"><canvas width="120" height="120"></canvas>${FINDS[i][1].split('.')[0]}.</div>`).join('')}</div>` : `<div class="dentry" style="opacity:.6">Il secchio a volte non torna su solo con l'acqua.</div>`;
     L.querySelectorAll('[data-relic]').forEach(d=> drawRelic(d.querySelector('canvas'), FINDS[+d.dataset.relic][2], +d.dataset.relic+1));
+  } else if (diaryTab==='mind'){
+    L.innerHTML = `<div class="dentry" style="font-family:'Cormorant Garamond',serif;font-size:16px">La LUCIDITÀ è quanto riesci a restare te stesso. Se arriva a zero perdi i sensi: ti svegli all'alba, con meno soldi, e il lago è risalito.</div>
+      <div class="dentry" style="color:#c98a7a">▼ La consumano: la notte · la torcia spenta · scendere più a fondo · le scoperte e le cose trovate nel secchio · guardare le apparizioni troppo a lungo · rispondere a chi ti chiama · scendere dalla zattera · le macchine di carne e il secchio che respira.</div>
+      <div class="dentry" style="color:#9fc28f">▲ La restituiscono: la luce del giorno · stare vicino alla lanterna accesa · RESPIRA (sotto la lucidità, ogni 45 secondi) · i lumini votivi dell'officina · non rispondere, non bussare · ricacciare giù le cose illuminandole con la torcia.</div>
+      <div class="dentry" style="opacity:.7">Adesso: ${LUCWHY.net >= 0 ? '▲ ' + (LUCWHY.up.join(' · ') || 'stabile') : '▼ ' + (LUCWHY.dn.join(' · ') || '')}</div>`;
   } else {
     L.innerHTML = `<div class="dentry">I. Non scendere mai dalla zattera dopo il tramonto.</div><div class="dentry">II. Se dall'acqua qualcuno ti chiama per nome, non rispondere.</div><div class="dentry">III. Non contare l'acqua.</div>`
       + (S.found.includes('ledge') ? `<div class="dentry" style="color:#c98a7a">IV. Fermati prima del fondo.</div>` : '')
@@ -1176,10 +1238,13 @@ function renderDiary(){
 document.querySelectorAll('.tabs button').forEach(b=> b.onclick = ()=>{ diaryTab = b.dataset.tab; renderDiary(); });
 $('diaryBtn').onclick = ()=>{
   $('shop').classList.add('hidden'); $('diaryDot').classList.add('hidden');
-  if (S.total > CATASTO){ S.luc = Math.max(0, S.luc-2); }
+  if (S.total > CATASTO){ loseLuc(2, `hai contato l'acqua`); }
   renderDiary(); $('diary').classList.remove('hidden');
 };
 $('diaryList').addEventListener('click', e=>{ const d = e.target.closest('[data-lore]'); if (d) openLore(d.dataset.lore); });
+$('breathBtn').addEventListener('pointerdown', e=>{ e.stopPropagation(); if (breathCd > 0 || breathT > 0 || !running || ending) return; initAudio();
+  breathT = 6; breathCd = 45; holdBucket = false; $('breathOv').classList.remove('hidden'); breathSfx(true, 2.6, .25); setTimeout(()=>breathSfx(false, 2.6, .22), 3000);
+  const before = S.luc; setTimeout(()=>{ $('breathOv').classList.add('hidden'); lucPop(`+${Math.round(S.luc - before)} · hai respirato`, true); }, 6000); });
 $('torchBtn').onclick = ()=>{ S.torchOn = !S.torchOn; $('torchBtn').classList.toggle('off', !S.torchOn); play('click', {vol:.5, rev:.05}); };
 $('sellBtn').onclick = ()=>{ if (S.tank < 1) return; const v = S.tank * PRICE(S.d); S.money += v; S.tank = 0; coinSfx(); toast(`Venduti al Compratore: € ${fmt(v)}`); };
 let holdBucket = false;
@@ -1192,14 +1257,37 @@ $('bucketBtn').addEventListener('pointerdown', e=>{ e.preventDefault(); holdBuck
 const tankCap = () => TANKS[S.tankLv].cap;
 const handPos = new THREE.Vector3(), handRope = new THREE.Vector3();
 const FINDS = [
+  // fase 0: il paese, la vita di prima
   [0,`Un sasso liscio, caldo come una mano.`,'stone'],[0,`Una scarpa da bambino. Ha i lacci annodati.`,'shoe'],[0,`Capelli. Lunghi, aggrovigliati attorno al manico.`,'hair'],
-  [1,`Un dente umano. Un molare, con un'otturazione d'oro.`,'tooth'],[1,`Una fede. Dentro c'è inciso "per sempre — 1953".`,'ring'],[1,`Una pagina di messale, fradicia. Le parole sono cancellate tranne una: DORMI.`,'page'],[1,`L'acqua è tiepida. Troppo tiepida. Come se qualcuno ci avesse respirato dentro.`,'warm'],
-  [1,`Una conchiglia a spirale. Gira nel verso sbagliato, e continua a girare.`,'shell'],
+  [0,`Un bottone d'osso, con ancora attaccato un filo rosso.`,'button'],[0,`Un cucchiaio d'argento. Sul manico: "Albergo Nàrrena".`,'spoon'],[0,`Un pettine di tartaruga. Tra i denti, capelli grigi.`,'comb'],
+  [0,`Cento lire del 1953. Sul retro qualcuno ha scritto a matita: "per la barca".`,'lire'],[0,`Una forcina per capelli, piegata a forma di occhio.`,'hairpin'],[0,`Un soldatino di latta senza testa.`,'soldier'],
+  [0,`Un biglietto della corriera Nàrrena–Valle, 12 novembre 1953. Mai obliterato.`,'ticket'],[0,`Una candela di cera nera. Lo stoppino è bagnato, ma odora di bruciato.`,'candle'],[0,`Un amo da pesca enorme, grande come una mano.`,'hook'],
+  // fase 1: il lutto, le cose dei morti
+  [1,`Un dente umano. Un molare, con un'otturazione d'oro.`,'tooth'],[1,`Una fede. Dentro c'è inciso "per sempre — 1953".`,'ring'],[1,`Una pagina di messale, fradicia. Le parole sono cancellate tranne una: DORMI.`,'page'],
+  [1,`L'acqua è tiepida. Troppo tiepida. Come se qualcuno ci avesse respirato dentro.`,'warm'],[1,`Una conchiglia a spirale. Gira nel verso sbagliato, e continua a girare.`,'shell'],
+  [1,`Un rosario. I grani non sono di legno: sono denti di latte.`,'rosary'],[1,`Un paio di occhiali tondi. Le lenti sono graffiate dall'interno.`,'glasses'],[1,`La testa di una bambola di porcellana. Ha gli occhi chiusi. Quando la giri, li apre.`,'doll'],
+  [1,`Una lettera chiusa, indirizzata a "chi verrà a svuotare". La busta è asciutta.`,'letter'],[1,`Un orologio da taschino fermo alle 3:07. Ticchetta, ma le lancette non si muovono.`,'watch'],
+  [1,`Una medaglietta di San Cristoforo. Il santo, invece del bambino, porta sulle spalle qualcosa con troppe braccia.`,'medal'],[1,`Un'armonica a bocca. Quando ci soffia il vento, suona la ninna nanna.`,'harmonica'],
+  [1,`Una dentiera completa. Si apre e si chiude da sola, piano, come chi mastica nel sonno.`,'dentures'],[1,`Un nastro rosso legato attorno a una ciocca di capelli bianchi.`,'ribbon'],
+  // fase 2: il corpo, l'impossibile che comincia
   [2,`Un occhio. Ha sbattuto la palpebra.`,'eye'],[2,`Una tua foto da bambino. Non te l'hanno mai scattata.`,'photo'],[2,`Un'unghia lunga quattro dita.`,'nail'],[2,`Il secchio torna più pesante. Dentro c'è solo acqua. L'acqua respira.`,'breath'],
-  [2,`L'acqua riflette un cielo pieno di stelle che non conosci. Sopra di te è tutto coperto.`,'stars'],
+  [2,`L'acqua riflette un cielo pieno di stelle che non conosci. Sopra di te è tutto coperto.`,'stars'],[2,`Un dito. Indossa il tuo anello.`,'finger'],[2,`Una biglia di vetro. Dentro, una pupilla ti segue.`,'marble'],
+  [2,`Un crocifisso di ferro piegato a spirale, come se l'avessero torto con le mani.`,'crucifix'],[2,`Una barchetta di carta. È fatta con una pagina del tuo quaderno. La calligrafia è la tua.`,'boat'],
+  [2,`Una scaglia grande come un piatto. È calda, e sotto c'è un battito.`,'scale'],[2,`Un campanello d'ottone, di quelli da porta. Ha suonato una volta, nel secchio, mentre saliva.`,'bellsmall'],
+  [2,`Un frammento di specchio. Riflette la zattera, ma tu non ci sei.`,'mirror'],[2,`Un uovo nero, liscio come il vetro. Qualcosa dentro si è girato.`,'egg'],
+  [2,`Denti. Decine di denti, tutti con la stessa otturazione d'oro.`,'teeth'],
+  // fase 3: il sogno di Lui
   [3,`Una mano stringeva il bordo del secchio. L'hai vista lasciare la presa.`,'hand'],[3,`Acqua nera, densa, che scivola verso l'alto invece che verso il basso.`,'black'],[3,`Le tue chiavi di casa. Le hai in tasca. Anche queste sono tue.`,'keys'],
   [3,`Un frammento di pietra verde. Ha più spigoli di quanti riesci a contarne. Ogni volta che li conti, sono di più.`,'crystal'],[3,`Un pesce senza occhi. Ha una faccia. È quella della signora del bar.`,'fish'],
-  [4,`Niente acqua. Solo il rumore di qualcuno che respira dal fondo del secchio.`,'none'],[4,`Sul fondo c'è scritto, con le unghie: QUASI.`,'quasi'],[4,`Il secchio torna vuoto, ma pesa come un uomo. È caldo. Batte.`,'heart']
+  [3,`La punta di un tentacolo, recisa. Si attorciglia attorno al tuo dito e non vuole lasciarlo.`,'tentacle'],[3,`Un'altra lettera per "chi verrà a svuotare". Questa volta è scritta da te, domani.`,'letter'],
+  [3,`Un occhio grande come un pugno. La pupilla è a forma di serratura.`,'eye'],[3,`Una conchiglia che, all'orecchio, non fa il rumore del mare. Fa il rumore del tuo respiro.`,'shell'],
+  [3,`Un sasso con inciso il simbolo del campanile: un occhio chiuso. Mentre lo guardi, si apre.`,'stone'],[3,`Una medaglietta da militare con il tuo nome. Data di morte: domani.`,'medal'],
+  [3,`Un cuore di pietra verde. Batte, lentissimo, una volta al minuto.`,'crystal'],
+  // fase 4: il risveglio
+  [4,`Niente acqua. Solo il rumore di qualcuno che respira dal fondo del secchio.`,'none'],[4,`Sul fondo c'è scritto, con le unghie: QUASI.`,'quasi'],[4,`Il secchio torna vuoto, ma pesa come un uomo. È caldo. Batte.`,'heart'],
+  [4,`Una ciglia lunga come un remo. È caduta da un occhio che si sta aprendo.`,'nail'],[4,`Il secchio è pieno di occhi piccoli come chicchi. Si chiudono tutti insieme quando li guardi.`,'marble'],
+  [4,`Una pagina con un solo disegno: la zattera, vista dal basso. C'è qualcuno seduto. Sei tu.`,'page'],[4,`Un dente grande come il secchio. Non è umano. Non è di nessun animale che conosci.`,'tooth'],
+  [4,`Dentro il secchio c'è il cielo notturno. E le stelle si muovono.`,'stars'],[4,`La tua scarpa. Quella che hai ai piedi. Abbassi lo sguardo: sei scalzo.`,'shoe']
 ];
 /* ---------- illustrazioni dei reperti (disegnate al volo) ---------- */
 function drawRelic(cv, icon, seed=1){
@@ -1236,8 +1324,37 @@ function drawRelic(cv, icon, seed=1){
     fish(){ X.fillStyle='#9a9c8c'; X.beginPath(); X.ellipse(0,0,48,20,0,0,7); X.fill(); X.beginPath(); X.moveTo(42,0); X.lineTo(66,-18); X.lineTo(66,18); X.fill(); X.fillStyle='#c9b8a0'; X.beginPath(); X.ellipse(-30,-2,14,15,0,0,7); X.fill(); X.fillStyle='#2a1a14'; X.beginPath(); X.arc(-34,-6,2.2,0,7); X.arc(-26,-6,2.2,0,7); X.fill(); X.strokeStyle='#2a1a14'; X.lineWidth=1.5; X.beginPath(); X.arc(-30,4,4,.2,2.9); X.stroke(); },
     none(){ X.fillStyle='rgba(0,0,0,.8)'; X.beginPath(); X.arc(0,0,40,0,7); X.fill(); },
     quasi(){ X.strokeStyle='rgba(200,190,170,.8)'; X.lineWidth=2.5; X.font='bold 38px serif'; X.textAlign='center'; X.strokeText('QUASI',0,14); X.lineWidth=1; for(let i=0;i<8;i++){ X.beginPath(); X.moveTo(-50+rr()*100,-40); X.lineTo(-50+rr()*100,40); X.stroke(); } },
-    heart(){ X.fillStyle='#6a1a18'; X.beginPath(); X.moveTo(0,40); X.bezierCurveTo(-60,0,-34,-48,0,-18); X.bezierCurveTo(34,-48,60,0,0,40); X.fill(); X.strokeStyle='#2a3a8a'; X.lineWidth=4; X.beginPath(); X.moveTo(-8,-26); X.lineTo(-12,-50); X.moveTo(8,-24); X.lineTo(14,-52); X.stroke(); X.fillStyle='rgba(255,200,180,.2)'; X.beginPath(); X.ellipse(-14,-6,8,14,.4,0,7); X.fill(); }
+    heart(){ X.fillStyle='#6a1a18'; X.beginPath(); X.moveTo(0,40); X.bezierCurveTo(-60,0,-34,-48,0,-18); X.bezierCurveTo(34,-48,60,0,0,40); X.fill(); X.strokeStyle='#2a3a8a'; X.lineWidth=4; X.beginPath(); X.moveTo(-8,-26); X.lineTo(-12,-50); X.moveTo(8,-24); X.lineTo(14,-52); X.stroke(); X.fillStyle='rgba(255,200,180,.2)'; X.beginPath(); X.ellipse(-14,-6,8,14,.4,0,7); X.fill(); },
+    button(){ X.fillStyle='#d9d0b8'; X.beginPath(); X.arc(0,0,30,0,7); X.fill(); X.strokeStyle='#a89c80'; X.lineWidth=3; X.beginPath(); X.arc(0,0,24,0,7); X.stroke(); X.fillStyle='#3a3020'; for (const [x,y] of [[-7,-7],[7,-7],[-7,7],[7,7]]){ X.beginPath(); X.arc(x,y,4,0,7); X.fill(); } X.strokeStyle='#a01a14'; X.lineWidth=2; X.beginPath(); X.moveTo(-7,-7); X.lineTo(7,7); X.moveTo(7,-7); X.quadraticCurveTo(30,20,50,10); X.stroke(); },
+    spoon(){ X.rotate(.6); X.fillStyle='#c8ccd0'; X.beginPath(); X.ellipse(0,-30,18,26,0,0,7); X.fill(); X.fillRect(-4,-6,8,62); X.fillStyle='rgba(255,255,255,.4)'; X.beginPath(); X.ellipse(-5,-36,5,10,0,0,7); X.fill(); },
+    comb(){ X.rotate(-.3); X.fillStyle='#7a4a22'; X.fillRect(-55,-22,110,16); for (let i=0;i<22;i++) X.fillRect(-52+i*5,-6,3,32); X.strokeStyle='#bbb'; X.lineWidth=1; for (let i=0;i<10;i++){ X.beginPath(); X.moveTo(-40+i*8,10); X.quadraticCurveTo(-30+i*9,40,-20+i*7,60); X.stroke(); } },
+    lire(){ X.fillStyle='#b7b2a0'; X.beginPath(); X.arc(0,0,40,0,7); X.fill(); X.strokeStyle='#7c776a'; X.lineWidth=3; X.beginPath(); X.arc(0,0,34,0,7); X.stroke(); X.fillStyle='#5d594f'; X.font='bold 22px serif'; X.textAlign='center'; X.fillText('100',0,4); X.font='9px serif'; X.fillText('LIRE · 1953',0,20); },
+    hairpin(){ X.strokeStyle='#2a2420'; X.lineWidth=4; X.beginPath(); X.moveTo(-50,20); X.quadraticCurveTo(0,-40,50,20); X.quadraticCurveTo(0,60,-50,20); X.stroke(); X.fillStyle='#2a2420'; X.beginPath(); X.arc(0,20,8,0,7); X.fill(); },
+    soldier(){ X.fillStyle='#4a5a3a'; X.fillRect(-14,-30,28,40); X.fillRect(-14,10,11,36); X.fillRect(3,10,11,36); X.fillStyle='#8a2a1a'; X.fillRect(-14,-30,28,8); X.fillStyle='#777'; X.fillRect(14,-40,4,60); X.fillStyle='rgba(120,100,60,.8)'; X.beginPath(); X.ellipse(0,-34,9,3,0,0,7); X.fill(); },
+    ticket(){ X.rotate(.1); X.fillStyle='#d8c890'; X.fillRect(-48,-28,96,56); X.strokeStyle='#6a5a30'; X.setLineDash([3,3]); X.strokeRect(-42,-22,84,44); X.setLineDash([]); X.fillStyle='#3a2a10'; X.font='bold 11px serif'; X.textAlign='center'; X.fillText('CORRIERA',0,-6); X.font='9px serif'; X.fillText('NÀRRENA – VALLE',0,8); X.fillText('12·XI·1953',0,20); },
+    candle(){ X.fillStyle='#141210'; X.fillRect(-14,-30,28,74); X.beginPath(); X.ellipse(0,-30,14,5,0,0,7); X.fill(); X.strokeStyle='#666'; X.lineWidth=2; X.beginPath(); X.moveTo(0,-34); X.lineTo(2,-44); X.stroke(); X.fillStyle='rgba(30,25,20,.8)'; X.beginPath(); X.moveTo(-14,-10); X.quadraticCurveTo(-20,10,-16,20); X.lineTo(-14,20); X.fill(); },
+    hook(){ X.strokeStyle='#8a8a86'; X.lineWidth=7; X.lineCap='round'; X.beginPath(); X.moveTo(10,-55); X.lineTo(10,20); X.arc(-12,20,22,0,Math.PI*.95); X.stroke(); X.fillStyle='#8a8a86'; X.beginPath(); X.moveTo(-34,22); X.lineTo(-42,6); X.lineTo(-28,14); X.fill(); X.beginPath(); X.arc(10,-58,6,0,7); X.lineWidth=3; X.stroke(); },
+    rosary(){ X.fillStyle='#e8e0cc'; for (let i=0;i<26;i++){ const a=i/26*Math.PI*2; X.beginPath(); X.ellipse(Math.cos(a)*36, Math.sin(a)*30-6, 4.5, 6, a, 0, 7); X.fill(); } X.strokeStyle='#e8e0cc'; X.lineWidth=2; X.beginPath(); X.moveTo(0,24); X.lineTo(0,58); X.moveTo(-9,40); X.lineTo(9,40); X.stroke(); },
+    glasses(){ X.strokeStyle='#2a2620'; X.lineWidth=4; for (const x of [-24,24]){ X.beginPath(); X.arc(x,0,19,0,7); X.stroke(); } X.beginPath(); X.moveTo(-6,0); X.quadraticCurveTo(0,-8,6,0); X.stroke(); X.strokeStyle='rgba(200,210,200,.5)'; X.lineWidth=1; for (let i=0;i<9;i++){ const x=(i<5?-24:24); X.beginPath(); X.moveTo(x+R2()*20-10, R2()*20-10); X.lineTo(x+R2()*20-10, R2()*20-10); X.stroke(); } },
+    doll(){ X.fillStyle='#e6dccc'; X.beginPath(); X.ellipse(0,0,34,40,0,0,7); X.fill(); X.fillStyle='#3a2a1a'; X.beginPath(); X.arc(0,-26,34,Math.PI,0); X.fill(); X.strokeStyle='#2a1a10'; X.lineWidth=2.5; X.beginPath(); X.moveTo(-18,0); X.quadraticCurveTo(-12,5,-6,0); X.moveTo(6,0); X.quadraticCurveTo(12,5,18,0); X.stroke(); X.fillStyle='#a8323a'; X.beginPath(); X.ellipse(0,20,5,3,0,0,7); X.fill(); X.strokeStyle='rgba(60,40,30,.6)'; X.lineWidth=1; X.beginPath(); X.moveTo(20,-30); X.lineTo(8,4); X.lineTo(14,24); X.stroke(); },
+    letter(){ X.rotate(-.12); X.fillStyle='#e2d8bc'; X.fillRect(-46,-30,92,60); X.strokeStyle='#9a8a64'; X.lineWidth=1.5; X.beginPath(); X.moveTo(-46,-30); X.lineTo(0,6); X.lineTo(46,-30); X.stroke(); X.fillStyle='#7a1a14'; X.beginPath(); X.arc(0,6,8,0,7); X.fill(); X.fillStyle='#3a3020'; X.font='italic 8px serif'; X.textAlign='center'; X.fillText('a chi verrà a svuotare',0,24); },
+    watch(){ X.fillStyle='#b89a4a'; X.beginPath(); X.arc(0,6,38,0,7); X.fill(); X.fillStyle='#ece4cc'; X.beginPath(); X.arc(0,6,31,0,7); X.fill(); X.strokeStyle='#b89a4a'; X.lineWidth=5; X.beginPath(); X.arc(0,-38,8,0,7); X.stroke(); X.strokeStyle='#222'; X.lineWidth=3; X.beginPath(); X.moveTo(0,6); X.lineTo(14,6); X.moveTo(0,6); X.lineTo(4,30); X.stroke(); for (let i=0;i<12;i++){ const a=i/12*6.283; X.fillStyle='#222'; X.fillRect(Math.cos(a)*25-1, 6+Math.sin(a)*25-1, 2, 2); } },
+    medal(){ X.fillStyle='#9a9690'; X.beginPath(); X.ellipse(0,8,30,36,0,0,7); X.fill(); X.strokeStyle='#5a5650'; X.lineWidth=2; X.beginPath(); X.ellipse(0,8,24,30,0,0,7); X.stroke(); X.fillStyle='#5a5650'; X.fillRect(-4,-10,8,30); X.beginPath(); X.arc(0,-14,7,0,7); X.fill(); for (let i=0;i<5;i++){ X.beginPath(); X.moveTo(0,-8); X.quadraticCurveTo(-20+i*10,-30,-24+i*12,-20); X.stroke(); } X.strokeStyle='#9a9690'; X.lineWidth=2; X.beginPath(); X.arc(0,-34,6,0,7); X.stroke(); },
+    harmonica(){ X.rotate(-.2); X.fillStyle='#a8acb0'; X.fillRect(-52,-14,104,28); X.fillStyle='#4a3a2a'; X.fillRect(-48,-4,96,8); X.fillStyle='#1a1410'; for (let i=0;i<10;i++) X.fillRect(-46+i*9.4,-2,6,4); },
+    dentures(){ X.fillStyle='#b4505a'; X.beginPath(); X.ellipse(0,-8,46,22,0,Math.PI,0); X.fill(); X.beginPath(); X.ellipse(0,14,46,20,0,0,Math.PI); X.fill(); X.fillStyle='#eae2cc'; for (let i=0;i<10;i++){ X.fillRect(-40+i*8,-12,7,12); X.fillRect(-40+i*8,8,7,12); } },
+    ribbon(){ X.strokeStyle='#ddd8cc'; X.lineWidth=1.2; for (let i=0;i<40;i++){ X.beginPath(); X.moveTo(R2()*20-10,-50); X.quadraticCurveTo(R2()*40-20,0,R2()*30-15,50); X.stroke(); } X.fillStyle='#a01a1a'; X.beginPath(); X.ellipse(-14,0,16,8,-.4,0,7); X.ellipse(14,0,16,8,.4,0,7); X.fill(); X.fillRect(-5,-6,10,12); },
+    finger(){ X.rotate(.5); X.fillStyle='#b8b0a0'; X.beginPath(); X.roundRect(-10,-50,20,96,9); X.fill(); X.fillStyle='#8a8070'; X.fillRect(-9,-50,18,14); X.strokeStyle='#d8b450'; X.lineWidth=6; X.beginPath(); X.moveTo(-12,10); X.lineTo(12,10); X.stroke(); X.fillStyle='#6a1a14'; X.fillRect(-10,40,20,6); },
+    marble(){ g=X.createRadialGradient(-10,-10,4,0,0,36); g.addColorStop(0,'#cfe8e0'); g.addColorStop(1,'#2a4a46'); X.fillStyle=g; X.beginPath(); X.arc(0,0,36,0,7); X.fill(); X.fillStyle='#d9a62a'; X.beginPath(); X.arc(6,4,12,0,7); X.fill(); X.fillStyle='#000'; X.beginPath(); X.ellipse(6,4,3,10,0,0,7); X.fill(); X.fillStyle='rgba(255,255,255,.6)'; X.beginPath(); X.arc(-14,-14,6,0,7); X.fill(); },
+    crucifix(){ X.strokeStyle='#4a4038'; X.lineWidth=8; X.lineCap='round'; X.beginPath(); for (let a=0;a<11;a+=.1){ const r=4+a*4; X.lineTo(Math.cos(a)*r, Math.sin(a)*r); } X.stroke(); X.beginPath(); X.moveTo(36,-30); X.lineTo(50,-44); X.moveTo(40,-48); X.lineTo(48,-26); X.stroke(); },
+    boat(){ X.fillStyle='#e6e0d0'; X.beginPath(); X.moveTo(-50,0); X.lineTo(50,0); X.lineTo(30,20); X.lineTo(-30,20); X.fill(); X.beginPath(); X.moveTo(0,0); X.lineTo(0,-46); X.lineTo(28,0); X.fill(); X.strokeStyle='rgba(40,40,60,.5)'; X.lineWidth=1; for (let i=0;i<4;i++){ X.beginPath(); X.moveTo(-26,6+i*3); X.lineTo(26,6+i*3); X.stroke(); } },
+    scale(){ g=X.createRadialGradient(-8,-10,4,0,0,48); g.addColorStop(0,'#5a7a6a'); g.addColorStop(1,'#14201a'); X.fillStyle=g; X.beginPath(); X.moveTo(0,-48); X.quadraticCurveTo(50,-20,36,30); X.quadraticCurveTo(0,52,-36,30); X.quadraticCurveTo(-50,-20,0,-48); X.fill(); X.strokeStyle='rgba(160,220,190,.35)'; X.lineWidth=1.5; for (let i=1;i<6;i++){ X.beginPath(); X.arc(0,40,i*14,3.6,5.8); X.stroke(); } },
+    bellsmall(){ X.fillStyle='#b89a4a'; X.beginPath(); X.moveTo(-34,26); X.quadraticCurveTo(-30,-36,0,-38); X.quadraticCurveTo(30,-36,34,26); X.closePath(); X.fill(); X.fillRect(-40,24,80,7); X.fillStyle='#6a5420'; X.beginPath(); X.arc(0,38,8,0,7); X.fill(); X.fillStyle='rgba(255,240,200,.4)'; X.fillRect(-18,-20,6,36); },
+    mirror(){ X.fillStyle='#9aa8ac'; X.beginPath(); X.moveTo(-40,-30); X.lineTo(30,-44); X.lineTo(44,20); X.lineTo(-10,46); X.lineTo(-46,10); X.closePath(); X.fill(); X.fillStyle='#3a4a4e'; X.beginPath(); X.moveTo(-30,0); X.lineTo(20,-10); X.lineTo(30,12); X.lineTo(-20,20); X.fill(); X.strokeStyle='rgba(255,255,255,.6)'; X.lineWidth=2; X.beginPath(); X.moveTo(-30,-26); X.lineTo(26,-38); X.stroke(); },
+    egg(){ g=X.createRadialGradient(-12,-16,4,0,0,44); g.addColorStop(0,'#4a4a52'); g.addColorStop(1,'#020204'); X.fillStyle=g; X.beginPath(); X.ellipse(0,4,32,42,0,0,7); X.fill(); X.fillStyle='rgba(200,210,255,.35)'; X.beginPath(); X.ellipse(-12,-18,7,12,-.4,0,7); X.fill(); X.strokeStyle='rgba(140,255,170,.35)'; X.lineWidth=1.2; X.beginPath(); X.moveTo(6,-20); X.quadraticCurveTo(14,0,4,24); X.stroke(); },
+    teeth(){ X.fillStyle='#e2dac2'; for (let i=0;i<28;i++){ const a=R2()*6.283, r=R2()*40; X.save(); X.translate(Math.cos(a)*r, Math.sin(a)*r); X.rotate(R2()*6.28); X.beginPath(); X.moveTo(-6,-7); X.quadraticCurveTo(0,-10,6,-7); X.lineTo(4,8); X.lineTo(-4,8); X.fill(); X.fillStyle='#c9a640'; X.fillRect(-3,-7,5,3); X.fillStyle='#e2dac2'; X.restore(); } },
+    tentacle(){ X.strokeStyle='#2a3a30'; X.lineCap='round'; for (let w=16; w>2; w-=2){ X.lineWidth=w; X.beginPath(); X.moveTo(-50,40); X.bezierCurveTo(-10,40,30,10,10,-10); X.bezierCurveTo(-6,-26,20,-40,34,-30); X.stroke(); X.strokeStyle = w>10 ? '#2a3a30' : '#3e5a48'; } X.fillStyle='#c9b8a0'; for (let i=0;i<9;i++){ X.beginPath(); X.arc(-40+i*8, 38-i*4, 3, 0, 7); X.fill(); } }
   };
+  const R2 = rr;
   (F[icon]||F.stone)();
   X.restore();
   // riflesso sull'acqua
@@ -1251,7 +1368,7 @@ function showFind(idx){
 }
 $('findCard').addEventListener('pointerdown', e=>{ e.stopPropagation(); $('findCard').classList.add('hidden'); findT = 0; });
 function throwBucket(){
-  if (!running || B.busy || ending) return;
+  if (!running || B.busy || ending || breathT > 0) return;
   if (S.tank >= tankCap() && !S.contract){ toast(`La cisterna è piena. Vendi.`, 'warn'); return; }
   const sr = shoreR(S.d);
   const rt = Math.max(Math.min(raftPos.z - 3.6, sr - 1.5), 3);
@@ -1263,11 +1380,12 @@ function throwBucket(){
 }
 function finishBucket(){
   B.busy = false; clankSfx(); dripsSfx();
+  if (B.thing){ B.thing = false; bucketTent.visible = false; bucket.rotation.x = 0; toast(pick([`Il secchio torna su scosso da qualcosa che si dimena. Una punta di tentacolo sporge dal bordo. Poi scivola giù, nel buio.`,`Nel secchio qualcosa si contorce. Ti guarda con un occhio solo, poi si arrotola e sparisce oltre il bordo.`]), 'warn'); loseLuc(6, `qualcosa nel secchio`); heartSfx(.7); }
   const L = BUCKETS[S.bucket].s * 10;
   addLiters(L);
-  if (BUCKETS[S.bucket].org) S.luc = Math.max(0, S.luc - .3);
-  const ch = .035 + phase*.025;
-  if (phase >= 0 && Math.random() < ch && S.d > 2){ const pool = FINDS.map((f,i)=>i).filter(i=>FINDS[i][0]<=phase && FINDS[i][0]>=phase-1); const fresh = pool.filter(i=>!S.relics.includes(i)); const fi = pick(fresh.length && Math.random()<.75 ? fresh : pool); showFind(fi); S.luc = Math.max(0, S.luc - (2+phase)); if (phase>=2) whisperSfx(1.5,.15); }
+  if (BUCKETS[S.bucket].org) loseLuc(.3, `il secchio che respira`);
+  const ch = .05 + phase*.022;
+  if (phase >= 0 && Math.random() < ch && S.d > 2){ const unseen = FINDS.map((f,i)=>i).filter(i=>!S.relics.includes(i)); let pool = unseen.filter(i=>FINDS[i][0]<=phase && FINDS[i][0]>=phase-1); if (!pool.length) pool = unseen.filter(i=>FINDS[i][0]<=phase+1); if (pool.length){ const fi = pick(pool); showFind(fi); loseLuc(2+phase, `ciò che era nel secchio`); if (phase>=2) whisperSfx(1.5,.15); } }
   if (holdBucket) setTimeout(throwBucket, 30);
 }
 function addLiters(L){
@@ -1291,59 +1409,67 @@ let lampOverride = 0, blackT = 0, paleT = 0;
 const WHISPERS = [`...più giù...`,`...non contare...`,`...ci hai svegliati...`,`...Tobia...`,`...siamo ancora a tavola...`,`...riempi il secchio... riempi...`,`...sotto il pontile...`,`...ti abbiamo visto nascere...`,`...scendi a salutarci...`];
 const CHANTS = [`Nàrr'ghena ul-thoom... sha'ath dormh'a...`,`Ia... ia... Ghren-na ul'loth, phaa-gnar...`,`Ubh'nàrr ka-sleth... ka-sleth... ka-sleth...`,`Dormh'a, dormh'a... ye-nàrr ophuu...`,`(sono le voci del paese, tutte insieme) ...UL-THOOM...`];
 const RADIO_LINES = [`(radio, da sola) ...previsioni: nebbia densa sul lago. Nebbia densa nelle case. Nebbia nei letti...`,`(radio, da sola) ...si raccomanda di non rispondere a chi chiama dall'acqua. Ripeto: non rispondete...`,`(radio, da sola) ...e ora un vecchio successo del 1953... (si sente solo una campana)`];
+/* ---------- il regista: varia, non ripete, sceglie ciò che hai visto meno ---------- */
+// nome: [profondità minima, condizione, attesa minima (s), massimo per partita, peso]
+const EV_DEF = {
+  knock:[1.5,null,80,5,1], prints:[1.5,null,130,4,1], music:[1.5,n=>n||phase>=1,140,2,1], silent:[3,null,260,2,.8], tug:[2,null,70,3,.8], fish:[4,null,170,2,1],
+  behind:[5,null,95,3,1.2], hand:[8,null,85,3,1.2], torch:[8,n=>n,110,3,1], sublim:[8,null,70,6,.6], green:[8,n=>n,120,2,.8], left:[8,null,240,1,1],
+  bodies:[12,null,170,2,1], dg:[12,n=>n,220,2,1.2], fog:[12,null,180,2,1], lost:[12,()=>S.luc<65,320,1,1], car:[12,n=>n&&S.revealed.includes('car'),200,1,1],
+  titan:[10,null,150,3,1.3], levx:[18,()=>!LEV.on,110,3,1.2], mouth:[35,null,120,2,1.1], blood:[35,null,160,2,1], breath:[35,null,150,2,1], dock:[35,n=>n,200,2,1],
+  bump:[3,null,60,4,1.3], tentRaft:[9,null,110,3,1.3], surfEye:[14,null,120,3,1.2], hands:[20,null,150,2,1.2], rowboat:[6,null,200,2,1.1], selfCorpse:[25,null,400,1,1.3],
+  rain:[15,null,220,2,1], starsOut:[30,n=>n,240,1,1.2], swarm:[18,null,160,2,1.1], silence:[6,null,200,2,1], neck:[4,null,140,3,1.1], tide:[10,null,150,2,1],
+  scrawl:[5,null,160,3,1], bucketThing:[8,null,120,3,1], bellNear:[22,null,200,2,1.1], reflection:[10,null,180,2,1.2],
+  figure:[12,n=>(n||phase>=3)&&!wf.on,60,99,.6], flicker:[12,n=>n,60,99,.5], name:[35,null,160,3,1], ladder:[12,n=>n,220,2,1], scare:[65,()=>S.luc<30,110,99,.8],
+  leviathan:[35,()=>!LEV.on,120,99,.7], eyes:[12,n=>n&&SE.t<=0,70,99,.7], chant:[35,null,90,99,.6], lightning:[2,n=>n,50,99,.5]
+};
+const OLD_EV = new Set(['figure','bubbles','flicker','bell','whisper','name','ladder','radio','glitch','scare','quake','lightning','leviathan','eyes','chant']);
+function directorPick(night){
+  const now = performance.now()/1000, cand = []; let tot = 0;
+  for (const k in EV_DEF){ const [md, cond, cd, mx, w] = EV_DEF[k], c = S.evc[k]||0;
+    if (S.d < md || c >= mx || (EV.cool[k]||0) > now || S.evRecent.includes(k) || (cond && !cond(night))) continue;
+    const ww = w / (1 + c*1.2); cand.push([k, ww]); tot += ww; }
+  if (!cand.length) return null;
+  let r = Math.random()*tot; let e = cand[cand.length-1][0]; for (const [k,w] of cand){ r -= w; if (r <= 0){ e = k; break; } }
+  EV.cool[e] = now + EV_DEF[e][2]; S.evc[e] = (S.evc[e]||0) + 1; S.evRecent.push(e); while (S.evRecent.length > 7) S.evRecent.shift();
+  return e;
+}
 function runEvent(){
-  const night = dayF < .5, opts = [];
-  if (phase>=1 && (night || phase>=3) && !wf.on) opts.push('figure');
-  if (phase>=1) opts.push('bubbles');
-  if (phase>=1 && night) opts.push('flicker');
-  if (S.d > 20) opts.push('bell');
-  if (phase>=1 && S.luc < 70) opts.push('whisper');
-  if (phase>=2 && cool('name', 160)) opts.push('name');
-  if (phase>=1 && night && cool('ladder', 220)) opts.push('ladder');
-  if (phase>=2) { opts.push('radio'); opts.push('glitch'); }
-  if (phase>=3 && S.luc < 30 && cool('scare', 110)) opts.push('scare');
-  if (phase>=4) opts.push('quake');
-  if (night && S.d > 2 && cool('light', 50)) opts.push('lightning');
-  if (phase>=2 && !LEV.on && cool('lev', 120)) opts.push('leviathan');
-  if (night && (phase>=2 || S.luc < 65) && SE.t <= 0 && cool('eyes', 70)) opts.push('eyes');
-  if (phase>=2 && cool('chant', 90)) opts.push('chant');
-  const extra = X_.big > 0 ? [] : pickExtraEvent(night);
+  const night = dayF < .5;
   if (X_.forceHand && !X_.hand){ X_.forceHand = false; startEv('hand'); return; }
-  const all = opts.concat(extra, extra);
-  if (!all.length) return;
-  const e = pick(all);
-  if (extra.includes(e)){ EV.cool[e] = performance.now()/1000 + (EV_CD[e]||90); startEv(e); return; }
+  let e = (X_.big <= 0 && Math.random() < .78) ? directorPick(night) : null;
+  if (!e){ const f = []; if (phase>=1) f.push('bubbles'); if (S.d > 20) f.push('bell'); if (phase>=1 && S.luc < 70) f.push('whisper'); if (phase>=2) f.push('radio','glitch'); if (phase>=4) f.push('quake'); if (!f.length) return; e = pick(f); }
+  if (!OLD_EV.has(e)){ startEv(e); return; }
   if (e==='figure'){
     const sr = shoreR(S.d); let x, z, tries = 0;
     do { const a = rand(0,6.28), r = rand(4, Math.max(5, sr-4)); x = Math.cos(a)*r; z = Math.sin(a)*r; tries++; } while ((Math.hypot(x, z-CAM_BASE.z) < Math.min(22, sr*.8) || Math.abs(x) < 2) && tries < 40);
     waterFigure.position.set(x, water.position.y - .7, z); waterFigure.rotation.y = Math.atan2(CAM_BASE.x-x, CAM_BASE.z-z); waterFigure.visible = true; wf = {on:true, t:0, seen:0};
   }
   if (e==='bubbles'){ const sr = shoreR(S.d); const a = rand(0,6.28), r = rand(3, Math.max(4,sr*.7)); ripple(Math.cos(a)*r, Math.sin(a)*r, 2.2); bubbleSfx(); if (phase>=2) groanSfx(.25, 3); }
-  if (e==='flicker'){ lampOverride = 2.5; creakSfx(); if (phase>=2 && Math.random()<.6){ blackT = 2.2; setTimeout(()=>{ paleFigure.position.set(.3, water.position.y - .25, raftPos.z - 2.6); paleFigure.rotation.y = 0; paleFigure.visible = true; paleT = 1.4; S.luc = Math.max(0, S.luc-6); heartSfx(.7); }, 2200); } }
-  if (e==='bell'){ bellSfx(1.6); S.luc = Math.max(0, S.luc-2); }
-  if (e==='whisper'){ whisperSfx(2.8,.25); sub(zalgo(pick(WHISPERS), S.luc < 40 ? 3 : 0), 3); S.luc = Math.max(0, S.luc-1.5); }
+  if (e==='flicker'){ lampOverride = 2.5; creakSfx(); if (phase>=2 && Math.random()<.6){ blackT = 2.2; setTimeout(()=>{ paleFigure.position.set(.3, water.position.y - .25, raftPos.z - 2.6); paleFigure.rotation.y = 0; paleFigure.visible = true; paleT = 1.4; loseLuc(6, `era sulla zattera`); heartSfx(.7); }, 2200); } }
+  if (e==='bell'){ bellSfx(1.6); loseLuc(2, `la campana`); }
+  if (e==='whisper'){ whisperSfx(2.8,.25); sub(zalgo(pick(WHISPERS), S.luc < 40 ? 3 : 0), 3); loseLuc(1.5, `i sussurri`); }
   if (e==='name'){
     whisperSfx(3.5,.3); sub(`...Tobia... sono qui sotto... Tobia, rispondi...`, 4);
     setTimeout(()=> promptAsk(`Dall'acqua, sotto il pontile, qualcuno ti chiama per nome. Ha la voce di tua madre.`, `RISPONDI`, `TACI`, yes=>{
-      if (yes){ scare(); S.luc = Math.max(0, S.luc-25); setTimeout(()=>sub(`...ti abbiamo sentito...`, 3), 1500); }
-      else { S.luc = Math.min(100, S.luc+4); setTimeout(()=>{ whisperSfx(1.5,.15); sub(`...la prossima volta...`, 3); }, 2500); }
+      if (yes){ scare(); loseLuc(25, `hai risposto`); setTimeout(()=>sub(`...ti abbiamo sentito...`, 3), 1500); }
+      else { gainLuc(4, `non hai risposto`); setTimeout(()=>{ whisperSfx(1.5,.15); sub(`...la prossima volta...`, 3); }, 2500); }
     }), 2600);
   }
   if (e==='ladder'){
     promptAsk(`Nel fango, a pochi metri dalla zattera, c'è una busta della Ditta Sesti. Di notte non si scende dalla zattera.`, `SCENDI A PRENDERLA`, `RESTA SULLA ZATTERA`, yes=>{
       if (!yes) return;
-      if (Math.random()<.55){ const bonus = Math.max(50, S.money*.25); S.money += bonus; S.luc = Math.max(0, S.luc-15); toast(`Nella busta: € ${fmt(bonus)} e un biglietto. "Lo sapevamo che sarebbe sceso."`, 'find'); whisperSfx(2,.25); }
-      else { scare(); S.luc = Math.max(0, S.luc-30); toast(`Qualcosa ti ha afferrato la caviglia. Sei risalito. Non ricordi come.`, 'warn'); }
+      if (Math.random()<.55){ const bonus = Math.max(50, S.money*.25); S.money += bonus; loseLuc(15, `sei sceso dalla zattera`); toast(`Nella busta: € ${fmt(bonus)} e un biglietto. "Lo sapevamo che sarebbe sceso."`, 'find'); whisperSfx(2,.25); }
+      else { scare(); loseLuc(30, `qualcosa ti ha afferrato`); toast(`Qualcosa ti ha afferrato la caviglia. Sei risalito. Non ricordi come.`, 'warn'); }
     });
   }
   if (e==='radio'){ staticSfx(1.5); toast(pick(RADIO_LINES)); }
   if (e==='glitch'){ glitchT = 1.6; play('glitch', {vol:.25, rev:.1}); }
-  if (e==='scare'){ scare(); S.luc = Math.max(0, S.luc-10); }
+  if (e==='scare'){ scare(); loseLuc(10, `l'hai visto`); }
   if (e==='quake'){ shakeAmt = 1; groanSfx(.7,4); creakSfx(); setTimeout(creakSfx,400); }
   if (e==='lightning'){ lightning(); }
-  if (e==='leviathan'){ startLeviathan(); S.luc = Math.max(0, S.luc-5); }
+  if (e==='leviathan'){ startLeviathan(); loseLuc(5, `qualcosa sotto di te`); }
   if (e==='eyes'){ startShoreEyes(); }
-  if (e==='chant'){ choirBoost = 7; whisperSfx(5,.2); sub(zalgo(pick(CHANTS), 2+phase), 5); S.luc = Math.max(0, S.luc-2); }
+  if (e==='chant'){ choirBoost = 7; whisperSfx(5,.2); sub(zalgo(pick(CHANTS), 2+phase), 5); loseLuc(2, `il canto`); }
 }
 /* ---------- lampi ---------- */
 let lightK = 0, lightSeq = [];
@@ -1409,18 +1535,18 @@ const headObj = (()=>{ const g = new THREE.Group(); const hd = mesh(new THREE.Sp
   for (let k=0;k<14;k++){ const st = mesh(new THREE.CylinderGeometry(.006,.002,rand(.2,.4),3), M.black, rand(-.15,.15), -.1, rand(-.15,.05)); g.add(st); }
   g.visible = false; scene.add(g); return g; })();
 // la figura dietro di te
-const behindFig = mesh(figureGeo(2.55), M.black); behindFig.visible = false; raft.add(behindFig);
-{ const e = mesh(eyePairGeo, eyeGlowMat, .05*1.1, 2.55*.87, .22); behindFig.add(e); }
+const behindFig = mesh(figureGeo(2.55, 1.3), ghoulMat); behindFig.visible = false; raft.add(behindFig);
+{ const e = mesh(eyePairGeo, eyeGlowMat, ...eyeAt(2.55, 1.3)); behindFig.add(e); }
 // impronte bagnate sulla zattera
-const printMat = new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0, depthWrite:false});
+const printMat = new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0, depthWrite:false, side:THREE.DoubleSide});
 const prints = new THREE.Group(); raft.add(prints);
 { const pg = new THREE.CircleGeometry(.07, 10); pg.scale(1,1.9,1); pg.rotateX(-Math.PI/2);
   for (let i=0;i<9;i++){ const z = 1.65 - i*.36, x = (i%2? .11 : -.11) + Math.sin(i*.7)*.15; const m = mesh(pg, printMat, x, .37, z); m.renderOrder = 3; prints.add(m);
     const toes = mesh(new THREE.CircleGeometry(.03,6).rotateX(-Math.PI/2), printMat, x, .371, z-.16); prints.add(toes); } }
 // pesci morti
 const FISH_N = 60;
-const fishGeo = (()=>{ const b = new THREE.SphereGeometry(.12, 8, 6); b.scale(1.9,.6,.7); const t = new THREE.ConeGeometry(.09,.16,4); t.rotateZ(Math.PI/2); t.translate(-.29,0,0); return mergeGeometries([b.toNonIndexed(), t.toNonIndexed()]); })();
-const fishMesh = new THREE.InstancedMesh(fishGeo, new THREE.MeshStandardMaterial({color:0xa9ad9c, roughness:.3, metalness:.2, emissive:0x1c1f1a}), FISH_N); fishMesh.count = 0; fishMesh.frustumCulled = false; scene.add(fishMesh);
+const fishGeo = (()=>{ const b = new THREE.SphereGeometry(.16, 10, 6); b.scale(1.9,.55,.7); const t = new THREE.ConeGeometry(.09,.16,4); t.rotateZ(Math.PI/2); t.translate(-.29,0,0); return mergeGeometries([b.toNonIndexed(), t.toNonIndexed()]); })();
+const fishMesh = new THREE.InstancedMesh(fishGeo, new THREE.MeshStandardMaterial({color:0x8a8e80, roughness:.35, metalness:.25, emissive:0x0a0b09}), FISH_N); fishMesh.count = 0; fishMesh.frustumCulled = false; scene.add(fishMesh);
 const fishData = [];
 // corpi che galleggiano
 const floaters = [0,1,2,3].map(()=>{ const c = makeCorpse(0,0,0); c.visible = false; scene.add(c); return c; });
@@ -1432,12 +1558,12 @@ const mouthObj = (()=>{ const g = new THREE.Group();
   for (let r of [1.75, 1.35]) for (let k=0;k<22;k++){ const a = k/22*Math.PI*2 + r; const t = mesh(new THREE.ConeGeometry(.09,.55,5), M.bone, Math.cos(a)*r,.25,Math.sin(a)*r); t.rotation.z = Math.cos(a)*.9; t.rotation.x = -Math.sin(a)*.9; g.add(t); }
   g.visible = false; scene.add(g); return g; })();
 // il doppio con la lanterna
-const dgObj = (()=>{ const g = new THREE.Group(); g.add(mesh(figureGeo(2.2), M.black)); g.add(mesh(new THREE.SphereGeometry(.09,8,6), new THREE.MeshBasicMaterial({color:new THREE.Color(5,3.2,1.4)}), .32,1.15,.12)); g.visible = false; scene.add(g); return g; })();
+const dgObj = (()=>{ const g = new THREE.Group(); g.add(mesh(figureGeo(2.2), ghoulMat)); g.add(mesh(new THREE.SphereGeometry(.09,8,6), new THREE.MeshBasicMaterial({color:new THREE.Color(5,3.2,1.4)}), .32,1.15,.12)); g.visible = false; scene.add(g); return g; })();
 // figure nella nebbia
-const fogFigs = [0,1,2,3,4,5,6].map(()=>{ const f = mesh(FIG, M.black); f.visible = false; scene.add(f); return f; });
+const fogFigs = [0,1,2,3,4,5,6].map(()=>{ const f = mesh(FIG, ghoulMat); f.visible = false; scene.add(f); return f; });
 // il paese sul pontile
 const dockFigs = [];
-for (let i=0;i<10;i++){ const f = mesh(figureGeo(rand(1.9,2.3)), M.black); f.add(mesh(eyePairGeo, eyeGlowMat, .05*1.1, 2.1*.87, .22)); f.position.set((i%2? 1.2 : -1.2)+rand(-.2,.2), 1.38, 83.5 + i*1.4); f.visible = false; scene.add(f); dockFigs.push(f); }
+for (let i=0;i<10;i++){ const ft = rand(1.9,2.3), fh = rand(.8,1.4); const f = mesh(figureGeo(ft, fh), ghoulMat); f.add(mesh(eyePairGeo, eyeGlowMat, ...eyeAt(ft, fh))); f.position.set((i%2? 1.2 : -1.2)+rand(-.2,.2), 1.38, 83.5 + i*1.4); f.visible = false; scene.add(f); dockFigs.push(f); }
 const wfPos = new THREE.Vector3();
 
 function startEv(name){
@@ -1445,7 +1571,7 @@ function startEv(name){
   if (name==='hand'){ headObj.position.set(raftPos.x + rand(-1.5,1.5), waterY - .5, raftPos.z - rand(3.5,5)); headObj.visible = true; handObj.position.set(rand(-.9,.9), -.7, -1.66); handObj.rotation.set(0, rand(-.3,.3), 0); handObj.visible = true; X_.hand = {t:0, seen:0, gone:false}; X_.big = 11; setTimeout(()=>{ dripSfx(.2); knockSfx(.3); }, 600); setTimeout(()=>breathSfx(false,1.6,.18), 2500); }
   if (name==='behind'){ behindFig.position.set(rand(-.5,.5), .36, 1.35); behindFig.rotation.y = Math.PI; behindFig.visible = true; X_.behind = {t:0, seen:0}; X_.big = 10;
     [0,.8,1.7,2.4].forEach((d,i)=> setTimeout(()=>{ footstepSfx(); if (i%2) creakSfx(); }, d*1000)); setTimeout(()=>breathSfx(true,2.4,.14), 3000); setTimeout(()=>breathSfx(false,2.4,.12), 5600); }
-  if (name==='prints'){ X_.prints = 30; dripSfx(.15); setTimeout(()=>dripSfx(.12), 400); setTimeout(()=>toast(`Sulle assi della zattera ci sono impronte bagnate. Piedi nudi. Arrivano dall'acqua.`), 2500); }
+  if (name==='prints'){ const pv = PRINTS[((S.evc.prints||1)-1) % PRINTS.length]; prints.scale.set(pv.s, 1, pv.s*(pv.rev?-1:1)); X_.prints = 30; dripSfx(.15); setTimeout(()=>dripSfx(.12), 400); setTimeout(()=>toast(pv.t), 2500); }
   if (name==='fish'){ fishData.length = 0; for (let i=0;i<FISH_N;i++){ const a = rand(0,Math.PI*2), r = rand(2.2, Math.min(11, sr*.5)); const x = raftPos.x + Math.cos(a)*r*1.3, z = raftPos.z - 5 + Math.sin(a)*r*.6; if (Math.hypot(x,z) > sr - 1) continue; fishData.push({x, z, ry:rand(0,6.3), ph:rand(0,6)}); }
     X_.fish = 32; bubbleSfx(); setTimeout(()=>toast(`Pesci morti affiorano tutti insieme, a pancia in su. Hanno gli occhi rivolti verso di te.`), 2500); }
   if (name==='bodies'){ floaters.forEach((c,i)=>{ const a = rand(0,Math.PI*2), r = rand(7, Math.min(22, sr*.6)); c.position.set(Math.cos(a)*r, waterY - .5, raftPos.z - 5 + Math.sin(a)*r*.7); c.rotation.set(0, rand(0,6.3), 0); c.userData.v = new THREE.Vector2(-c.position.x, raftPos.z - c.position.z).normalize().multiplyScalar(rand(.15,.3)); c.visible = true; });
@@ -1455,14 +1581,14 @@ function startEv(name){
   if (name==='fog'){ X_.fog = 18; X_.big = 18; fogFigs.forEach((f,i)=>{ f.userData.a = i/fogFigs.length*Math.PI*2; f.visible = true; }); whisperSfx(4,.2); setTimeout(()=>whisperSfx(4,.25), 5000); setTimeout(()=>sub(zalgo(`...siamo tutti qui... tutti intorno...`, phase>=3?2:0), 4), 6000); }
   if (name==='green'){ X_.green = 7; whisperSfx(3,.2); sub(zalgo(pick(CHANTS), 1), 4); }
   if (name==='torch'){ X_.torchKill = 4.5; play('click', {vol:.5, rev:.05}); setTimeout(()=>breathSfx(true,2,.2), 1200); setTimeout(()=>breathSfx(false,1.8,.22), 3000);
-    setTimeout(()=>{ if (!running) return; paleFigure.position.set(rand(-.6,.6), waterY - .25, raftPos.z - 2.4); paleFigure.rotation.y = 0; paleFigure.visible = true; paleT = .9; heartSfx(.8); S.luc = Math.max(0, S.luc-6); }, 4500); }
-  if (name==='knock'){ const pan = rand(-.4,.4); [0,.55,1.1].forEach(d=> setTimeout(()=>{ knockSfx(.8, pan); shakeAmt = Math.max(shakeAmt,.25); }, d*1000));
-    if (!X_.knocked || Math.random()<.4){ X_.knocked = true; setTimeout(()=> promptAsk(`Tre colpi, sotto le assi della zattera. Lenti. Come chi chiede permesso.`, `BUSSA ANCHE TU`, `NON FARE NIENTE`, yes=>{
-      if (yes){ [0,.4,.8,1.2].forEach(d=> setTimeout(()=>{ knockSfx(1, pan); shakeAmt = .5; }, 900 + d*1000)); setTimeout(()=>{ whisperSfx(2,.3); sub(`...grazie... ora possiamo salire...`, 3.5); S.luc = Math.max(0, S.luc-8); EV.next = 6; X_.forceHand = true; }, 6000); }
-      else { S.luc = Math.min(100, S.luc+2); setTimeout(()=>knockSfx(.4, pan), 5000); }
-    }), 2200); } }
+    setTimeout(()=>{ if (!running) return; paleFigure.position.set(rand(-.6,.6), waterY - .25, raftPos.z - 2.4); paleFigure.rotation.y = 0; paleFigure.visible = true; paleT = .9; heartSfx(.8); loseLuc(6, `era davanti a te`); }, 4500); }
+  if (name==='knock'){ const pan = rand(-.4,.4), kv = KNOCKS[(S.evc.knock||1) % KNOCKS.length]; kv.p.forEach(d=> setTimeout(()=>{ knockSfx(kv.v, pan); shakeAmt = Math.max(shakeAmt,.25*kv.v); }, d*1000));
+    if (kv.ask){ setTimeout(()=> promptAsk(kv.t, `BUSSA ANCHE TU`, `NON FARE NIENTE`, yes=>{
+      if (yes){ [0,.4,.8,1.2].forEach(d=> setTimeout(()=>{ knockSfx(1, pan); shakeAmt = .5; }, 900 + d*1000)); setTimeout(()=>{ whisperSfx(2,.3); sub(`...grazie... ora possiamo salire...`, 3.5); loseLuc(8, `hai bussato`); EV.next = 6; X_.forceHand = true; }, 6000); }
+      else { gainLuc(2, `non hai bussato`); setTimeout(()=>knockSfx(.4, pan), 5000); }
+    }), 2200); } else setTimeout(()=>sub(kv.t, 4.5), 1800); }
   if (name==='lost'){ $('fade').style.transition = 'opacity .15s'; $('fade').style.opacity = 1; holdBucket = false; staticSfx(.6);
-    setTimeout(()=>{ S.time += 110; yawT += Math.PI; yaw = yawT; X_.prints = 25; S.luc = Math.max(0, S.luc-8); $('fade').style.transition = 'opacity 1.5s'; $('fade').style.opacity = 0;
+    setTimeout(()=>{ S.time += 110; yawT += Math.PI; yaw = yawT; X_.prints = 25; loseLuc(8, `tempo perduto`); $('fade').style.transition = 'opacity 1.5s'; $('fade').style.opacity = 0;
       toast(`Hai perso due ore. Hai i capelli bagnati e le mani piene di fango. Sei girato dall'altra parte.`, 'warn'); heartSfx(.6); }, 1900); }
   if (name==='music'){ musicBoxSfx(.18); setTimeout(()=>sub(`(un carillon suona, da qualche parte sotto l'acqua)`, 4), 1500); }
   if (name==='sublim'){ const el = $('subliminal'); el.textContent = pick(['TI VEDE','SCENDI','È SVEGLIO','NON VOLTARTI','SEI GIÀ QUI','CONTA','TOBIA']); el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 70); }
@@ -1475,7 +1601,24 @@ function startEv(name){
   if (name==='silent'){ call(`NUMERO SCONOSCIUTO`, `. . . . . . . . . . (qualcuno respira, molto vicino al microfono. Si sente gocciolare.) . . . . . . . . . Tobia.`); }
   if (name==='tug'){ X_.tugNext = true; }
   if (name==='titan'){ startTitan(); }
-  if (name==='levx'){ startLeviathan(); S.luc = Math.max(0, S.luc-5); setTimeout(()=>sub(`(qualcosa di lungo quanto il paese passa sotto la zattera)`, 4), 3000); }
+  if (name==='bump'){ raftJolt = 1; knockSfx(1, 0); groanSfx(.45, 3); setTimeout(()=>bubbleSfx(), 600); loseLuc(4, `qualcosa ha urtato la zattera da sotto`); setTimeout(()=>sub(pick([`(qualcosa di enorme è passato sotto la zattera e l'ha sfiorata)`,`(il legno ha tremato. Sotto, qualcosa si è girato nel sonno)`,`(un urto da sotto. Come una schiena che si inarca)`]), 4), 900); }
+  if (name==='tentRaft'){ tentRaft.position.set(rand(-.6,.6), 0, -1.75); tentRaft.rotation.set(0, Math.PI + rand(-.4,.4), 0); tentRaft.visible = true; X_.tentR = {t:0, seen:0, gone:false}; X_.big = 10; dripSfx(.25); setTimeout(()=>creakSfx(), 700); }
+  if (name==='surfEye'){ const dx = rand(-2.5,2.5); surfEye.position.set(raftPos.x + dx, waterY + .03, raftPos.z - rand(4,6)); surfEye.rotation.y = rand(-.3,.3); surfEye.scale.set(1,1,.02); surfEye.visible = true; X_.sEye = {t:0}; X_.big = 9; bubbleSfx(); setTimeout(()=>heartSfx(.7), 1500); }
+  if (name==='hands'){ handData.length = 0; for (let i=0;i<HANDS_N;i++){ const a = i/HANDS_N*Math.PI*2 + rand(-.15,.15), r = rand(2.6,5.5); handData.push({x:raftPos.x + Math.cos(a)*r, z:raftPos.z + Math.sin(a)*r, ry:rand(0,6.3), d:rand(0,1.2), sp:rand(.8,1.3)}); }
+    X_.hands = {t:0}; X_.big = 12; whisperSfx(3,.25); setTimeout(()=>sub(`(mani. Tutto intorno alla zattera. Si aprono verso di te)`, 4), 1500); }
+  if (name==='rowboat'){ const sgn = Math.random()<.5?-1:1; X_.boat = {t:0, a:new THREE.Vector3(raftPos.x + sgn*28, waterY, raftPos.z - 13), b:new THREE.Vector3(raftPos.x - sgn*28, waterY, raftPos.z - 11)}; rowboat.visible = true; X_.big = 26; setTimeout(()=>toast(pick([`Una barca a remi scivola sul lago, senza remi. C'è qualcuno seduto. Ha una lanterna.`,`Una barca passa lenta davanti a te. Chi c'è sopra non rema. Gira la testa mentre ti passa davanti.`])), 3000); }
+  if (name==='selfCorpse'){ floaters.forEach(f=>f.visible = false); const c = floaters[0]; c.position.set(raftPos.x + rand(-4,4), waterY - .1, raftPos.z - 9); c.rotation.set(0, rand(0,6.3), 0); c.userData.v = new THREE.Vector2(0, .35); c.visible = true; X_.bodies = 22; X_.big = 14; setTimeout(()=>toast(`Un corpo galleggia verso la zattera, a faccia in su. Indossa la tua tuta. Ha la tua faccia, gonfia d'acqua. Sorride.`, 'warn'), 4000); setTimeout(()=>loseLuc(6, `il tuo corpo`), 4200); }
+  if (name==='rain'){ X_.rain = 22; X_.big = 20; rain.visible = true; setTimeout(()=>toast(`Piove. Le gocce sono nere e calde. È acqua che cade dal basso verso l'alto, e poi ricade.`, 'cosmic'), 2500); sfxNoise({dur:20, f:1800, q:.4, vol:.08, a:3, rev:.2}); }
+  if (name==='starsOut'){ X_.stars = 20; X_.big = 18; setTimeout(()=>toast(`Le stelle si stanno spegnendo. Una alla volta. Come occhi che si chiudono per non guardare.`, 'cosmic'), 2000); deepCallSfx(.4); }
+  if (name==='swarm'){ swarmD.length = 0; for (let i=0;i<SWARM_N;i++){ const a = rand(0,Math.PI*2), r = rand(12,26); swarmD.push({s:new THREE.Vector3(raftPos.x+Math.cos(a)*r, waterY-rand(2,5), raftPos.z+Math.sin(a)*r*.6 - 6), ph:rand(0,6), k:i/SWARM_N}); } X_.swarm = {t:0}; X_.big = 18; setTimeout(()=>sub(`(luci, sotto l'acqua. Si radunano sotto di te)`, 4), 2500); }
+  if (name==='silence'){ silence(9); X_.big = 12; setTimeout(()=>{ breathSfx(false, 2.2, .35); sub(`...Tobia...`, 2.5); }, 8200); setTimeout(()=>loseLuc(3, `il silenzio`), 8500); }
+  if (name==='neck'){ breathSfx(true, 2, .32); setTimeout(()=>breathSfx(false, 2.2, .35), 2200); shakeAmt = .3; X_.neck = {t:0, turned:false}; X_.big = 8; sub(`(qualcosa ti respira sul collo)`, 3.5); }
+  if (name==='tide'){ tideK = 0; X_.tide = {t:0}; X_.big = 8; rumbleSfx(5,.5); setTimeout(()=>{ splashSfx(3, 50); splashSfx(6, 30); }, 1700); setTimeout(()=>toast(`L'acqua è salita di colpo. Poi è tornata giù. Come un respiro trattenuto.`), 4500); }
+  if (name==='scrawl'){ const w = pick([`TOBIA`,`SCENDI`,`TI ASPETTIAMO`,`NON CONTARE`,`QUASI`,`SVEGLIALO`]); writeName(w); X_.name = 28; dripSfx(.2); setTimeout(()=>toast(`Sulle assi, davanti a te, qualcuno ha scritto con l'acqua: ${w}.`), 1500); }
+  if (name==='bucketThing'){ X_.thingNext = true; }
+  if (name==='bellNear'){ [0,4,8,12].forEach((d,i)=> setTimeout(()=>{ bellSfx(2.2 - i*.4); ripple(raftPos.x + rand(-6,6), raftPos.z - 12 + i*3, 1 + i*.6); if (i===3){ raftJolt = .7; loseLuc(4, `la campana sotto di te`); } }, d*1000)); X_.big = 15; setTimeout(()=>sub(`(la campana suona sott'acqua. Ogni rintocco è più vicino)`, 4), 1200); }
+  if (name==='reflection'){ reflFig.position.set(raftPos.x + rand(-.5,.5), waterY - .04, raftPos.z - 4.2); reflFig.rotation.set(Math.PI, Math.PI, 0); reflFig.visible = true; X_.refl = {t:0}; X_.big = 11; setTimeout(()=>sub(`(nell'acqua, davanti a te, il riflesso di qualcuno in piedi alle tue spalle)`, 4.5), 1200); }
+  if (name==='levx'){ startLeviathan(); loseLuc(5, `qualcosa sotto di te`); setTimeout(()=>sub(`(qualcosa di lungo quanto il paese passa sotto la zattera)`, 4), 3000); }
 }
 function eventsUpdate(dt){
   if (X_.big > 0) X_.big -= dt;
@@ -1484,13 +1627,13 @@ function eventsUpdate(dt){
     if (!h.gone){ handObj.position.y = lerp(-.7, .375, smooth(0, 1.4, h.t)); raft.rotation.x += Math.sin(T*3)*.004*smooth(1,2,h.t);
       headObj.position.y = waterY - .5 + smooth(.5, 3.5, h.t)*.62; headObj.lookAt(camera.position);
       if (h.t > 3.2 && S.torchOn && (lookingAt(wfPos, .96) || lookingAt(headObj.position, .985))) h.seen += dt;
-      if (h.seen > 1.3){ h.gone = true; h.tg = h.t; splashSfx(4); ripple(wfPos.x, wfPos.z, 1); S.luc = Math.min(100, S.luc+1); }
-      else if (h.t > 10){ h.gone = true; h.tg = h.t; shakeAmt = 1; splashSfx(3); creakSfx(); S.luc = Math.max(0, S.luc-10); toast(`Qualcosa ha provato a salire sulla zattera. Ha lasciato i segni delle unghie nel legno.`, 'warn'); X_.prints = 20; }
+      if (h.seen > 1.3){ h.gone = true; h.tg = h.t; splashSfx(4); ripple(wfPos.x, wfPos.z, 1); gainLuc(1, `l'hai ricacciato giù`); }
+      else if (h.t > 10){ h.gone = true; h.tg = h.t; shakeAmt = 1; splashSfx(3); creakSfx(); loseLuc(10, `qualcosa è salito`); toast(`Qualcosa ha provato a salire sulla zattera. Ha lasciato i segni delle unghie nel legno.`, 'warn'); X_.prints = 20; }
     } else { handObj.position.y -= dt*2; headObj.position.y -= dt*1.5; if (h.t - h.tg > .6){ handObj.visible = false; headObj.visible = false; X_.hand = null; } } }
   // figura alle spalle
   if (X_.behind){ const b = X_.behind; b.t += dt; camera.getWorldDirection(fwd);
-    if (fwd.z > .45){ b.seen += dt; if (b.seen > .3 && behindFig.visible){ behindFig.visible = false; heartSfx(.9); stingerSfx(); S.luc = Math.max(0, S.luc-7); postMat.uniforms.uFlash.value = .15; b.done = true; } }
-    if (b.t > 9 || b.done){ if (!b.done){ whisperSfx(1.8,.35); sub(`...non voltarti... non voltarti mai...`, 3); S.luc = Math.max(0, S.luc-3); } behindFig.visible = false; X_.behind = null; } }
+    if (fwd.z > .45){ b.seen += dt; behindFig.position.z = Math.max(.6, behindFig.position.z - dt*.9); if (b.seen > .75 && behindFig.visible){ behindFig.visible = false; heartSfx(.9); stingerSfx(); loseLuc(7, `era alle tue spalle`); postMat.uniforms.uFlash.value = .15; b.done = true; } }
+    if (b.t > 9 || b.done){ if (!b.done){ whisperSfx(1.8,.35); sub(`...non voltarti... non voltarti mai...`, 3); loseLuc(3, `qualcosa alle tue spalle`); } behindFig.visible = false; X_.behind = null; } }
   // impronte
   if (X_.prints > 0){ X_.prints -= dt; printMat.opacity = Math.min(.75, X_.prints/6) * Math.min(1, (30 - X_.prints)*2 + .5); } else printMat.opacity = 0;
   // pesci
@@ -1498,16 +1641,16 @@ function eventsUpdate(dt){
     fishData.forEach((f,i)=>{ seObj.position.set(f.x, waterY + .02 - sink - rise + Math.sin(T*1.3+f.ph)*.02, f.z); seObj.rotation.set(Math.sin(T+f.ph)*.1, f.ry, Math.PI); seObj.scale.setScalar(1); seObj.updateMatrix(); fishMesh.setMatrixAt(i, seObj.matrix); });
     fishMesh.count = fishData.length; fishMesh.instanceMatrix.needsUpdate = true; } else fishMesh.count = 0;
   // corpi
-  if (X_.bodies > 0){ X_.bodies -= dt; floaters.forEach(c=>{ c.position.x += c.userData.v.x*dt; c.position.z += c.userData.v.y*dt; c.position.y = waterY - .12 - (X_.bodies < 4 ? (4-X_.bodies)*.3 : 0) + Math.sin(T+c.position.x)*.03; c.rotation.z = Math.sin(T*.7+c.position.z)*.05; if (Math.hypot(c.position.x - raftPos.x, c.position.z - raftPos.z) < 3) c.userData.v.multiplyScalar(.97); }); if (X_.bodies <= 0) floaters.forEach(c=>c.visible = false); }
+  if (X_.bodies > 0){ X_.bodies -= dt; floaters.forEach(c=>{ if (!c.visible || !c.userData.v) return; c.position.x += c.userData.v.x*dt; c.position.z += c.userData.v.y*dt; c.position.y = waterY - .12 - (X_.bodies < 4 ? (4-X_.bodies)*.3 : 0) + Math.sin(T+c.position.x)*.03; c.rotation.z = Math.sin(T*.7+c.position.z)*.05; if (Math.hypot(c.position.x - raftPos.x, c.position.z - raftPos.z) < 3) c.userData.v.multiplyScalar(.97); }); if (X_.bodies <= 0) floaters.forEach(c=>c.visible = false); }
   // bocca
   if (X_.mouth){ const m = X_.mouth; m.t += dt; const open = smooth(0,2.5,m.t) * (1 - smooth(6,7.5,m.t)); mouthObj.scale.set(open+.01, 1, open+.01); mouthObj.position.y = waterY + .02 - smooth(6.5,9,m.t)*1.5; mouthObj.rotation.y += dt*.2;
-    if (m.t > 3 && m.t < 3.1) { S.luc = Math.max(0, S.luc-8); heartSfx(.6); }
+    if (m.t > 3 && m.t < 3.1) { loseLuc(8, `la bocca`); heartSfx(.6); }
     if (m.t > 9){ mouthObj.visible = false; X_.mouth = null; bubbleSfx(); } }
   // il doppio
   if (X_.dg){ const d = X_.dg; d.t += dt; dgObj.getWorldPosition(wfPos); wfPos.y += 1.2; const look = lookingAt(wfPos, .985);
     if (look){ d.seen = true; d.away = 0; } else if (d.seen){ d.away += dt; if (d.away > 1.4){ d.seen = false; d.away = 0; d.step++;
         const k = d.step/4, tx = lerp(d.far.x, raftPos.x + rand(-1,1), k), tz = lerp(d.far.z, raftPos.z - 2.6, k); dgObj.position.set(tx, d.step >= 4 ? waterY - .3 : Math.max(H(tx,tz), waterY - .3), tz); dgObj.lookAt(camera.position.x, dgObj.position.y, camera.position.z); creakSfx(); if (d.step >= 2) heartSfx(.4 + d.step*.1); } }
-    if (d.step >= 4 && look){ scare(); S.luc = Math.max(0, S.luc-12); dgObj.visible = false; X_.dg = null; }
+    if (d.step >= 4 && look){ scare(); loseLuc(12, `la figura con la lanterna`); dgObj.visible = false; X_.dg = null; }
     else if (d.t > 70){ dgObj.visible = false; X_.dg = null; } }
   // nebbia con le figure
   if (X_.fog > 0){ X_.fog -= dt; fogFigs.forEach((f,i)=>{ f.userData.a += dt*.12; const r = 7 + Math.sin(T*.5+i)*1.5; f.position.set(raftPos.x + Math.cos(f.userData.a)*r, waterY - .9, raftPos.z + Math.sin(f.userData.a)*r); f.lookAt(camera.position.x, f.position.y, camera.position.z); }); if (X_.fog <= 0) fogFigs.forEach(f=>f.visible = false); }
@@ -1518,10 +1661,40 @@ function eventsUpdate(dt){
   if (X_.dock > 0){ X_.dock -= dt; if (X_.dock <= 0 || (dayF > .5 && phase < 3)){ X_.dock = 0; dockFigs.forEach(f=>f.visible = false); } }
   if (X_.breath > 0){ X_.breath -= dt; const ph = (X_.breathPh += dt) / 5.5; const prev = Math.floor((X_.breathPh - dt)/5.5*2); if (Math.floor(ph*2) !== prev) breathSfx(Math.floor(ph*2)%2===0, 2.6, .28); }
   if (X_.left){ const l = X_.left; l.t += dt; if (S.torchOn && lookingAt(waterFigure.position, .96)) l.seen += dt;
-    if (l.seen > .4){ waterFigure.visible = false; X_.left = null; heartSfx(.9); whisperSfx(1.5,.3); sub(`...ti aveva detto di non guardare...`, 3); S.luc = Math.max(0, S.luc-9); }
+    if (l.seen > .4){ waterFigure.visible = false; X_.left = null; heartSfx(.9); whisperSfx(1.5,.3); sub(`...ti aveva detto di non guardare...`, 3); loseLuc(9, `hai guardato`); }
     else if (l.t > 14){ waterFigure.visible = false; X_.left = null; call(`DITTA SESTI`, `Bravo. Non l'ha guardato. Lui però ha guardato lei.`); } }
+  // nuovi eventi
+  if (X_.tentR){ const e = X_.tentR; e.t += dt; tentRaft.getWorldPosition(wfPos); wfPos.y += .3;
+    const up = e.gone ? Math.max(0, 1 - (e.t - e.tg)*1.5) : smooth(0, 2.5, e.t); tentRaft.position.y = -1.4 + up*1.4; tentRaft.scale.set(1, 1, .4 + up*.6);
+    if (!e.gone && e.t > 2 && S.torchOn && lookingAt(wfPos, .95)) e.seen += dt;
+    if (!e.gone && (e.seen > 1.2 || e.t > 9)){ e.gone = true; e.tg = e.t; splashSfx(3, 8); if (e.seen > 1.2) gainLuc(2, `l'hai ricacciato giù`); else { raftJolt = .6; loseLuc(8, `il tentacolo sulla zattera`); } }
+    if (e.gone && e.t - e.tg > .8){ tentRaft.visible = false; X_.tentR = null; } }
+  if (X_.sEye){ const e = X_.sEye; e.t += dt; const open = smooth(.5,2.5,e.t) * (1 - smooth(6,7,e.t)) * (Math.abs(Math.sin(e.t*.9)) > .97 ? .1 : 1); surfEye.scale.set(1,1,Math.max(.02,open)); surfEye.material.opacity = Math.min(1, open*1.2); surfEye.position.y = waterY + .03;
+    if (e.t > 3 && e.t < 3.05 && lookingAt(surfEye.position, .93)) loseLuc(6, `l'occhio nell'acqua`); if (e.t > 7){ surfEye.visible = false; X_.sEye = null; ripple(surfEye.position.x, surfEye.position.z, 1.2); } }
+  if (X_.hands){ const e = X_.hands; e.t += dt; let c = 0; handData.forEach(h=>{ const u = clamp((e.t - h.d)*h.sp, 0, 1), dn = smooth(8,10,e.t); const y = waterY - 1.6 + smooth(0,1,u)*2.4 - dn*2.6 + Math.sin(T*2+h.ry)*.03;
+      seObj.position.set(h.x, y, h.z); seObj.rotation.set(Math.sin(T+h.ry)*.15, h.ry, Math.cos(T*.8+h.ry)*.15); seObj.scale.setScalar(1.6); seObj.updateMatrix(); hands.setMatrixAt(c++, seObj.matrix); });
+    hands.count = c; hands.instanceMatrix.needsUpdate = true; if (e.t > 3 && e.t < 3.05) loseLuc(5, `le mani nell'acqua`); if (e.t > 10.5){ hands.count = 0; X_.hands = null; } }
+  if (X_.boat){ const e = X_.boat; e.t += dt; const k = e.t/24; rowboat.position.lerpVectors(e.a, e.b, k); rowboat.position.y = waterY + .05 + Math.sin(T*.8)*.04; rowboat.rotation.y = Math.atan2(e.b.x-e.a.x, e.b.z-e.a.z); rowboat.rotation.z = Math.sin(T*.6)*.03;
+    const f = rowboat.userData.fig; const want = Math.atan2(camera.position.x - rowboat.position.x, camera.position.z - rowboat.position.z) - rowboat.rotation.y; f.rotation.y += (want - f.rotation.y)*Math.min(1, dt*.6);
+    if (k > .5 && !e.l){ e.l = 1; loseLuc(4, `la barca`); whisperSfx(2,.2); } if (k >= 1){ rowboat.visible = false; X_.boat = null; } }
+  if (X_.rain > 0){ X_.rain -= dt; const a = rainGeo.attributes.position; const fade = Math.min(1, X_.rain/3, (22 - X_.rain)/2);
+    rainP.forEach((p,i)=>{ p.y -= dt*14; if (p.y < -2){ p.y = rand(16,22); p.x = rand(-25,25); p.z = rand(-25,25); } const x = camera.position.x + p.x, z = camera.position.z + p.z, y = Math.max(waterY, camera.position.y + p.y - 6); a.setXYZ(i*2, x, y, z); a.setXYZ(i*2+1, x, y + .5, z); });
+    a.needsUpdate = true; rain.material.opacity = .7*fade; if (Math.random() < dt*6) ripple(raftPos.x + rand(-10,10), raftPos.z - rand(2,14), .3); if (X_.rain <= 0) rain.visible = false; }
+  if (X_.stars > 0){ X_.stars -= dt; skyU.uOut.value = smooth(20,10,X_.stars) * smooth(0,3,X_.stars); } else skyU.uOut.value = 0;
+  if (X_.swarm){ const e = X_.swarm; e.t += dt; const gather = smooth(1,8,e.t) * (1 - smooth(12,16,e.t)); let c = 0;
+    swarmD.forEach(d=>{ const a = d.k*Math.PI*2 + e.t*.4, ring = new THREE.Vector3(raftPos.x + Math.cos(a)*(5+Math.sin(d.k*12)*1.2), waterY - 1.8, raftPos.z - 6 + Math.sin(a)*(3+Math.cos(d.k*12)*.7));
+      tmpV.lerpVectors(d.s, ring, gather); tmpV.y += Math.sin(T*2+d.ph)*.2; seObj.position.copy(tmpV); seObj.rotation.set(0,0,0); seObj.scale.setScalar(.8 + .4*Math.sin(T*3+d.ph)); seObj.updateMatrix(); swarm.setMatrixAt(c++, seObj.matrix); });
+    swarm.count = c; swarm.instanceMatrix.needsUpdate = true; if (e.t > 8 && e.t < 8.05){ loseLuc(4, `le luci sotto di te`); raftJolt = .3; } if (e.t > 16){ swarm.count = 0; X_.swarm = null; } }
+  if (X_.neck){ const e = X_.neck; e.t += dt; camera.getWorldDirection(fwd); if (fwd.z > .45 && !e.turned){ e.turned = true; whisperSfx(1,.3); sub(`(non c'è nessuno. Ma sul legno, dietro di te, l'acqua sgocciola)`, 3.5); }
+    if (e.t > 5){ if (!e.turned) loseLuc(5, `qualcosa ti ha respirato addosso`); X_.neck = null; } }
+  if (X_.tide){ const e = X_.tide; e.t += dt; tideK = Math.sin(Math.PI*clamp(e.t/4.5, 0, 1)) * .9; if (e.t > 4.5){ tideK = 0; X_.tide = null; } }
+  if (X_.name > 0){ X_.name -= dt; nameMat.opacity = Math.min(.8, X_.name/5) * Math.min(1, (28 - X_.name)*.5); } else nameMat.opacity = 0;
+  if (X_.refl){ const e = X_.refl; e.t += dt; reflFig.position.y = waterY - .04; camera.getWorldDirection(fwd);
+    if (fwd.z > .45 && !e.turned){ e.turned = true; reflFig.visible = false; behindFig.position.set(0, .36, 1.3); behindFig.rotation.y = Math.PI; behindFig.visible = true; stingerSfx(); loseLuc(8, `era davvero alle tue spalle`); setTimeout(()=>{ behindFig.visible = false; }, 350); }
+    if (e.t > 9 || e.turned){ if (!e.turned) whisperSfx(1.5,.2); reflFig.visible = false; X_.refl = null; } }
+  if (raftJolt > 0) raftJolt = Math.max(0, raftJolt - dt*1.4);
   // tirata sulla corda
-  if (X_.tug > 0){ X_.tug -= dt; shakeAmt = Math.max(shakeAmt, .35); if (Math.random() < dt*3) creakSfx(); if (X_.tug <= 0){ toast(`Qualcosa, laggiù, ha tirato la corda dall'altra parte. Poi ha lasciato andare.`, 'warn'); S.luc = Math.max(0, S.luc-4); } }
+  if (X_.tug > 0){ X_.tug -= dt; shakeAmt = Math.max(shakeAmt, .35); if (Math.random() < dt*3) creakSfx(); if (X_.tug <= 0){ toast(`Qualcosa, laggiù, ha tirato la corda dall'altra parte. Poi ha lasciato andare.`, 'warn'); loseLuc(4, `qualcosa ha tirato`); } }
   // suoni d'ambiente: non è mai del tutto silenzio
   X_.amb -= dt;
   if (X_.amb <= 0){ X_.amb = rand(4, 11) / (1 + phase*.3);
@@ -1529,6 +1702,47 @@ function eventsUpdate(dt){
     if (r < .2) splashSfx(rand(35, 90)); else if (r < .35) creakSfx(); else if (r < .5) dripSfx(rand(.05,.12)); else if (r < .6) knockSfx(.12, rand(-1,1));
     else if (r < .7 && phase >= 1) whisperSfx(1.2, .06); else if (r < .78) bubbleSfx(); else if (r < .85 && dayF < .5) sfxNoise({dur:1.5, f:rand(200,500), q:6, vol:.04, a:.5, rev:.9, rate:.3}); }
 }
+/* ---------- varianti ---------- */
+const KNOCKS = [
+  { p:[0,.55,1.1], v:.8, ask:true, t:`Tre colpi, sotto le assi della zattera. Lenti. Come chi chiede permesso.` },
+  { p:[0,.18,.36,.54,.72,.9,1.08], v:.6, t:`(colpi rapidi, tutti insieme, da ogni lato della zattera: come tante mani)` },
+  { p:[0,1.6,3.2], v:1, t:`(un colpo. Poi un altro, più forte. Viene da molto più in basso del fondo.)` },
+  { p:[0,.3,.6,2.2,2.5,2.8], v:.7, ask:true, t:`Tre colpi. Pausa. Tre colpi. È il segnale che usavi da bambino per farti aprire la porta.` },
+  { p:[0,.12], v:.5, t:`(due colpetti leggeri, proprio sotto i tuoi piedi. Poi qualcosa gratta il legno.)` } ];
+const PRINTS = [
+  { s:1, t:`Sulle assi della zattera ci sono impronte bagnate. Piedi nudi. Arrivano dall'acqua.` },
+  { s:.62, t:`Impronte piccole, di bambino, girano attorno a dove stai seduto. Tre giri. Poi tornano in acqua.` },
+  { s:1.45, t:`Impronte larghe, con la membrana tra le dita. Sono uscite dall'acqua e ci sono tornate. Dove stavi tu.` },
+  { s:1, rev:true, t:`Impronte bagnate che partono da dove sei seduto e finiscono in acqua. Sono della tua misura.` } ];
+/* ---------- nuovi eventi: la creatura, il lago, il cielo ---------- */
+let raftJolt = 0, tideK = 0;
+const tentRaft = (()=>{ const pts = []; for (let k=0;k<=10;k++){ const t = k/10; pts.push(new THREE.Vector3(Math.sin(t*2)*.2, -1.6 + t*2.1 - Math.max(0,t-.6)*1.8, t*1.6)); }
+  const cv = new THREE.CatmullRomCurve3(pts), g = tube(pts, .17, .015, 40, 8); const m = new THREE.Mesh(g, M.tentacle); m.visible = false; raft.add(m); return m; })();
+const surfEye = mesh(new THREE.PlaneGeometry(5,5).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({map:deepEyeTex0(), color:new THREE.Color(3,3,3), transparent:true, depthWrite:false})); surfEye.visible = false; surfEye.renderOrder = 3; scene.add(surfEye);
+function deepEyeTex0(){ const c = document.createElement('canvas'); c.width = c.height = 256; const X = c.getContext('2d');
+  const g = X.createRadialGradient(128,128,8,128,128,128); g.addColorStop(0,'rgba(255,230,120,1)'); g.addColorStop(.3,'rgba(210,110,20,.95)'); g.addColorStop(.48,'rgba(70,30,5,.8)'); g.addColorStop(.62,'rgba(150,140,110,.7)'); g.addColorStop(1,'rgba(0,0,0,0)');
+  X.fillStyle = g; X.beginPath(); X.ellipse(128,128,128,70,0,0,7); X.fill(); X.strokeStyle='rgba(140,20,20,.6)'; X.lineWidth=2; for (let i=0;i<20;i++){ const a = Math.random()*6.28; X.beginPath(); X.moveTo(128+Math.cos(a)*120, 128+Math.sin(a)*60); X.quadraticCurveTo(128+Math.cos(a+.2)*80, 128+Math.sin(a+.2)*45, 128+Math.cos(a)*50, 128+Math.sin(a)*30); X.stroke(); }
+  X.fillStyle = '#000'; X.beginPath(); X.ellipse(128,128,10,58,0,0,7); X.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const handGeo = (()=>{ const P = []; const palm = new THREE.BoxGeometry(.13,.16,.04); palm.translate(0,.08,0); P.push(palm);
+  for (let f=0; f<4; f++){ const fg = new THREE.CylinderGeometry(.011,.014,.17,5); fg.translate(-.045+f*.03, .24, 0); fg.rotateZ((f-1.5)*.08); P.push(fg); }
+  const th = new THREE.CylinderGeometry(.012,.015,.1,5); th.rotateZ(.9); th.translate(-.09,.1,0); P.push(th);
+  const arm = new THREE.CylinderGeometry(.04,.05,1.4,6); arm.translate(0,-.7,0); P.push(arm); return mergeGeometries(P.map(q=>q.index?q.toNonIndexed():q)); })();
+const HANDS_N = 16, hands = new THREE.InstancedMesh(handGeo, wetMat0(), HANDS_N); hands.count = 0; hands.frustumCulled = false; scene.add(hands); const handData = [];
+function wetMat0(){ return new THREE.MeshStandardMaterial({color:0x6b7465, roughness:.3, metalness:.05}); }
+const rowboat = (()=>{ const g = new THREE.Group(); const hull = new THREE.Mesh(new THREE.SphereGeometry(1,16,8,0,Math.PI*2,Math.PI/2,Math.PI/2), M.wood); hull.scale.set(.75,.45,2.1); g.add(hull);
+  g.add(mesh(new THREE.BoxGeometry(1.3,.06,.3), M.woodDark, 0,-.05,.3)); const f = mesh(figureGeo(1.9, 1.5), ghoulMat, 0,-.25,.3); f.scale.setScalar(.85); g.add(f); g.userData.fig = f;
+  g.add(mesh(new THREE.SphereGeometry(.07,8,6), new THREE.MeshBasicMaterial({color:new THREE.Color(5,3,1.2)}), .45,.25,-1.2)); g.visible = false; scene.add(g); return g; })();
+const RAIN_N = 700, rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(RAIN_N*6), 3));
+const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({color:0x1a1f1c, transparent:true, opacity:.75})); rain.visible = false; rain.frustumCulled = false; scene.add(rain); const rainP = [];
+for (let i=0;i<RAIN_N;i++) rainP.push(new THREE.Vector3(rand(-25,25), rand(0,22), rand(-25,25)));
+const SWARM_N = 48, swarm = new THREE.InstancedMesh(new THREE.SphereGeometry(.3,8,6), new THREE.MeshBasicMaterial({color:new THREE.Color(.5,2.6,1.4)}), SWARM_N); swarm.count = 0; swarm.frustumCulled = false; scene.add(swarm); const swarmD = [];
+const nameTex = document.createElement('canvas'); nameTex.width = 512; nameTex.height = 128;
+const nameMat = new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(nameTex), transparent:true, opacity:0, depthWrite:false, color:0x000000 });
+const nameDecal = mesh(new THREE.PlaneGeometry(2.4,.6).rotateX(-Math.PI/2), nameMat, 0,.372,-.95); nameDecal.renderOrder = 4; raft.add(nameDecal);
+const reflFig = mesh(figureGeo(2.4, 1.2), new THREE.MeshBasicMaterial({color:new THREE.Color(.42,.46,.42)})); reflFig.rotation.x = Math.PI; reflFig.visible = false; scene.add(reflFig); reflFig.add(mesh(eyePairGeo, eyeGlowMat, ...eyeAt(2.4, 1.2)));
+const bucketTent = (()=>{ const pts = []; for (let k=0;k<=6;k++){ const t = k/6; pts.push(new THREE.Vector3(Math.sin(t*4)*.06, .15 + t*.35, Math.cos(t*3)*.04)); } const m = new THREE.Mesh(tube(pts, .045, .006, 16, 6), M.tentacle); m.visible = false; bucket.add(m); return m; })();
+function writeName(word){ const X = nameTex.getContext('2d'); X.clearRect(0,0,512,128); X.fillStyle = '#fff'; X.font = 'bold 86px serif'; X.textAlign = 'center'; X.textBaseline = 'middle';
+  for (let i=0;i<5;i++){ X.globalAlpha = .25; X.fillText(word, 256 + rand(-4,4), 64 + rand(-4,4)); } X.globalAlpha = 1; for (let i=0;i<40;i++){ X.fillRect(rand(40,470), rand(70,124), 2, rand(6,30)); } nameMat.map.needsUpdate = true; }
 const EV_CD = {};
 const ok = (k, sec) => { EV_CD[k] = sec; return (EV.cool[k]||0) <= performance.now()/1000; };
 /* ---------- le cose enormi ---------- */
@@ -1568,7 +1782,7 @@ function bigUpdate(dt){
   if (X_.titan){ const t = (X_.titan.t += dt); const rise = smooth(0,7,t) * (1 - smooth(14,20,t));
     titan.position.y = waterY - 75 + rise*60; shakeAmt = Math.max(shakeAmt, rise*.25); fovKick = Math.max(fovKick, rise*7); subBoost = Math.max(subBoost, rise*.35);
     if (Math.random() < dt*2*rise) ripple(titan.position.x + rand(-6,6), titan.position.z + rand(-6,6), 2.5);
-    if (t > 4 && t < 4.05){ S.luc = Math.max(0, S.luc-7); sub(`(è alto come il campanile. E ce ne sono altri, sotto.)`, 5); }
+    if (t > 4 && t < 4.05){ loseLuc(7, `il tentacolo`); sub(`(è alto come il campanile. E ce ne sono altri, sotto.)`, 5); }
     if (t > 20){ titan.visible = false; X_.titan = null; } }
   if (LEV.on){ const k = LEV.t/LEV.dur, sc = LEV.r/9; const x = lerp(LEV.a.x, LEV.b.x, k), z = lerp(LEV.a.y, LEV.b.y, k);
     const yb = H(x,z); creature.visible = true; creature.scale.setScalar(sc);
@@ -1854,7 +2068,7 @@ function fxUpdate(){
   mistU.uTime.value = T; mistU.uCol.value.copy(scene.fog.color);
   mists.forEach(m=>{ m.position.set(camera.position.x, water.position.y + m.userData.off, camera.position.z); });
   moteU.uTime.value = T; moteU.uCam.value.copy(camera.position); camera.getWorldDirection(moteU.uDir.value);
-  terrainU.uTime.value = T;
+  terrainU.uTime.value = T; ghoulU.uTime.value = T;
   renderer.shadowMap.needsUpdate = flash.intensity > 0;
 }
 
@@ -1894,7 +2108,7 @@ function begin(){
   running = true; buildPlumbMarks(); ['hud','bottom','sideBtns'].forEach(id=>$(id).classList.remove('hidden'));
   $('torchBtn').classList.toggle('off', !S.torchOn);
   corpse2.visible = S.cycle > 1;
-  waterY = -S.d; water.position.y = waterY; terrainU.uWater.value = waterY; raftPos.copy(raftTarget(waterY)); rebuildPipes(true);
+  waterY = -S.d; water.position.y = waterY; terrainU.uWater.value = waterY; raftPos.copy(raftTarget(waterY)); raftVel.set(0,0,0); rebuildPipes(true);
 }
 $('newBtn').onclick = ()=> startGame(true);
 $('contBtn').onclick = ()=> startGame(false);
@@ -2006,8 +2220,12 @@ function update(dt){
     if (S.contract && S.tank > 0){ S.money += S.tank * PRICE(S.d) * CONTRACTS[S.contract].p; S.tank = 0; }
     // lucidità
     const night = dayF < .5;
-    const drain = (night?.035:0) + phase*.012 + (S.torchOn?0:.08) + S.pumps[4]*.004 + S.pumps[5]*.012;
-    const regen = dayF*.05 + S.lumino*.035;
+    const nearLamp = lamp.intensity > 2;
+    const drain = (night?.035:0) + phase*.012 + (S.torchOn?0:.08) + S.pumps[4]*.004 + S.pumps[5]*.012 + (breathT>0 ? 0 : 0);
+    const regen = dayF*.05 + S.lumino*.035 + (nearLamp ? .012 : 0) + (breathT > 0 ? 1.8 : 0);
+    LUCWHY.dn = [night && 'notte', !S.torchOn && 'torcia spenta', phase>=1 && 'profondità', (S.pumps[4]||S.pumps[5]) && 'macchine di carne'].filter(Boolean);
+    LUCWHY.up = [dayF>.5 && 'luce del giorno', S.lumino && 'lumini votivi', nearLamp && 'la lanterna', breathT>0 && 'respiri'].filter(Boolean);
+    LUCWHY.net = regen - drain;
     if (S.luc <= .01 && !blackout) doBlackout();
     else S.luc = clamp(S.luc + (regen - drain)*dt, 0, 100);
     // eventi
@@ -2029,13 +2247,15 @@ function update(dt){
       pitchT = -1.35; postMat.uniforms.uDark.value = smooth(4.5,6.5,endT); if (endT > 7 && !S.ended) showCredits('wake'); }
     if (ending==='fill'){ targetY = lerp(-MAXD-9, 0, smooth(0,12,endT)); lidOpen = Math.max(0, 1-endT/5); postMat.uniforms.uDark.value = smooth(10,14,endT); if (endT > 14.5 && !S.ended) showCredits('fill'); }
   }
-  waterY += (targetY - waterY) * Math.min(1, dt*(ending?1.2:3));
+  waterY += (targetY - waterY) * Math.min(1, dt*(ending?1.2:1.1));
   const breathOff = X_.breath > 0 ? Math.sin(X_.breathPh/5.5*Math.PI*2)*.32*smooth(0,3,X_.breath)*smooth(24,21,X_.breath) : 0;
-  water.position.y = waterY + breathOff; terrainU.uWater.value = waterY;
+  water.position.y = waterY + breathOff + tideK; terrainU.uWater.value = waterY;
   // zattera
-  raftPos.lerp(raftTarget(waterY), Math.min(1, dt*1.5));
+  { // molla smorzata: la zattera accelera e frena dolcemente verso dove galleggia
+    const tg = raftTarget(waterY), w = 2.2; raftVel.addScaledVector(tmpV.subVectors(tg, raftPos), w*w*dt).multiplyScalar(Math.max(0, 1 - 2*w*dt)); raftPos.addScaledVector(raftVel, dt);
+    if (raftPos.y < tg.y - .02 && tg.y <= waterY + .01) raftPos.y = tg.y; }
   const floating = raftPos.y <= waterY + .05;
-  raft.position.copy(raftPos); if (floating){ raft.position.y += Math.sin(T*1.1)*.04 + breathOff; raft.rotation.set(Math.sin(T*.6)*.012, 0, Math.sin(T*.8)*.016); } else raft.rotation.set(-.08,0,.03);
+  raft.position.copy(raftPos); if (floating){ raft.position.y += Math.sin(T*1.1)*.04 + breathOff + tideK + raftJolt*Math.sin(T*24)*.12*raftJolt; raft.rotation.x += raftJolt*Math.sin(T*9)*.05; raft.rotation.set(Math.sin(T*.6)*.012, 0, Math.sin(T*.8)*.016); } else raft.rotation.set(-.08,0,.03);
   raft.updateMatrixWorld();
   lamp.position.set(raft.position.x-1.36, raft.position.y+1.98, raft.position.z-1.3); waterU.uLampPos.value.copy(lamp.position);
   if (raft.userData.lantern) raft.userData.lantern.rotation.z = Math.sin(T*.9)*.025;
@@ -2065,7 +2285,7 @@ function update(dt){
   if (X_.green > 0){ lamp.color.setRGB(.35,1,.4); M.lampGlass.emissive.setRGB(.3,1,.4); li *= 1.6; } else { lamp.color.copy(LAMP_COL); M.lampGlass.emissive.setHex(0xffaa55); }
   lamp.intensity = Math.max(0, li); M.lampGlass.emissiveIntensity = li*.8;
   const fi = TORCHES[S.torch].i * (S.torchOn && blackT<=0 && X_.torchKill<=0 ? 1 : 0) * (phase>=3 && Math.random()<.01 ? .1 : 1);
-  flash.intensity = fi*.4; waterU.uFlashI.value = fi; waterU.uLampI.value = lamp.intensity;
+  flash.intensity = fi*.3; waterU.uFlashI.value = fi; waterU.uLampI.value = lamp.intensity;
   camera.getWorldPosition(waterU.uFlashPos.value); camera.getWorldDirection(waterU.uFlashDir.value);
   waterU.uTime.value = T; waterU.uCalm.value = 1 + phase*.4;
   // finestre del paese
@@ -2094,7 +2314,7 @@ function update(dt){
   if (wf.on){ wf.t += dt; waterFigure.position.y = water.position.y - .7 + Math.sin(T*.8)*.05;
     camera.getWorldDirection(fwd); tmpV.copy(waterFigure.position).sub(camera.position).normalize();
     if (fwd.dot(tmpV) > .975 && S.torchOn) wf.seen += dt;
-    if (wf.seen > .35 || wf.t > 9){ waterFigure.visible = false; wf.on = false; if (wf.seen > .35){ whisperSfx(1.2,.25); S.luc = Math.max(0, S.luc-4); heartSfx(.5); } }
+    if (wf.seen > .35 || wf.t > 9){ waterFigure.visible = false; wf.on = false; if (wf.seen > .35){ whisperSfx(1.2,.25); loseLuc(4, `la figura sull'acqua`); heartSfx(.5); } }
   }
   if (paleT > 0){ paleT -= dt; if (paleT <= 0){ paleFigure.visible = false; } }
   if (!ending) eventsUpdate(dt);
@@ -2103,6 +2323,7 @@ function update(dt){
   // battito
   if (S.luc < 30 || phase>=4){ beatT -= dt; if (beatT <= 0){ heartSfx(.35 + (30-Math.min(S.luc,30))/60); beatT = lerp(.6, 1.3, Math.min(S.luc,30)/30); } }
   if (glitchT > 0) glitchT -= dt;
+  if (breathT > 0) breathT -= dt; if (breathCd > 0) breathCd -= dt;
   if (subT > 0){ subT -= dt; if (subT <= 0) $('subs').style.opacity = 0; }
 
   // camera
@@ -2115,7 +2336,8 @@ function update(dt){
   camera.updateMatrixWorld();
   postMat.uniforms.uInsane.value = Math.max(insane*insane, ending==='wake'?.8:0); postMat.uniforms.uTime.value = T;
   postMat.uniforms.uFlash.value = Math.max(lightK*.12, postMat.uniforms.uFlash.value - dt*.8);
-  postMat.uniforms.uTent.value = Math.max(clamp((48 - S.luc)/48, 0, 1), ending==='wake' ? smooth(0,4,endT) : 0);
+  postMat.uniforms.uTent.value = 0;
+  postMat.uniforms.uPulse.value = clamp((55 - S.luc)/55, 0, 1) * Math.pow(Math.max(0, Math.sin(ecgPh*Math.PI*2)), 6);
   postMat.uniforms.uSick.value = phase>=3 ? .15 + clamp((S.d-65)/63,0,1)*.35 : 0;
   postMat.uniforms.uOld.value = 0;
   applyUnder();
@@ -2129,7 +2351,7 @@ function update(dt){
     else if (u < .58){ if (!B.splashed){ B.splashed = true; ripple(B.target.x, B.target.z, .9); splashSfx(B.dist, BUCKETS[S.bucket].s); doSpray(B.target); if (X_.tugNext){ X_.tugNext = false; X_.tug = 2.6; B.dur += 2.6; } }
       if (X_.tug > 0 && Math.random() < dt*4) ripple(B.target.x + rand(-.5,.5), B.target.z + rand(-.5,.5), .6);
       bucket.position.copy(B.target); bucket.position.y = water.position.y - .2 + Math.sin(T*8)*.03; bucket.rotation.z = .9; }
-    else if (u < 1){ if (!B.reeled){ B.reeled = true; reelSfx(B.dur*.42); } const e = (u-.58)/.42; const ee = 1-(1-e)*(1-e); bucket.position.lerpVectors(B.target, handPos, ee); bucket.rotation.z = (1-e)*.6; }
+    else if (u < 1){ if (!B.reeled){ B.reeled = true; reelSfx(B.dur*.42); if (X_.thingNext){ X_.thingNext = false; B.thing = true; bucketTent.visible = true; } } if (B.thing){ bucket.rotation.x = Math.sin(T*30)*.15; } const e = (u-.58)/.42; const ee = 1-(1-e)*(1-e); bucket.position.lerpVectors(B.target, handPos, ee); bucket.rotation.z = (1-e)*.6; }
     else { finishBucket(); }
     rope.visible = true;
   } else { bucket.position.copy(handPos); bucket.rotation.set(0, yaw, Math.sin(T*1.3)*.04); rope.visible = false; }
@@ -2168,6 +2390,8 @@ function update(dt){
     $('lucBar').firstElementChild.style.width = S.luc + '%';
     $('lucBar').firstElementChild.style.background = S.luc < 30 ? '#c0584a' : '#b9c7a8';
     $('lucTxt').textContent = `LUCIDITÀ ${Math.round(S.luc)}%`;
+    { const up = LUCWHY.net > .002, w = up ? LUCWHY.up : LUCWHY.dn; $('lucWhy').textContent = (up ? '▲ ' : LUCWHY.net < -.002 ? '▼ ' : '■ ') + (w.length ? w.join(' · ') : (up ? 'stai recuperando' : 'stabile')); $('lucWhy').className = 'mini ' + (up ? 'up' : 'dn');
+      const bb = $('breathBtn'); bb.disabled = breathCd > 0 || breathT > 0 || S.luc > 96; bb.textContent = breathT > 0 ? 'RESPIRI…' : breathCd > 0 ? `RESPIRA · ${Math.ceil(breathCd)}s` : 'RESPIRA'; bb.classList.toggle('hint', !bb.disabled && S.luc < 60); }
     { const left = Math.max(0, MAXD - S.d); $('belowTxt').textContent = downT > .3 ? `SOTTO DI TE: ${Math.round(left)} m D'ACQUA NERA` : `ACQUA SOTTO: ${Math.round(left)} m`; $('belowTxt').classList.toggle('dn', downT > .3); }
     $('rateTxt').textContent = `${fmt(pumpRate())} L/s · ${PRICE(S.d).toLocaleString('it-IT',{maximumFractionDigits:2})} €/L`;
     $('timeTxt').textContent = (dayF>=.5 ? 'GIORNO ' : 'NOTTE ') + (Math.floor(S.time/240)+1);
@@ -2192,7 +2416,7 @@ function frame(now){
   fxUpdate();
   renderFrame();
 }
-if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt) };
+if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt) };
 $('loading').remove();
 requestAnimationFrame(frame);
 document.addEventListener('contextmenu', e=>e.preventDefault());
