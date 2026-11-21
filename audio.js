@@ -231,6 +231,36 @@ const DEFS = {
     const o = k.osc('square', 400), sh = k.shaper(8), g = k.g(.3); for (let t=0;t<.4;t+=.02) o.frequency.setValueAtTime(R(60,3000), t); k.chain(o, sh, g, out); o.start(0); o.stop(.4);
     for (let i=0;i<5;i++) k.burst(out, R(0,.35), .02, 'highpass', 2000, .7, .4);
   }},
+  // un tentacolo che striscia: risucchio bagnato, ventose che si staccano, gemito breve
+  slither:{ n:3, sec:2.4, build(ctx, out, k){
+    const n = k.noise(2.4, 'pink'), bp = k.f('bandpass', 380, 3), g = k.g(0); const c = new Float32Array(40), a = new Float32Array(40);
+    for (let i=0;i<40;i++){ c[i] = R(220,700); a[i] = Math.pow(Math.sin(Math.PI*i/39),.7)*R(.3,1); } bp.frequency.setValueCurveAtTime(c, 0, 2.3); g.gain.setValueCurveAtTime(a, 0, 2.3); k.chain(n, bp, g, out); n.start(0);
+    for (let i=0;i<14;i++){ const t = R(.1,2.1); k.burst(out, t, R(.02,.05), 'bandpass', R(600,1400), 4, R(.2,.5)); if (Math.random()<.5) k.blip(out, t+.01, R(200,500), R(.03,.06), R(.15,.35), 1.6); }
+    const o = k.osc('sawtooth', R(48,62)), lp = k.f('lowpass', 220, 6), og = k.g(0); o.frequency.linearRampToValueAtTime(R(34,42), 2.2); k.adsr(og.gain, .3, .6, .25, .6, .8); k.chain(o, lp, og, out); o.start(0); o.stop(2.4);
+  }},
+  // qualcosa di grosso che emerge: l'acqua che si apre, poi cola giù a scrosci
+  surface:{ n:2, sec:4.5, build(ctx, out, k){
+    const n = k.noise(4.5, 'brown'), lp = k.f('lowpass', 500, .7), g = k.g(0); k.adsr(g.gain, 0, .4, 1, .6, 3.2); k.chain(n, lp, g, out); n.start(0);
+    const w = k.noise(4.5, 'pink'), bp = k.f('bandpass', 1200, .6), wg = k.g(0); k.adsr(wg.gain, .3, .5, .5, 1.2, 2.4); k.chain(w, bp, wg, out); w.start(0);
+    for (let i=0;i<30;i++){ const t = R(.4,4.2), p = k.pan(R(-.7,.7)); p.connect(out); k.blip(p, t, R(500,1600), R(.02,.05), R(.05,.18)*(1-t/5), 1.5); }
+    for (let i=0;i<10;i++) k.blip(out, R(.1,1.2), R(120,300), R(.06,.12), R(.2,.4), 1.9);
+  }},
+  // la voce al telefono: borbottio di formanti, filtrato come una linea del '53
+  voice:{ n:3, sec:2.2, build(ctx, out, k){
+    const line = k.f('bandpass', 1300, .7), lg = k.g(1); k.chain(line, lg, out);
+    const src = k.osc('sawtooth', R(95,130)), fs = VOWELS[0].map(f=>k.f('bandpass', f, 7)), env = k.g(0); fs.forEach(b=>{ src.connect(b); b.connect(env); }); env.connect(line);
+    const vib = k.osc('sine', 5), vg = k.g(3); vib.connect(vg); vg.connect(src.frequency); vib.start(0);
+    let t = .05; while (t < 2.05){ const v = VOWELS[Math.floor(Math.random()*VOWELS.length)], d = R(.08,.2); fs.forEach((b,i)=> b.frequency.setValueAtTime(v[i]*R(.92,1.08), t)); src.frequency.setValueAtTime(R(90,135), t);
+      env.gain.setValueAtTime(.0001, t); env.gain.exponentialRampToValueAtTime(R(.3,.8), t+.025); env.gain.exponentialRampToValueAtTime(.0001, t+d); if (Math.random()<.2) t += R(.1,.25); t += d; }
+    src.start(0); src.stop(2.2); vib.stop(2.2);
+    const h = k.noise(2.2), hb = k.f('bandpass', 2400, .5), hg = k.g(.05); k.chain(h, hb, hg, out); h.start(0);
+  }},
+  // la tensione che sale prima che succeda qualcosa
+  riser:{ n:2, sec:3.6, build(ctx, out, k){
+    const n = k.noise(3.6, 'pink'), bp = k.f('bandpass', 300, 2), g = k.g(0); bp.frequency.setValueAtTime(300, 0); bp.frequency.exponentialRampToValueAtTime(2600, 3.4); g.gain.setValueAtTime(.0001, 0); g.gain.exponentialRampToValueAtTime(.7, 3.3); g.gain.linearRampToValueAtTime(0, 3.5); k.chain(n, bp, g, out); n.start(0);
+    [55, 58.3, 82.4].forEach(f=>{ const o = k.osc('sawtooth', f), lp = k.f('lowpass', 200, 2), og = k.g(0); lp.frequency.exponentialRampToValueAtTime(900, 3.4); og.gain.setValueAtTime(.0001, 0); og.gain.exponentialRampToValueAtTime(.25, 3.3); og.gain.linearRampToValueAtTime(0, 3.5); k.chain(o, lp, og, out); o.start(0); o.stop(3.6); });
+  }},
+  page:{ n:2, sec:.7, build(ctx, out, k){ k.burst(out, 0, .25, 'bandpass', 2800, .8, .5, 'pink'); k.burst(out, .18, .35, 'highpass', 3500, .7, .3, 'pink'); k.burst(out, .02, .1, 'lowpass', 400, .7, .2); }},
   /* ---------- ambienti in loop ---------- */
   // l'acqua che sciaborda contro i fusti della zattera
   lap:{ n:1, sec:11, loop:1, build(ctx, out, k){
@@ -253,7 +283,7 @@ const DEFS = {
     const h = k.osc('sine', 48), hg = k.g(.08); k.chain(h, hg, out); h.start(0); h.stop(16);
   }},
 };
-const ORDER = ['bell','creak','splash','cast','reel','whisper','heart','stinger','thunder','rumble','groan','bubble','lap','wind','clank','drip','knock','click','coin','deepcall','breathIn','breathOut','footstep','ring','static','reveal','musicbox','honk','glitch','deep'];
+const ORDER = ['bell','creak','splash','cast','reel','voice','riser','slither','surface','page','whisper','heart','stinger','thunder','rumble','groan','bubble','lap','wind','clank','drip','knock','click','coin','deepcall','breathIn','breathOut','footstep','ring','static','reveal','musicbox','honk','glitch','deep'];
 
 // cottura a lotti: più suoni nella stessa passata, ognuno spostato nel tempo da un ritardo, poi ritagliati
 function finish(buf, opts){
@@ -411,3 +441,9 @@ export function musicBoxSfx(vol=.16){ const p = R(-.8,.8); play('musicbox', { vo
 export function breathSfx(inhale=true, dur=2.2, vol=.2){ play(inhale ? 'breathIn' : 'breathOut', { vol:vol*2, dur:Math.min(dur,2.6), fade:.3, rev:.12, pan:R(-.2,.2) }); }
 export function honkSfx(){ play('honk', { vol:.32, rev:.7, lp:1700 }); }
 export function dripSfx(vol=.12){ play('drip', { vol:vol*2, rate:R(.8,1.25), pan:R(-.7,.7), rev:.55 }); }
+
+export function slitherSfx(vol=.5, pan=0){ play('slither', { vol, pan, rev:.35, rate:R(.85,1.1), max:2 }); }
+export function surfaceSfx(size=1, delay=0){ play('surface', { vol:clamp(.35*size, .1, 1), rate:clamp(1.15 - size*.15, .6, 1.2), delay, rev:.5, lp:clamp(6000 - size*900, 1200, 6000) }); }
+export function voiceSfx(rate=1){ play('voice', { vol:.32, rate:rate*R(.95,1.05), rev:.05, lp:3200, max:1 }); }
+export function riserSfx(){ play('riser', { vol:.45, rev:.4 }); }
+export function pageSfx(){ play('page', { vol:.35, rate:R(.9,1.1), rev:.1 }); }
