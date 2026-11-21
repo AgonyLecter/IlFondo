@@ -2123,8 +2123,6 @@ function attnUpdate(dt){ if (!attn || drag) { if (attn) attn.t -= dt; if (attn &
   const dx = attn.p.x - camera.position.x, dz = attn.p.z - camera.position.z, dy = attn.p.y - camera.position.y;
   const ty = Math.atan2(-dx, -dz), tp = clamp(Math.atan2(dy, Math.hypot(dx,dz)), -1.2, .4);
   let d = ty - yawT; d = Math.atan2(Math.sin(d), Math.cos(d)); yawT += d*Math.min(1, dt*attn.k); pitchT += (tp - pitchT)*Math.min(1, dt*attn.k*.7); }
-const EV_CD = {};
-const ok = (k, sec) => { EV_CD[k] = sec; return (EV.cool[k]||0) <= performance.now()/1000; };
 /* ---------- le cose enormi ---------- */
 // un tentacolo alto quanto il campanile
 const titan = (()=>{ const pts = []; for (let k=0;k<=12;k++){ const t = k/12; pts.push(new THREE.Vector3(Math.sin(t*2.4)*7*t, t*72, Math.cos(t*1.8)*3.5*t)); }
@@ -2201,19 +2199,6 @@ function bigUpdate(dt){
   const vert = downT > .5 ? Math.sin(T*.8)*2.5*clamp(downT/3,0,1) : 0;
   const fov = 70 - fovKick + vert; if (Math.abs(camera.fov - fov) > .05){ camera.fov = fov; camera.updateProjectionMatrix(); }
 }
-function pickExtraEvent(night){
-  const o = [];
-  if (S.d > 1.5){ if (ok('knock', 80)) o.push('knock'); if (ok('prints', 130)) o.push('prints'); if ((night || phase>=1) && ok('music', 140)) o.push('music'); if (S.d > 3 && ok('silent', 260)) o.push('silent'); if (S.d > 2 && ok('tug', 70)) o.push('tug'); }
-  if (S.d > 4 && ok('fish', 170)) o.push('fish');
-  if (S.d > 5 && ok('behind', 95)) o.push('behind');
-  if (phase >= 1 || S.d > 8){ if (ok('hand', 85)) o.push('hand'); if (night && ok('torch', 110)) o.push('torch'); if (ok('sublim', 70)) o.push('sublim'); if (night && ok('green', 120)) o.push('green'); if (ok('left', 240)) o.push('left'); }
-  if (phase >= 1){ if (ok('bodies', 170)) o.push('bodies'); if (night && ok('dg', 220)) o.push('dg'); if (ok('fog', 180)) o.push('fog'); if (S.luc < 65 && ok('lost', 320)) o.push('lost');
-    if (S.revealed.includes('car') && night && ok('car', 200)) o.push('car'); }
-  if (S.d > 10 && ok('titan', 150)) o.push('titan');
-  if (S.d > 18 && !LEV.on && ok('levx', 110)) o.push('levx');
-  if (phase >= 2){ if (ok('mouth', 120)) o.push('mouth'); if (ok('blood', 160)) o.push('blood'); if (ok('breath', 150)) o.push('breath'); if (night && ok('dock', 200)) o.push('dock'); }
-  return o;
-}
 /* ---------- jumpscare ---------- */
 const scv = $('scare'), sctx = scv.getContext('2d');
 function drawFace(){
@@ -2270,7 +2255,7 @@ function doBlackout(){
 }
 
 /* ---------- finale ---------- */
-let ending = null, endT = 0;
+let ending = null, endT = 0, endAsked = false;
 function startFinale(){
   ending = 'reveal'; endT = 0; holdBucket = false; B.busy = false;
   titan.visible = creature.visible = deepEye.visible = false; X_.titan = X_.deepEye = null;
@@ -2567,11 +2552,10 @@ function poiUpdate(){
 const ecg = $('ecg').getContext('2d'); let ecgSkip = false; const HC = {}; const EL = { lucLid:$('lucLid'), lucIris:$('lucIris'), plumbBob:$('plumbBob'), hud:$('hud'), bucketRing:$('bucketRing'), dayIc:$('dayIc') }; let ecgX = 0, ecgPh = 0; const ecgBuf = new Float32Array(200);
 function hudFx(dt){
   const fear = clamp((100 - S.luc)/100, 0, 1), bpm = 62 + fear*90 + (phase>=4?20:0);
-  ecgPh += dt*bpm/60;
-  for (let k=0;k<3;k++){ const p = ecgPh % 1; let v = 0;
+  for (let k=0;k<3;k++){ ecgPh += dt*bpm/60/3; const p = ecgPh % 1; let v = 0;
     if (p < .06) v = Math.sin(p/.06*Math.PI)*.15; else if (p > .12 && p < .14) v = -.2; else if (p >= .14 && p < .18) v = 1 - (p-.14)/.04*1.6; else if (p >= .18 && p < .21) v = -.35 + (p-.18)/.03*.35; else if (p > .3 && p < .42) v = Math.sin((p-.3)/.12*Math.PI)*.25;
     if (S.luc < 25) v += (Math.random()-.5)*.25;
-    ecgBuf[ecgX] = v; ecgX = (ecgX+1) % 200; ecgPh += dt*bpm/60*.0; }
+    ecgBuf[ecgX] = v; ecgX = (ecgX+1) % 200; }
   if ((ecgSkip = !ecgSkip)){
     ecg.clearRect(0,0,200,40); ecg.strokeStyle = S.luc < 30 ? '#d0584a' : '#a9c19a'; ecg.lineWidth = 2; ecg.beginPath();
     for (let i=0;i<200;i+=2){ const j = (ecgX + i) % 200; const y = 22 - ecgBuf[j]*16; i ? ecg.lineTo(i, y) : ecg.moveTo(i, y); } ecg.stroke(); }
@@ -2618,7 +2602,7 @@ function update(dt){
     // lucidità
     const night = dayF < .5;
     const nearLamp = lamp.intensity > 2;
-    const drain = (night?.028:0) + phase*.006 + (S.torchOn?0:.06) + S.pumps[4]*.004 + S.pumps[5]*.012 + (S.filter>=5 ? .006 : 0) + (breathT>0 ? 0 : 0);
+    const drain = (night?.028:0) + phase*.006 + (S.torchOn?0:.06) + S.pumps[4]*.004 + S.pumps[5]*.012 + (S.filter>=5 ? .006 : 0);
     const regen = dayF*.075 + S.lumino*.04 + (nearLamp ? .018 : 0) + (breathT > 0 ? 2.2 : 0);
     LUCWHY.dn = [night && 'notte', !S.torchOn && 'torcia spenta', phase>=1 && 'profondità', (S.pumps[4]||S.pumps[5]) && 'macchine di carne'].filter(Boolean);
     LUCWHY.up = [dayF>.5 && 'luce del giorno', S.lumino && 'lumini votivi', nearLamp && 'la lanterna', breathT>0 && 'respiri'].filter(Boolean);
@@ -2638,7 +2622,7 @@ function update(dt){
   // livello acqua
   let targetY = -S.d;
   if (ending){ endT += dt;
-    if (ending==='reveal'){ targetY = -MAXD - Math.min(endT/6,1)*9; lidOpen = Math.min(1, endT/9); if (endT > 10 && $('prompt').classList.contains('hidden') && !S._asked){ S._asked = true; showEndChoice(); } }
+    if (ending==='reveal'){ targetY = -MAXD - Math.min(endT/6,1)*9; lidOpen = Math.min(1, endT/9); if (endT > 10 && $('prompt').classList.contains('hidden') && !endAsked){ endAsked = true; showEndChoice(); } }
     if (ending==='wake'){ targetY = -137; lidOpen = 1; shakeAmt = Math.max(shakeAmt, .5);
       const k = Math.min(1, endT/5); CAM_BASE.lerpVectors(camWakeStart, new THREE.Vector3(0,-128,3), k*k);
       pitchT = -1.35; postMat.uniforms.uDark.value = smooth(4.5,6.5,endT); if (endT > 7 && !S.ended) showCredits('wake'); }
@@ -2824,4 +2808,4 @@ if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ r
 $('loading').remove();
 requestAnimationFrame(frame);
 document.addEventListener('contextmenu', e=>e.preventDefault());
-document.addEventListener('visibilitychange', ()=>{ if (document.hidden) save(); });
+document.addEventListener('visibilitychange', ()=>{ if (document.hidden && !ending) save(); });
