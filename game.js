@@ -1627,6 +1627,13 @@ function aimTarget(out){ camera.getWorldDirection(fwd); const cy = camera.positi
   if (fwd.y < -.04){ const t = (waterY - cy)/fwd.y, x = camera.position.x + fwd.x*t, z = camera.position.z + fwd.z*t, d = Math.hypot(x - raftPos.x, z - raftPos.z);
     if (d > 2.8 && d < 16 && wetSpot(x, z, .6)){ out.set(x, water.position.y - .05, z); return true; } }
   return false; }
+// il segno di mira: un cerchio sull'acqua dove cadrà il secchio
+const aimMat = new THREE.MeshBasicMaterial({ color:new THREE.Color(.9,.85,.6), transparent:true, opacity:0, depthWrite:false }); aimMat.userData.murk = true;
+const aimRing = mesh(new THREE.RingGeometry(.42,.5,32).rotateX(-Math.PI/2), aimMat); aimRing.renderOrder = 4; aimRing.userData.noCast = true; scene.add(aimRing);
+const aimV = new THREE.Vector3();
+function aimUpdate(){ const ok = running && !ending && !B.busy && aimTarget(aimV); const inV = ok && VEIN.on && Math.hypot(aimV.x - VEIN.x, aimV.z - VEIN.z) < 2.2;
+  aimMat.opacity += ((ok ? (inV ? .8 : .35) : 0) - aimMat.opacity)*.15; aimRing.visible = aimMat.opacity > .02;
+  if (ok){ aimRing.position.set(aimV.x, water.position.y + .04, aimV.z); aimMat.color.setRGB(inV ? 1.6 : .9, inV ? 1.5 : .85, inV ? .7 : .6); aimRing.scale.setScalar(inV ? 1.3 + .1*Math.sin(T*6) : 1); } }
 /* ---------- commesse della Ditta Sesti ---------- */
 let orderNext = 90;
 function ordersUpdate(dt){
@@ -2710,7 +2717,7 @@ function update(dt){
   }
   if (wf.sink > 0){ wf.sink -= dt; waterFigure.position.y -= dt*3.2; if (wf.sink <= 0 && !X_.left) waterFigure.visible = false; }
   if (paleT > 0){ paleT -= dt; if (paleT <= 0){ paleFigure.visible = false; } }
-  if (!ending){ eventsUpdate(dt); helpersUpdate(dt); ordersUpdate(dt); } veinUpdate(dt);
+  if (!ending){ eventsUpdate(dt); helpersUpdate(dt); ordersUpdate(dt); } veinUpdate(dt); aimUpdate();
   attnUpdate(dt);
   if (tensionT > 0) tensionT -= dt; if (!ending) postMat.uniforms.uDark.value = tensionT > 0 ? Math.sin(Math.PI*clamp(1 - tensionT/tensionD, 0, 1))*.22 : 0;
   bigUpdate(dt);
