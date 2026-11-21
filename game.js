@@ -16,6 +16,7 @@ const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 const MAXD = 128;
 const LPM = d => 250 * Math.pow(1.08, d);
 const PRICE = d => 0.02 * Math.pow(1.03, d);
+const priceNow = () => PRICE(S.d) * FILTERS[S.filter||0].m;
 const CATASTO = 150000;
 const BUCKETS = [
   {n:`Secchio di latta`, s:1, c:0},
@@ -58,6 +59,16 @@ const TORCHES = [
   {n:`Faro marino`, i:3500, c:250000}
 ];
 const LUMINI = [0,150,6000,250000];
+// filtri: l'acqua pulita vale di più
+const FILTERS = [{n:``, m:1, c:0}, {n:`Telo di juta`, m:1.2, c:90}, {n:`Filtro a sabbia`, m:1.45, c:1400}, {n:`Distillatore`, m:1.8, c:18000}, {n:`Alambicco di rame`, m:2.3, c:260000}, {n:`Filtro di capelli`, m:3.2, c:5e6, org:true}];
+// amuleti: si perde meno lucidità
+const CHARMS = [{n:``, k:1, c:0}, {n:`Sale grosso sulle assi`, k:.85, c:220}, {n:`Ferro di cavallo inchiodato`, k:.72, c:3500}, {n:`Medaglietta di San Cristoforo`, k:.6, c:45000}, {n:`L'occhio chiuso del campanile`, k:.45, c:700000}];
+// reti: più reperti nel secchio (e il Compratore li paga)
+const NETS = [{n:``, f:1, c:0}, {n:`Retina sul secchio`, f:1.7, c:160}, {n:`Rete a strascico`, f:2.4, c:2800}, {n:`Rete del pescatore annegato`, f:3.3, c:60000}];
+// garzoni: calano secchi da soli, anche quando non tocchi niente
+const HELPERS = [{n:``, iv:0, k:0, c:0}, {n:`Il garzone muto`, iv:5, k:1, c:110}, {n:`Il garzone, più svelto`, iv:3, k:1, c:1300}, {n:`Due garzoni`, iv:2.6, k:2, c:16000}, {n:`Tre garzoni`, iv:2.2, k:3, c:240000}, {n:`I garzoni senza ombra`, iv:1.2, k:3, c:6e6, org:true}];
+// furgone: vende da solo quando la cisterna è piena
+const VANS = [{n:``, p:0, c:0}, {n:`Il furgone del Compratore`, p:.85, c:600}, {n:`Due viaggi al giorno`, p:.95, c:9000}];
 
 function fmt(n){
   n = Math.floor(n);
@@ -74,7 +85,7 @@ function glitchStr(s){ return s.replace(/[0-9]/g, ()=> Math.random()<.5 ? String
 const SAVE_KEY = 'ilfondo_v1';
 function freshState(cycle=1){
   return { d:0, money:0, tank:0, total:0, luc:100, time:70, bucket:0, pull:0, tankLv:0, contract:0,
-    pumps:PUMPS.map(()=>0), torch:0, lumino:0, story:[], found:[], revealed:[], relics:[], evc:{}, evRecent:[], cycle, ended:false, torchOn:true };
+    pumps:PUMPS.map(()=>0), torch:0, lumino:0, filter:0, charm:0, net:0, helper:0, van:0, order:null, orderN:0, veins:0, story:[], found:[], revealed:[], relics:[], evc:{}, evRecent:[], cycle, ended:false, torchOn:true };
 }
 let S = freshState();
 function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
@@ -1315,7 +1326,7 @@ let lucPopN = 0;
 function lucPop(txt, good){ const el = document.createElement('div'); el.className = 'lp ' + (good ? 'up' : 'dn'); el.textContent = txt; $('lucPop').appendChild(el);
   while ($('lucPop').children.length > 3) $('lucPop').firstChild.remove(); setTimeout(()=>el.remove(), 3800); }
 // calibrata: le perdite pesano la metà, e meno ancora quando sei già al limite
-function loseLuc(x, why='', raw=false){ if (!(x > 0)) return; if (!raw) x *= .62 * (.45 + .55*S.luc/100) * (phase < 1 ? .7 : 1); S.luc = Math.max(0, S.luc - x); if (x >= 1) lucPop(`−${Math.round(x)} · ${why}`, false);
+function loseLuc(x, why='', raw=false){ if (!(x > 0)) return; if (!raw) x *= CHARMS[S.charm||0].k * .62 * (.45 + .55*S.luc/100) * (phase < 1 ? .7 : 1); S.luc = Math.max(0, S.luc - x); if (x >= 1) lucPop(`−${Math.round(x)} · ${why}`, false);
   if (!S.tipLuc && S.luc < 85){ S.tipLuc = 1; setTimeout(()=>toast(`La tua LUCIDITÀ è scesa. Le cose che vedi e senti la consumano. Tocca RESPIRA o guarda il DIARIO › MENTE per capire come recuperarla.`, 'lore'), 1500); } }
 function gainLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.min(100, S.luc + x); if (x >= 1) lucPop(`+${Math.round(x)} · ${why}`, true); }
 let subT = 0; const LUCWHY = { dn:[], up:[], net:0 }; let breathT = 0, breathCd = 0;
@@ -1354,21 +1365,27 @@ let glitchT = 0;
 function shopItems(){
   const it = [];
   const nb = BUCKETS[S.bucket+1];
-  if (nb && (!nb.org || phase>=2)) it.push({id:'bucket', n:nb.n, d: nb.org ? `${nb.s} secchi per calata. Si riempie da solo. Non guardarci dentro. (−lucidità)` : `${nb.s} secchi per calata (${nb.s*10} L)`, c:nb.c, org:nb.org, buy:()=>{ S.bucket++; }});
+  if (nb && (!nb.org || phase>=2)) it.push({id:'bucket', cat:0, n:nb.n, d: nb.org ? `${nb.s} secchi per calata. Si riempie da solo. Non guardarci dentro. (−lucidità)` : `${nb.s} secchi per calata (${nb.s*10} L)`, c:nb.c, org:nb.org, buy:()=>{ S.bucket++; }});
   const np = PULLS[S.pull+1];
-  if (np) it.push({id:'pull', n:np.n, d:`Cali e tiri su il secchio più in fretta`, c:np.c, buy:()=>{ S.pull++; }});
+  if (np) it.push({id:'pull', cat:0, n:np.n, d:`Cali e tiri su il secchio più in fretta`, c:np.c, buy:()=>{ S.pull++; }});
   const nt = TANKS[S.tankLv+1];
-  if (nt) it.push({id:'tank', n:`Cisterna da ${fmt(nt.cap)} L`, d:`Più acqua prima di dover vendere`, c:nt.c, buy:()=>{ S.tankLv++; }});
+  if (nt) it.push({id:'tank', cat:2, n:`Cisterna da ${fmt(nt.cap)} L`, d:`Più acqua prima di dover vendere`, c:nt.c, buy:()=>{ S.tankLv++; }});
   const nc = CONTRACTS[S.contract+1];
-  if (nc && (!nc.org || phase>=2)) it.push({id:'contract', n:nc.n, d: nc.org ? `Il Compratore paga più del valore. Si firma con quello che hai. (−15 lucidità)` : `Il Compratore ritira l'acqua da solo al ${Math.round(nc.p*100)}% del prezzo`, c:nc.c, org:nc.org, buy:()=>{ S.contract++; if (nc.org){ loseLuc(15, `contratto di sangue`, true); groanSfx(.5,3); } }});
-  PUMPS.forEach((p,i)=>{ if ((p.ph||0) <= phase) it.push({id:'pump'+i, n:p.n + (S.pumps[i]?` (${S.pumps[i]})`:''), d:`+${fmt(p.r)} L/s · ${p.d}`, c:pumpCost(i), org:p.org, buy:()=>{ S.pumps[i]++; rebuildPipes(true); creakSfx(); }}); });
+  if (nc && (!nc.org || phase>=2)) it.push({id:'contract', cat:2, n:nc.n, d: nc.org ? `Il Compratore paga più del valore. Si firma con quello che hai. (−15 lucidità)` : `Il Compratore ritira l'acqua da solo al ${Math.round(nc.p*100)}% del prezzo`, c:nc.c, org:nc.org, buy:()=>{ S.contract++; if (nc.org){ loseLuc(15, `contratto di sangue`, true); groanSfx(.5,3); } }});
+  PUMPS.forEach((p,i)=>{ if ((p.ph||0) <= phase) it.push({id:'pump'+i, cat:3, n:p.n + (S.pumps[i]?` (${S.pumps[i]})`:''), d:`+${fmt(p.r)} L/s · ${p.d}`, c:pumpCost(i), org:p.org, buy:()=>{ S.pumps[i]++; rebuildPipes(true); creakSfx(); }}); });
   const nto = TORCHES[S.torch+1];
-  if (nto) it.push({id:'torch', n:nto.n, d:`Illumina più a fondo. Sei sicuro di voler vedere?`, c:nto.c, buy:()=>{ S.torch++; }});
-  if (S.lumino < 3) it.push({id:'lumino', n:`Lumino votivo ${['I','II','III'][S.lumino]}`, d:`Una fiammella per i morti del paese. La lucidità torna più in fretta.`, c:LUMINI[S.lumino+1], buy:()=>{ S.lumino++; }});
+  if (nto) it.push({id:'torch', cat:4, n:nto.n, d:`Illumina più a fondo. Sei sicuro di voler vedere?`, c:nto.c, buy:()=>{ S.torch++; }});
+  if (S.lumino < 3) it.push({id:'lumino', cat:4, n:`Lumino votivo ${['I','II','III'][S.lumino]}`, d:`Una fiammella per i morti del paese. La lucidità torna più in fretta.`, c:LUMINI[S.lumino+1], buy:()=>{ S.lumino++; }});
+  const nf = FILTERS[S.filter+1]; if (nf && (!nf.org || phase>=2)) it.push({id:'filter', cat:2, n:nf.n, d: nf.org ? `L'acqua esce limpida come un occhio. Il Compratore paga ×${nf.m}. (−lucidità)` : `L'acqua vale ×${nf.m} al litro`, c:nf.c, org:nf.org, buy:()=>{ S.filter++; }});
+  const nv = VANS[S.van+1]; if (nv && !S.contract) it.push({id:'van', cat:2, n:nv.n, d:`Quando la cisterna è piena, vende da solo al ${Math.round(nv.p*100)}% del prezzo`, c:nv.c, buy:()=>{ S.van++; }});
+  const nh = HELPERS[S.helper+1]; if (nh && (!nh.org || phase>=2)) it.push({id:'helper', cat:1, n:nh.n, d: nh.org ? `Non mangiano, non dormono, non parlano. Calano secchi pieni tutta la notte. (−lucidità)` : `${nh.k > 1 ? nh.k + ' secchi' : 'Un secchio'} ogni ${nh.iv} s, da soli, anche mentre fai altro. ${S.helper ? '' : 'Non dice da dove viene.'}`, c:nh.c, org:nh.org, buy:()=>{ S.helper++; layoutHelpers(); }});
+  const nn = NETS[S.net+1]; if (nn) it.push({id:'net', cat:0, n:nn.n, d:`Il secchio trattiene più cose del fondo (×${nn.f}). Il Compratore paga anche quelle.`, c:nn.c, buy:()=>{ S.net++; }});
+  const nk = CHARMS[S.charm+1]; if (nk) it.push({id:'charm', cat:4, n:nk.n, d:`Perdi il ${Math.round((1-nk.k)*100)}% di lucidità in meno`, c:nk.c, buy:()=>{ S.charm++; }});
   return it;
 }
 function buildShop(){
-  $('shopList').innerHTML = shopItems().map(i=>`<div class="item ${i.org?'org':''}" data-row="${i.id}"><div class="info"><div class="nm">${i.n}</div><div class="ds">${i.d}</div></div><button data-buy="${i.id}">€ ${fmt(i.c)}</button></div>`).join('');
+  const CATS = ['IL SECCHIO','AIUTANTI','ACQUA E VENDITA','POMPE','PROTEZIONE'], its = shopItems().map((x,k)=>({...x, k})).sort((a,b)=>(a.cat-b.cat) || (a.k-b.k)); let lastC = -1;
+  $('shopList').innerHTML = its.map(i=>(i.cat !== lastC ? `<div class="shcat">${CATS[lastC = i.cat]}</div>` : '') + `<div class="item ${i.org?'org':''}" data-row="${i.id}"><div class="info"><div class="nm">${i.n}</div><div class="ds">${i.d}</div></div><button data-buy="${i.id}">€ ${fmt(i.c)}</button></div>`).join('');
   updateShop();
 }
 function updateShop(){
@@ -1415,7 +1432,7 @@ $('breathBtn').addEventListener('pointerdown', e=>{ e.stopPropagation(); if (bre
   breathT = 6; breathCd = 35; holdBucket = false; $('breathOv').classList.remove('hidden'); breathSfx(true, 2.6, .25); setTimeout(()=>breathSfx(false, 2.6, .22), 3000);
   const before = S.luc; setTimeout(()=>{ $('breathOv').classList.add('hidden'); lucPop(`+${Math.round(S.luc - before)} · hai respirato`, true); }, 6000); });
 $('torchBtn').onclick = ()=>{ S.torchOn = !S.torchOn; $('torchBtn').classList.toggle('off', !S.torchOn); play('click', {vol:.5, rev:.05}); };
-$('sellBtn').onclick = ()=>{ if (S.tank < 1) return; const v = S.tank * PRICE(S.d); S.money += v; S.tank = 0; coinSfx(); toast(`Venduti al Compratore: € ${fmt(v)}`); };
+$('sellBtn').onclick = ()=>{ if (S.tank < 1) return; const v = S.tank * priceNow(); S.money += v; S.tank = 0; coinSfx(); toast(`Venduti al Compratore: € ${fmt(v)}`); };
 let holdBucket = false;
 $('bucketBtn').addEventListener('pointerdown', e=>{ e.preventDefault(); holdBucket = true; initAudio(); throwBucket(); });
 ['pointerup','pointerleave','pointercancel'].forEach(ev=> $('bucketBtn').addEventListener(ev, ()=> holdBucket = false));
@@ -1541,7 +1558,8 @@ function throwBucket(){
   if (S.tank >= tankCap() && !S.contract){ toast(`La cisterna è piena. Vendi.`, 'warn'); return; }
   const sr = shoreR(S.d);
   const rt = Math.max(Math.min(raftPos.z - 3.6, sr - 1.5), 3);
-  B.target.set(.4, water.position.y - .05, rt);
+  B.vein = false; if (!aimTarget(B.target)) B.target.set(.4, water.position.y - .05, rt);
+  if (VEIN.on && VEIN.t > 1 && Math.hypot(B.target.x - VEIN.x, B.target.z - VEIN.z) < 2.2){ B.vein = VEIN.trap ? 'trap' : true; VEIN.on = false; veinObj.visible = false; }
   camera.updateMatrixWorld(); handPos.set(.5,-.58,-.85); camera.localToWorld(handPos);
   const dist = handPos.distanceTo(B.target);
   B.dist = dist; B.dur = (.55 + dist*.006) * PULLS[S.pull].m; B.t = 0; B.busy = true; B.splashed = false; B.reeled = false;
@@ -1550,18 +1568,21 @@ function throwBucket(){
 function finishBucket(){
   B.busy = false; clankSfx(); dripsSfx();
   if (B.thing){ B.thing = false; bucketTent.visible = false; bucket.rotation.x = 0; toast(pick([`Il secchio torna su scosso da qualcosa che si dimena. Una punta di tentacolo sporge dal bordo. Poi scivola giù, nel buio.`,`Nel secchio qualcosa si contorce. Ti guarda con un occhio solo, poi si arrotola e sparisce oltre il bordo.`]), 'warn'); loseLuc(6, `qualcosa nel secchio`); heartSfx(.7); }
-  const L = BUCKETS[S.bucket].s * 10;
+  let L = BUCKETS[S.bucket].s * 10;
+  if (B.vein === 'trap'){ L = 0; B.vein = false; scare(); loseLuc(7, `la vena era una bocca`); toast(`Il secchio torna su vuoto e morso. Sul bordo, il segno di denti. Non era una vena.`, 'warn'); }
+  else if (B.vein){ L *= 5; S.veins = (S.veins||0) + 1; revealSfx(); toast(`Acqua antica: secchio ×5.`, 'find'); }
   addLiters(L);
   if (BUCKETS[S.bucket].org) loseLuc(.3, `il secchio che respira`);
-  const ch = .05 + phase*.022;
-  if (phase >= 0 && Math.random() < ch && S.d > 2){ const unseen = FINDS.map((f,i)=>i).filter(i=>!S.relics.includes(i)); let pool = unseen.filter(i=>FINDS[i][0]<=phase && FINDS[i][0]>=phase-1); if (!pool.length) pool = unseen.filter(i=>FINDS[i][0]<=phase+1); if (pool.length){ const fi = pick(pool); showFind(fi); loseLuc(2+phase, `ciò che era nel secchio`); if (phase>=2) whisperSfx(1.5,.15); } }
+  const ch = (.05 + phase*.022) * NETS[S.net||0].f * (B.vein ? 3 : 1); B.vein = false;
+  if (phase >= 0 && Math.random() < ch && S.d > 2){ const unseen = FINDS.map((f,i)=>i).filter(i=>!S.relics.includes(i)); let pool = unseen.filter(i=>FINDS[i][0]<=phase && FINDS[i][0]>=phase-1); if (!pool.length) pool = unseen.filter(i=>FINDS[i][0]<=phase+1); if (pool.length){ const fi = pick(pool); showFind(fi); loseLuc(2+phase, `ciò che era nel secchio`); if (phase>=2) whisperSfx(1.5,.15); }
+    const val = Math.round(35*Math.pow(3, phase)*(1 + (S.net||0)*.35)); S.money += val; setTimeout(()=>{ coinSfx(); toast(pool.length ? `Il Compratore vuole anche questo: +€ ${fmt(val)}` : `Cianfrusaglie dal fondo. Il Compratore le prende tutte: +€ ${fmt(val)}`); }, pool.length ? 1800 : 0); }
   if (holdBucket) setTimeout(throwBucket, 30);
 }
 function addLiters(L){
   const space = S.contract ? Infinity : Math.max(0, tankCap() - S.tank);
   const take = Math.min(L, space);
   if (take <= 0) return 0;
-  S.tank += take; S.total += take;
+  S.tank += take; S.total += take; if (S.order) S.order.got += take;
   let rem = take;
   while (rem > 0 && S.d < MAXD){ const need = LPM(S.d); const step = Math.min(rem, need*.25); S.d += step/need; rem -= step; }
   S.d = Math.min(S.d, MAXD);
@@ -1569,6 +1590,58 @@ function addLiters(L){
 }
 const pumpRate = () => PUMPS.reduce((s,p,i)=> s + p.r*S.pumps[i], 0);
 
+/* ---------- i garzoni: lavorano da soli, ai lati della zattera ---------- */
+const helperFigs = [[-1.2,.95,-1],[1.25,.9,1],[-1.25,-.3,-1]].map(([x,z,side])=>{ const g = new THREE.Group(); g.position.set(x, .36, z); g.rotation.y = side*Math.PI/2;
+  const f = mesh(figureGeo(1.45, 1.5), ghoulMat); g.add(f); const b = mesh(new THREE.CylinderGeometry(.11,.085,.2,10,1,true), M.rust, .25, .55, .25); g.add(b);
+  g.userData = { side, b, t:0, f }; g.visible = false; raft.add(g); return g; });
+function layoutHelpers(){ const k = HELPERS[S.helper||0].k; helperFigs.forEach((g,i)=> g.visible = i < k); }
+let helperT = 2;
+function helpersUpdate(dt){
+  const h = HELPERS[S.helper||0]; if (!h.k || ending) return;
+  helperFigs.forEach(g=>{ if (!g.visible) return; const u = g.userData; if (u.t > 0){ u.t = Math.max(0, u.t - dt); const k = Math.sin(Math.PI*(1 - u.t/1.4)); g.rotation.z = -u.side*k*.35; u.b.position.y = .55 - k*.5; } else { g.rotation.z = 0; u.f.rotation.y = Math.sin(T*.3 + u.side)*.15; } });
+  helperT -= dt; if (helperT > 0) return; helperT = h.iv * rand(.85, 1.15);
+  if (!S.contract && S.tank >= tankCap()) return;
+  const who = helperFigs.filter(g=>g.visible), g = pick(who); g.userData.t = 1.4;
+  const L = BUCKETS[S.bucket].s * 10 * .75 * h.k; setTimeout(()=>{ if (!running || ending) return; g.getWorldPosition(tmpV); const x = raft.position.x + g.userData.side*2.3, z = tmpV.z;
+    splashFX(x, waterY, z, .45, .5); ripple(x, z, .6); if (Math.random() < .5) splashSfx(6, BUCKETS[S.bucket].s); addLiters(L);
+    if (S.helper >= 5 && Math.random() < .3) loseLuc(.4, `i garzoni senza ombra`); }, 700);
+}
+/* ---------- vene d'acqua antica: bolle sul lago, cala il secchio lì ---------- */
+const veinMat = new THREE.MeshBasicMaterial({ map:deepGlowTex(), color:new THREE.Color(1.1,1.5,1.05), blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0 }); veinMat.userData.murk = true;
+const veinObj = mesh(new THREE.CircleGeometry(1.9, 24).rotateX(-Math.PI/2), veinMat); veinObj.renderOrder = 3; veinObj.userData.noCast = true; veinObj.visible = false; scene.add(veinObj);
+const VEIN = { on:false, t:0, life:0, next:35, trap:false, x:0, z:0 };
+function startVein(){ for (let k=0;k<30;k++){ const a = rand(-.75,.75), r = rand(5, 13), x = raftPos.x + Math.sin(a)*r, z = raftPos.z - 2 - Math.cos(a)*r; if (!wetSpot(x, z, 1.5)) continue;
+    Object.assign(VEIN, { on:true, t:0, life:rand(18,26), x, z, trap: dayF < .5 && phase >= 1 && Math.random() < .25 }); veinObj.position.set(x, waterY + .03, z); veinObj.visible = true; bubbleSfx();
+    if (!S.veins){ toast(`Bolle sul lago, e una luce sotto: una vena d'acqua antica. Guardala e cala il secchio lì dentro: vale molto di più.`, 'lore'); } return true; } return false; }
+function veinUpdate(dt){
+  if (!VEIN.on){ VEIN.next -= dt; if (VEIN.next <= 0 && running && !ending && S.d > .5){ VEIN.next = rand(30, 55); startVein(); } return; }
+  VEIN.t += dt; const a = smooth(0, 2, VEIN.t) * smooth(VEIN.life, VEIN.life - 3, VEIN.t);
+  veinObj.position.y = water.position.y + .03; veinMat.opacity = a*(.55 + .25*Math.sin(T*3)); veinObj.scale.setScalar(.9 + .1*Math.sin(T*1.7));
+  if (VEIN.trap) veinMat.color.setRGB(1.6, .9 + .3*Math.sin(T*9), .6); else veinMat.color.setRGB(1.1, 1.5, 1.05);
+  if (Math.random() < dt*14*a) emitDrop(VEIN.x + rand(-1,1), waterY, VEIN.z + rand(-1,1), 0, rand(.3,.9), 0, .8, .5);
+  if (Math.random() < dt*2*a) ripple(VEIN.x + rand(-.6,.6), VEIN.z + rand(-.6,.6), .5);
+  if (VEIN.t > VEIN.life){ VEIN.on = false; veinObj.visible = false; }
+}
+// dove va il secchio: dove guardi, se è acqua a portata; altrimenti davanti alla zattera
+function aimTarget(out){ camera.getWorldDirection(fwd); const cy = camera.position.y;
+  if (fwd.y < -.04){ const t = (waterY - cy)/fwd.y, x = camera.position.x + fwd.x*t, z = camera.position.z + fwd.z*t, d = Math.hypot(x - raftPos.x, z - raftPos.z);
+    if (d > 2.8 && d < 16 && wetSpot(x, z, .6)){ out.set(x, water.position.y - .05, z); return true; } }
+  return false; }
+/* ---------- commesse della Ditta Sesti ---------- */
+let orderNext = 90;
+function ordersUpdate(dt){
+  if (ending || !running) return;
+  const o = S.order;
+  if (!o){ orderNext -= dt; if (orderNext > 0 || inCall || S.d < 1) return; orderNext = rand(140, 220);
+    const sec = Math.round(rand(2, 4))*60, perSec = pumpRate() + HELPERS[S.helper||0].k*BUCKETS[S.bucket].s*7.5/Math.max(1, HELPERS[S.helper||0].iv) + BUCKETS[S.bucket].s*10/(2 + PULLS[S.pull].m*1.5);
+    const need = Math.max(150, Math.round(perSec*sec*rand(.55,.8)/50)*50), reward = Math.round(need*priceNow()*rand(.9,1.3) + 30*Math.pow(1.6, phase) + S.orderN*15);
+    const night = dayF < .5, lines = night ? [`Signor Ferri. Stanotte ci servono ${fmt(need)} litri. Li vogliamo entro ${sec/60} minuti. Le pagheremo € ${fmt(reward)} in più. Non chieda per chi sono.`,`Ci scusi l'ora. Il Compratore ha sete. ${fmt(need)} litri in ${sec/60} minuti, premio € ${fmt(reward)}. Lavori al buio, se serve.`]
+      : [`Signor Ferri, buongiorno. Commessa urgente: ${fmt(need)} litri in ${sec/60} minuti. Premio di € ${fmt(reward)}, oltre al prezzo.`,`Una commessa per Lei: ${fmt(need)} litri entro ${sec/60} minuti. Se ce la fa, € ${fmt(reward)}. Se non ce la fa, non si preoccupi. Ce ne ricorderemo.`];
+    S.order = { need, got:0, left:sec, reward }; call(`DITTA SESTI`, pick(lines)); return; }
+  o.left -= dt;
+  if (o.got >= o.need){ S.money += o.reward; S.orderN++; coinSfx(); setTimeout(coinSfx, 250); toast(`Commessa consegnata: +€ ${fmt(o.reward)}. "Bravo, signor Ferri. Il Compratore è contento."`, 'find'); gainLuc(3, `lavoro fatto`); S.order = null; }
+  else if (o.left <= 0){ toast(`Commessa scaduta. ${pick([`Al telefono nessuno dice niente. Si sente solo respirare.`,`"Peccato." Poi la linea cade.`,`Più tardi, sul pontile, qualcuno ha lasciato un secchio vuoto. Per lei.`])}`, 'warn'); loseLuc(2, `commessa persa`); S.order = null; }
+}
 /* ---------- eventi ---------- */
 const EV = { next: 14, cool:{} };
 let choirBoost = 0;
@@ -2423,7 +2496,7 @@ function showLetter(){
 function begin(){
   running = true; buildPlumbMarks(); ['hud','bottom','sideBtns'].forEach(id=>$(id).classList.remove('hidden'));
   $('torchBtn').classList.toggle('off', !S.torchOn);
-  corpse2.visible = S.cycle > 1;
+  corpse2.visible = S.cycle > 1; layoutHelpers();
   waterY = -S.d; waterVel = 0; water.position.y = waterY; terrainU.uWater.value = waterY; raftPos.copy(raftTarget(waterY)); raftVel.set(0,0,0); rebuildPipes(true);
 }
 $('newBtn').onclick = ()=> startGame(true);
@@ -2533,11 +2606,12 @@ function update(dt){
   if (!ending){
     const pr = pumpRate();
     if (pr > 0) addLiters(pr*dt);
-    if (S.contract && S.tank > 0){ S.money += S.tank * PRICE(S.d) * CONTRACTS[S.contract].p; S.tank = 0; }
+    if (S.contract && S.tank > 0){ S.money += S.tank * priceNow() * CONTRACTS[S.contract].p; S.tank = 0; }
+    else if (S.van && S.tank >= tankCap()){ const v = S.tank * priceNow() * VANS[S.van].p; S.money += v; S.tank = 0; coinSfx(); toast(`Il furgone del Compratore ha svuotato la cisterna: € ${fmt(v)}`); }
     // lucidità
     const night = dayF < .5;
     const nearLamp = lamp.intensity > 2;
-    const drain = (night?.028:0) + phase*.006 + (S.torchOn?0:.06) + S.pumps[4]*.004 + S.pumps[5]*.012 + (breathT>0 ? 0 : 0);
+    const drain = (night?.028:0) + phase*.006 + (S.torchOn?0:.06) + S.pumps[4]*.004 + S.pumps[5]*.012 + (S.filter>=5 ? .006 : 0) + (breathT>0 ? 0 : 0);
     const regen = dayF*.075 + S.lumino*.04 + (nearLamp ? .018 : 0) + (breathT > 0 ? 2.2 : 0);
     LUCWHY.dn = [night && 'notte', !S.torchOn && 'torcia spenta', phase>=1 && 'profondità', (S.pumps[4]||S.pumps[5]) && 'macchine di carne'].filter(Boolean);
     LUCWHY.up = [dayF>.5 && 'luce del giorno', S.lumino && 'lumini votivi', nearLamp && 'la lanterna', breathT>0 && 'respiri'].filter(Boolean);
@@ -2636,7 +2710,7 @@ function update(dt){
   }
   if (wf.sink > 0){ wf.sink -= dt; waterFigure.position.y -= dt*3.2; if (wf.sink <= 0 && !X_.left) waterFigure.visible = false; }
   if (paleT > 0){ paleT -= dt; if (paleT <= 0){ paleFigure.visible = false; } }
-  if (!ending) eventsUpdate(dt);
+  if (!ending){ eventsUpdate(dt); helpersUpdate(dt); ordersUpdate(dt); } veinUpdate(dt);
   attnUpdate(dt);
   if (tensionT > 0) tensionT -= dt; if (!ending) postMat.uniforms.uDark.value = tensionT > 0 ? Math.sin(Math.PI*clamp(1 - tensionT/tensionD, 0, 1))*.22 : 0;
   bigUpdate(dt);
@@ -2714,8 +2788,9 @@ function update(dt){
     { const up = LUCWHY.net > .002, w = up ? LUCWHY.up : LUCWHY.dn; $('lucWhy').textContent = (up ? '▲ ' : LUCWHY.net < -.002 ? '▼ ' : '■ ') + (w.length ? w.join(' · ') : (up ? 'stai recuperando' : 'stabile')); $('lucWhy').className = 'mini ' + (up ? 'up' : 'dn');
       const bb = $('breathBtn'); bb.disabled = breathCd > 0 || breathT > 0 || S.luc > 96; bb.textContent = breathT > 0 ? 'RESPIRI…' : breathCd > 0 ? `RESPIRA · ${Math.ceil(breathCd)}s` : 'RESPIRA'; bb.classList.toggle('hint', !bb.disabled && S.luc < 60); }
     { const left = Math.max(0, MAXD - S.d); $('belowTxt').textContent = downT > .3 ? `SOTTO DI TE: ${Math.round(left)} m D'ACQUA NERA` : `ACQUA SOTTO: ${Math.round(left)} m`; $('belowTxt').classList.toggle('dn', downT > .3); }
-    $('rateTxt').textContent = `${fmt(pumpRate())} L/s · ${PRICE(S.d).toLocaleString('it-IT',{maximumFractionDigits:2})} €/L`;
+    $('rateTxt').textContent = `${fmt(pumpRate())} L/s · ${priceNow().toLocaleString('it-IT',{maximumFractionDigits:2})} €/L`;
     $('timeTxt').textContent = (dayF>=.5 ? 'GIORNO ' : 'NOTTE ') + (Math.floor(S.time/240)+1);
+    { const o = S.order, el = $('orderTxt'); if (o){ const m = Math.max(0, Math.ceil(o.left)); el.textContent = `COMMESSA ${fmt(Math.min(o.got,o.need))} / ${fmt(o.need)} L · ${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`; el.classList.toggle('dn', o.left < 30); } else el.textContent = ''; }
     $('bucketSub').textContent = fmt(BUCKETS[S.bucket].s*10) + ' L';
     $('sellBtn').style.opacity = S.contract ? .5 : 1;
     if (!$('shop').classList.contains('hidden')) updateShop();
@@ -2738,7 +2813,7 @@ function frame(now){
   fxUpdate(dt);
   renderFrame();
 }
-if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), begin, startTitan, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
+if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
 $('loading').remove();
 requestAnimationFrame(frame);
 document.addEventListener('contextmenu', e=>e.preventDefault());
