@@ -1193,7 +1193,8 @@ function toast(msg, cls=''){ const el = document.createElement('div'); el.classN
 let lucPopN = 0;
 function lucPop(txt, good){ const el = document.createElement('div'); el.className = 'lp ' + (good ? 'up' : 'dn'); el.textContent = txt; $('lucPop').appendChild(el);
   while ($('lucPop').children.length > 3) $('lucPop').firstChild.remove(); setTimeout(()=>el.remove(), 3800); }
-function loseLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.max(0, S.luc - x); if (x >= 1) lucPop(`−${Math.round(x)} · ${why}`, false);
+// calibrata: le perdite pesano la metà, e meno ancora quando sei già al limite
+function loseLuc(x, why='', raw=false){ if (!(x > 0)) return; if (!raw) x *= .62 * (.45 + .55*S.luc/100) * (phase < 1 ? .7 : 1); S.luc = Math.max(0, S.luc - x); if (x >= 1) lucPop(`−${Math.round(x)} · ${why}`, false);
   if (!S.tipLuc && S.luc < 85){ S.tipLuc = 1; setTimeout(()=>toast(`La tua LUCIDITÀ è scesa. Le cose che vedi e senti la consumano. Tocca RESPIRA o guarda il DIARIO › MENTE per capire come recuperarla.`, 'lore'), 1500); } }
 function gainLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.min(100, S.luc + x); if (x >= 1) lucPop(`+${Math.round(x)} · ${why}`, true); }
 let subT = 0; const LUCWHY = { dn:[], up:[], net:0 }; let breathT = 0, breathCd = 0;
@@ -1238,7 +1239,7 @@ function shopItems(){
   const nt = TANKS[S.tankLv+1];
   if (nt) it.push({id:'tank', n:`Cisterna da ${fmt(nt.cap)} L`, d:`Più acqua prima di dover vendere`, c:nt.c, buy:()=>{ S.tankLv++; }});
   const nc = CONTRACTS[S.contract+1];
-  if (nc && (!nc.org || phase>=2)) it.push({id:'contract', n:nc.n, d: nc.org ? `Il Compratore paga più del valore. Si firma con quello che hai. (−15 lucidità)` : `Il Compratore ritira l'acqua da solo al ${Math.round(nc.p*100)}% del prezzo`, c:nc.c, org:nc.org, buy:()=>{ S.contract++; if (nc.org){ loseLuc(15, `contratto di sangue`); groanSfx(.5,3); } }});
+  if (nc && (!nc.org || phase>=2)) it.push({id:'contract', n:nc.n, d: nc.org ? `Il Compratore paga più del valore. Si firma con quello che hai. (−15 lucidità)` : `Il Compratore ritira l'acqua da solo al ${Math.round(nc.p*100)}% del prezzo`, c:nc.c, org:nc.org, buy:()=>{ S.contract++; if (nc.org){ loseLuc(15, `contratto di sangue`, true); groanSfx(.5,3); } }});
   PUMPS.forEach((p,i)=>{ if ((p.ph||0) <= phase) it.push({id:'pump'+i, n:p.n + (S.pumps[i]?` (${S.pumps[i]})`:''), d:`+${fmt(p.r)} L/s · ${p.d}`, c:pumpCost(i), org:p.org, buy:()=>{ S.pumps[i]++; rebuildPipes(true); creakSfx(); }}); });
   const nto = TORCHES[S.torch+1];
   if (nto) it.push({id:'torch', n:nto.n, d:`Illumina più a fondo. Sei sicuro di voler vedere?`, c:nto.c, buy:()=>{ S.torch++; }});
@@ -1274,7 +1275,7 @@ function renderDiary(){
   } else if (diaryTab==='mind'){
     L.innerHTML = `<div class="dentry" style="font-family:'Cormorant Garamond',serif;font-size:16px">La LUCIDITÀ è quanto riesci a restare te stesso. Se arriva a zero perdi i sensi: ti svegli all'alba, con meno soldi, e il lago è risalito.</div>
       <div class="dentry" style="color:#c98a7a">▼ La consumano: la notte · la torcia spenta · scendere più a fondo · le scoperte e le cose trovate nel secchio · guardare le apparizioni troppo a lungo · rispondere a chi ti chiama · scendere dalla zattera · le macchine di carne e il secchio che respira.</div>
-      <div class="dentry" style="color:#9fc28f">▲ La restituiscono: la luce del giorno · stare vicino alla lanterna accesa · RESPIRA (sotto la lucidità, ogni 45 secondi) · i lumini votivi dell'officina · non rispondere, non bussare · ricacciare giù le cose illuminandole con la torcia.</div>
+      <div class="dentry" style="color:#9fc28f">▲ La restituiscono: la luce del giorno · stare vicino alla lanterna accesa · RESPIRA (sotto la lucidità, ogni 35 secondi) · i lumini votivi dell'officina · non rispondere, non bussare · ricacciare giù le cose illuminandole con la torcia.</div>
       <div class="dentry" style="opacity:.7">Adesso: ${LUCWHY.net >= 0 ? '▲ ' + (LUCWHY.up.join(' · ') || 'stabile') : '▼ ' + (LUCWHY.dn.join(' · ') || '')}</div>`;
   } else {
     L.innerHTML = `<div class="dentry">I. Non scendere mai dalla zattera dopo il tramonto.</div><div class="dentry">II. Se dall'acqua qualcuno ti chiama per nome, non rispondere.</div><div class="dentry">III. Non contare l'acqua.</div>`
@@ -1290,7 +1291,7 @@ $('diaryBtn').onclick = ()=>{
 };
 $('diaryList').addEventListener('click', e=>{ const d = e.target.closest('[data-lore]'); if (d) openLore(d.dataset.lore); });
 $('breathBtn').addEventListener('pointerdown', e=>{ e.stopPropagation(); if (breathCd > 0 || breathT > 0 || !running || ending) return; initAudio();
-  breathT = 6; breathCd = 45; holdBucket = false; $('breathOv').classList.remove('hidden'); breathSfx(true, 2.6, .25); setTimeout(()=>breathSfx(false, 2.6, .22), 3000);
+  breathT = 6; breathCd = 35; holdBucket = false; $('breathOv').classList.remove('hidden'); breathSfx(true, 2.6, .25); setTimeout(()=>breathSfx(false, 2.6, .22), 3000);
   const before = S.luc; setTimeout(()=>{ $('breathOv').classList.add('hidden'); lucPop(`+${Math.round(S.luc - before)} · hai respirato`, true); }, 6000); });
 $('torchBtn').onclick = ()=>{ S.torchOn = !S.torchOn; $('torchBtn').classList.toggle('off', !S.torchOn); play('click', {vol:.5, rev:.05}); };
 $('sellBtn').onclick = ()=>{ if (S.tank < 1) return; const v = S.tank * PRICE(S.d); S.money += v; S.tank = 0; coinSfx(); toast(`Venduti al Compratore: € ${fmt(v)}`); };
@@ -1667,7 +1668,7 @@ function startEv(name){
   if (name==='bump'){ raftJolt = 1; knockSfx(1, 0); [[-1.6,-1.8],[1.6,-1.8],[-1.6,1.8],[1.6,1.8]].forEach(([dx,dz])=> splashFX(raftPos.x+dx, waterY, raftPos.z+dz, .55, .5)); surfaceSfx(.8); groanSfx(.45, 3); setTimeout(()=>bubbleSfx(), 600); loseLuc(4, `qualcosa ha urtato la zattera da sotto`); setTimeout(()=>sub(pick([`(qualcosa di enorme è passato sotto la zattera e l'ha sfiorata)`,`(il legno ha tremato. Sotto, qualcosa si è girato nel sonno)`,`(un urto da sotto. Come una schiena che si inarca)`]), 4), 900); }
   if (name==='tentRaft'){ tentRaft.position.set(rand(-.6,.6), 0, -1.75); tentRaft.rotation.set(0, Math.PI + rand(-.4,.4), 0); tentRaft.visible = true; X_.tentR = {t:0, seen:0, gone:false}; X_.big = 10; tentRaft.getWorldPosition(wfPos); splashFX(wfPos.x, waterY, wfPos.z, .9, .6); surfaceSfx(.7); setTimeout(()=>slitherSfx(.6, .1), 300); setTimeout(()=>{ creakSfx(); slitherSfx(.45, -.1); }, 1600); attend(wfPos.setY(waterY+.4), .8, 1.4); }
   if (name==='surfEye'){ const dx = rand(-2.5,2.5); surfEye.position.set(raftPos.x + dx, waterY + .03, raftPos.z - rand(4,6)); surfEye.rotation.y = rand(-.3,.3); surfEye.scale.set(1,1,.02); surfEye.visible = true; X_.sEye = {t:0}; X_.big = 9; bubbleSfx(); setTimeout(()=>{ surfaceSfx(.8); splashFX(surfEye.position.x, waterY, surfEye.position.z, .6, 1.6); }, 400); setTimeout(()=>heartSfx(.7), 1500); attend(surfEye.position, .7, 2); }
-  if (name==='hands'){ handData.length = 0; for (let i=0;i<HANDS_N;i++){ const a = i/HANDS_N*Math.PI*2 + rand(-.15,.15), r = rand(2.6,5.5); handData.push({x:raftPos.x + Math.cos(a)*r, z:raftPos.z + Math.sin(a)*r, ry:rand(0,6.3), d:rand(0,1.2), sp:rand(.8,1.3)}); }
+  if (name==='hands'){ handData.length = 0; for (let i=0;i<HANDS_N;i++){ const a = i/HANDS_N*Math.PI*2 + rand(-.15,.15), r = rand(2.6,5.5); const hx = raftPos.x + Math.cos(a)*r, hz = raftPos.z + Math.sin(a)*r; handData.push({x:hx, z:hz, ry:Math.atan2(raftPos.x - hx, raftPos.z - hz) + rand(-.3,.3), d:rand(0,1.2), sp:rand(.8,1.3)}); }
     X_.hands = {t:0}; X_.big = 12; whisperSfx(3,.25); setTimeout(()=>surfaceSfx(1.2), 300); setTimeout(()=>sub(`(mani. Tutto intorno alla zattera. Si aprono verso di te)`, 4), 1500); }
   if (name==='rowboat'){ const sgn = Math.random()<.5?-1:1; X_.boat = {t:0, a:new THREE.Vector3(raftPos.x + sgn*28, waterY, raftPos.z - 13), b:new THREE.Vector3(raftPos.x - sgn*28, waterY, raftPos.z - 11)}; rowboat.visible = true; X_.big = 26; setTimeout(()=>toast(pick([`Una barca a remi scivola sul lago, senza remi. C'è qualcuno seduto. Ha una lanterna.`,`Una barca passa lenta davanti a te. Chi c'è sopra non rema. Gira la testa mentre ti passa davanti.`])), 3000); }
   if (name==='selfCorpse'){ floaters.forEach(f=>f.visible = false); const c = floaters[0]; c.position.set(raftPos.x + rand(-4,4), waterY - .1, raftPos.z - 9); c.rotation.set(0, rand(0,6.3), 0); c.userData.v = new THREE.Vector2(0, .35); c.visible = true; X_.bodies = 22; X_.big = 14; setTimeout(()=>toast(`Un corpo galleggia verso la zattera, a faccia in su. Indossa la tua tuta. Ha la tua faccia, gonfia d'acqua. Sorride.`, 'warn'), 4000); setTimeout(()=>loseLuc(6, `il tuo corpo`), 4200); }
@@ -1735,12 +1736,12 @@ function eventsUpdate(dt){
     if (e.gone && e.t - e.tg > .8){ tentRaft.visible = false; X_.tentR = null; } }
   if (X_.sEye){ const e = X_.sEye; e.t += dt; const open = smooth(.5,2.5,e.t) * (1 - smooth(6,7,e.t)) * (Math.abs(Math.sin(e.t*.9)) > .97 ? .1 : 1); surfEye.scale.set(1,1,Math.max(.02,open)); surfEye.material.opacity = Math.min(1, open*1.2); surfEye.position.y = waterY + .03;
     if (e.t > 3 && e.t < 3.05 && lookingAt(surfEye.position, .93)) loseLuc(6, `l'occhio nell'acqua`); if (e.t > 7){ surfEye.visible = false; X_.sEye = null; splashFX(surfEye.position.x, waterY, surfEye.position.z, .7, 1.4); surfaceSfx(.5); } }
-  if (X_.hands){ const e = X_.hands; e.t += dt; let c = 0; handData.forEach(h=>{ const u = clamp((e.t - h.d)*h.sp, 0, 1), dn = smooth(8,10,e.t); if (u > .25 && !h.sp1){ h.sp1 = 1; splashFX(h.x, waterY, h.z, .45, .5); } if (dn > .3 && !h.sp2){ h.sp2 = 1; splashFX(h.x, waterY, h.z, .3, .4); } if (u > .4 && dn < .1 && Math.random() < dt*3) dripFX(h.x, waterY + 1, h.z, 1, .1); const y = waterY - 1.6 + smooth(0,1,u)*2.4 - dn*2.6 + Math.sin(T*2+h.ry)*.03;
-      seObj.position.set(h.x, y, h.z); seObj.rotation.set(Math.sin(T+h.ry)*.15, h.ry, Math.cos(T*.8+h.ry)*.15); seObj.scale.setScalar(1.6); seObj.updateMatrix(); hands.setMatrixAt(c++, seObj.matrix); });
+  if (X_.hands){ const e = X_.hands; e.t += dt; let c = 0; handData.forEach(h=>{ const u = clamp((e.t - h.d)*h.sp, 0, 1), dn = smooth(8,10,e.t); if (u > .25 && !h.sp1){ h.sp1 = 1; splashFX(h.x, waterY, h.z, .45, .5); } if (dn > .3 && !h.sp2){ h.sp2 = 1; splashFX(h.x, waterY, h.z, .3, .4); } if (u > .4 && dn < .1 && Math.random() < dt*3) dripFX(h.x, waterY + 1, h.z, 1, .1); const y = waterY - 1.3 + smooth(0,1,u)*1.75 - dn*2 + Math.sin(T*2+h.ry)*.03;
+      seObj.position.set(h.x, y, h.z); seObj.rotation.set(-.25 + Math.sin(T*1.3+h.ry)*.12, h.ry, Math.cos(T*.9+h.ry)*.12); seObj.scale.setScalar(1.9); seObj.updateMatrix(); hands.setMatrixAt(c++, seObj.matrix); });
     hands.count = c; hands.instanceMatrix.needsUpdate = true; if (e.t > 3 && e.t < 3.05) loseLuc(5, `le mani nell'acqua`); if (e.t > 10.5){ hands.count = 0; X_.hands = null; } }
-  if (X_.boat){ const e = X_.boat; e.t += dt; const k = e.t/24; rowboat.position.lerpVectors(e.a, e.b, k); rowboat.position.y = waterY + .05 + Math.sin(T*.8)*.04; rowboat.rotation.y = Math.atan2(e.b.x-e.a.x, e.b.z-e.a.z); rowboat.rotation.z = Math.sin(T*.6)*.03;
+  if (X_.boat){ const e = X_.boat; e.t += dt; const k = e.t/24; rowboat.position.lerpVectors(e.a, e.b, k); rowboat.position.y = waterY + .05 + Math.sin(T*.8)*.04 - smooth(.78,1,k)*1.6; rowboat.rotation.x = smooth(.78,1,k)*.5; rowboat.rotation.y = Math.atan2(e.b.x-e.a.x, e.b.z-e.a.z); rowboat.rotation.z = Math.sin(T*.6)*.03;
     const f = rowboat.userData.fig; const want = Math.atan2(camera.position.x - rowboat.position.x, camera.position.z - rowboat.position.z) - rowboat.rotation.y; f.rotation.y += (want - f.rotation.y)*Math.min(1, dt*.6);
-    if (k > .5 && !e.l){ e.l = 1; loseLuc(4, `la barca`); whisperSfx(2,.2); } if (k >= 1){ rowboat.visible = false; X_.boat = null; } }
+    if (k > .5 && !e.l){ e.l = 1; loseLuc(4, `la barca`); whisperSfx(2,.2); } if (k > .78 && !e.s){ e.s = 1; surfaceSfx(.8); bubbleSfx(); } if (k >= 1){ rowboat.visible = false; X_.boat = null; } }
   if (X_.rain > 0){ X_.rain -= dt; const a = rainGeo.attributes.position; const fade = Math.min(1, X_.rain/3, (22 - X_.rain)/2);
     rainP.forEach((p,i)=>{ p.y -= dt*14; if (p.y < -2){ p.y = rand(16,22); p.x = rand(-25,25); p.z = rand(-25,25); } const x = camera.position.x + p.x, z = camera.position.z + p.z, y = Math.max(waterY, camera.position.y + p.y - 6); a.setXYZ(i*2, x, y, z); a.setXYZ(i*2+1, x, y + .5, z); });
     a.needsUpdate = true; rain.material.opacity = .7*fade; if (Math.random() < dt*6) ripple(raftPos.x + rand(-10,10), raftPos.z - rand(2,14), .3); if (X_.rain <= 0) rain.visible = false; }
@@ -1787,10 +1788,18 @@ function deepEyeTex0(){ const c = document.createElement('canvas'); c.width = c.
   const g = X.createRadialGradient(128,128,8,128,128,128); g.addColorStop(0,'rgba(255,230,120,1)'); g.addColorStop(.3,'rgba(210,110,20,.95)'); g.addColorStop(.48,'rgba(70,30,5,.8)'); g.addColorStop(.62,'rgba(150,140,110,.7)'); g.addColorStop(1,'rgba(0,0,0,0)');
   X.fillStyle = g; X.beginPath(); X.ellipse(128,128,128,70,0,0,7); X.fill(); X.strokeStyle='rgba(140,20,20,.6)'; X.lineWidth=2; for (let i=0;i<20;i++){ const a = Math.random()*6.28; X.beginPath(); X.moveTo(128+Math.cos(a)*120, 128+Math.sin(a)*60); X.quadraticCurveTo(128+Math.cos(a+.2)*80, 128+Math.sin(a+.2)*45, 128+Math.cos(a)*50, 128+Math.sin(a)*30); X.stroke(); }
   X.fillStyle = '#000'; X.beginPath(); X.ellipse(128,128,10,58,0,0,7); X.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
-const handGeo = (()=>{ const P = []; const palm = new THREE.BoxGeometry(.13,.16,.04); palm.translate(0,.08,0); P.push(palm);
-  for (let f=0; f<4; f++){ const fg = new THREE.CylinderGeometry(.011,.014,.17,5); fg.translate(-.045+f*.03, .24, 0); fg.rotateZ((f-1.5)*.08); P.push(fg); }
-  const th = new THREE.CylinderGeometry(.012,.015,.1,5); th.rotateZ(.9); th.translate(-.09,.1,0); P.push(th);
-  const arm = new THREE.CylinderGeometry(.04,.05,1.4,6); arm.translate(0,-.7,0); P.push(arm); return mergeGeometries(P.map(q=>q.index?q.toNonIndexed():q)); })();
+// mani vere: palmo, cinque dita lunghe a ventaglio piegate ad artiglio verso di te, polso e avambraccio
+const handGeo = (()=>{ const P = [], V = (x,y,z)=>new THREE.Vector3(x,y,z);
+  const palm = new THREE.SphereGeometry(1, 14, 10); palm.scale(.068,.085,.026); palm.translate(0,.075,0); P.push(palm);
+  [[-.046,-.32,.9],[-.016,-.1,1.05],[.016,.1,1],[.044,.3,.82]].forEach(([x0,fan,len])=>{
+    const L = .2*len, pts = [V(x0, .14, 0)]; let ang = fan*.6, cur = 0, px = x0, py = .14, pz = 0;
+    for (let k=1;k<=4;k++){ cur += .32; const seg = L/4; px += Math.sin(ang)*seg*.55; py += Math.cos(cur)*seg; pz += Math.sin(cur)*seg; ang += fan*.12; pts.push(V(px, py, pz)); }
+    P.push(tube(pts, .0125, .006, 12, 6)); });
+  P.push(tube([V(-.06,.06,.01), V(-.1,.1,.03), V(-.125,.15,.06), V(-.13,.19,.09)], .013, .007, 8, 6));
+  P.push(tube([V(0,.01,0), V(.005,-.08,-.01)], .034, .03, 4, 8));
+  P.push(tube([V(.005,-.08,-.01), V(.02,-.45,-.05), V(.03,-.95,-.12)], .03, .042, 10, 8));
+  const g = mergeGeometries(P.map(q=>{ const n = q.index ? q.toNonIndexed() : q; if (!n.attributes.uv) n.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n.attributes.position.count*2),2)); return n; }));
+  g.deleteAttribute('normal'); g.deleteAttribute('uv'); const m = mergeVertices(g, 1e-4); m.computeVertexNormals(); return m; })();
 const HANDS_N = 16, hands = new THREE.InstancedMesh(handGeo, wetMat0(), HANDS_N); hands.count = 0; hands.frustumCulled = false; scene.add(hands); const handData = [];
 function wetMat0(){ return new THREE.MeshStandardMaterial({color:0x6b7465, roughness:.3, metalness:.05}); }
 const rowboat = (()=>{ const g = new THREE.Group(); const hull = new THREE.Mesh(new THREE.SphereGeometry(1,16,8,0,Math.PI*2,Math.PI/2,Math.PI/2), M.wood); hull.scale.set(.75,.45,2.1); g.add(hull);
@@ -1825,13 +1834,14 @@ const titan = (()=>{ const pts = []; for (let k=0;k<=12;k++){ const t = k/12; pt
 // la creatura che nuota sotto la zattera
 const creatureMat = new THREE.MeshStandardMaterial({color:0x0d1310, roughness:.35, metalness:.1});
 const creature = (()=>{ const g = new THREE.Group();
-  const b = mesh(new THREE.SphereGeometry(1,24,16), creatureMat); b.scale.set(6.5,3.2,21); g.add(b);
-  const hd = mesh(new THREE.SphereGeometry(1,18,12), creatureMat, 0,.8,19); hd.scale.set(5,3.4,6); g.add(hd);
-  const spots = []; for (let i=0;i<46;i++){ const t = i/46, z = lerp(-18, 22, t); const sp = new THREE.SphereGeometry(.35,6,4); sp.translate((i%2?1:-1)*(2+Math.sin(t*9)*1.5), 2.6*Math.cos((z/21)*1.4)+.5, z); spots.push(sp); }
+  const bg = new THREE.SphereGeometry(1, 48, 32); { const p = bg.attributes.position; for (let i=0;i<p.count;i++){ const z = p.getZ(i); const k = 1 - .25*Math.max(0,-z); p.setXYZ(i, p.getX(i)*k, p.getY(i)*k*(p.getY(i) < 0 ? .8 : 1), z); } bg.computeVertexNormals(); }
+  const b = mesh(bg, creatureMat); b.scale.set(6.5,3.2,21); g.add(b);
+  const hd = mesh(new THREE.SphereGeometry(1,36,24), creatureMat, 0,.8,19); hd.scale.set(5,3.4,6); g.add(hd);
+  const spots = []; for (let i=0;i<60;i++){ const t = i/60, z = lerp(-18, 22, t); const sp = new THREE.SphereGeometry(.32,8,6); sp.translate((i%2?1:-1)*(2+Math.sin(t*9)*1.5), 2.6*Math.cos((z/21)*1.4)+.5, z); spots.push(sp); }
   g.add(new THREE.Mesh(mergeGeometries(spots), new THREE.MeshBasicMaterial({color:new THREE.Color(.6,2.4,1.2)})));
-  for (const sx of [-1,1]){ const e = mesh(new THREE.SphereGeometry(1.1,12,8), new THREE.MeshBasicMaterial({color:new THREE.Color(5,3.4,.8)}), sx*3.4,1.6,23); e.scale.set(1,.45,.6); g.add(e); }
-  for (let k=0;k<10;k++){ const a = k/10*Math.PI*2, pts = []; for (let j=0;j<=6;j++){ const t = j/6; pts.push(new THREE.Vector3(Math.cos(a)*(3+t*4) + Math.sin(t*5+k)*2, Math.sin(a)*2 - t*3, -18 - t*34)); }
-    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, .9 - k*.03, 6, false), creatureMat)); }
+  for (const sx of [-1,1]){ const e = mesh(new THREE.SphereGeometry(1.1,20,14), new THREE.MeshBasicMaterial({color:new THREE.Color(5,3.4,.8)}), sx*3.4,1.6,23); e.scale.set(1,.45,.6); g.add(e); }
+  for (let k=0;k<10;k++){ const a = k/10*Math.PI*2, pts = []; for (let j=0;j<=10;j++){ const t = j/10; pts.push(new THREE.Vector3(Math.cos(a)*(3+t*4) + Math.sin(t*5+k)*2, Math.sin(a)*2 - t*3, -15 - t*36)); }
+    g.add(new THREE.Mesh(tube(pts, 1.1 - k*.04, .08, 60, 12), M.tentacle)); }
   g.visible = false; scene.add(g); return g; })();
 // l'occhio che si apre nel nero, se guardi giù troppo a lungo
 const deepEyeTex = (()=>{ const c = document.createElement('canvas'); c.width = c.height = 256; const X = c.getContext('2d');
@@ -1860,8 +1870,10 @@ function bigUpdate(dt){
     if (t > 20){ titan.visible = false; X_.titan = null; } }
   if (LEV.on){ const k = LEV.t/LEV.dur, sc = LEV.r/9; const x = lerp(LEV.a.x, LEV.b.x, k), z = lerp(LEV.a.y, LEV.b.y, k);
     const yb = H(x,z); creature.visible = true; creature.scale.setScalar(sc);
-    creature.position.set(x, Math.min(waterY - 4*sc, Math.max(waterY - 11*sc, yb + 3.5*sc)), z); creature.rotation.y = Math.atan2(LEV.b.x-LEV.a.x, LEV.b.y-LEV.a.y);
-    creature.rotation.z = Math.sin(T*.6)*.05; subBoost = Math.max(subBoost, Math.sin(Math.PI*clamp(k,0,1))*.4); fovKick = Math.max(fovKick, Math.sin(Math.PI*clamp(k,0,1))*3); }
+    // sale dal buio, ti passa sotto, poi ridiscende nel nero: niente comparse e sparizioni
+    const near = Math.min(waterY - 4*sc, Math.max(waterY - 11*sc, yb + 3.5*sc)), deep = Math.max(yb + 3*sc, waterY - 30*sc), up = smooth(0,.3,k)*(1 - smooth(.7,1,k));
+    creature.position.set(x, lerp(deep, near, up), z); creature.rotation.y = Math.atan2(LEV.b.x-LEV.a.x, LEV.b.y-LEV.a.y);
+    creature.rotation.x = k < .3 ? -.18*(1-up) : k > .7 ? .22*(1-up) : 0; creature.rotation.z = Math.sin(T*.6)*.06; subBoost = Math.max(subBoost, Math.sin(Math.PI*clamp(k,0,1))*.4); fovKick = Math.max(fovKick, Math.sin(Math.PI*clamp(k,0,1))*3); }
   else creature.visible = false;
   if (X_.deepEye){ const t = (X_.deepEye.t += dt); const open = smooth(0,2.5,t) * (1 - smooth(5.5,6.5,t)); deepEye.scale.set(1, 1, Math.max(.02, open)); deepEye.material.opacity = open;
     if (t > 6.6){ deepEye.visible = false; X_.deepEye = null; } }
@@ -2296,8 +2308,8 @@ function update(dt){
     // lucidità
     const night = dayF < .5;
     const nearLamp = lamp.intensity > 2;
-    const drain = (night?.035:0) + phase*.012 + (S.torchOn?0:.08) + S.pumps[4]*.004 + S.pumps[5]*.012 + (breathT>0 ? 0 : 0);
-    const regen = dayF*.05 + S.lumino*.035 + (nearLamp ? .012 : 0) + (breathT > 0 ? 1.8 : 0);
+    const drain = (night?.028:0) + phase*.006 + (S.torchOn?0:.06) + S.pumps[4]*.004 + S.pumps[5]*.012 + (breathT>0 ? 0 : 0);
+    const regen = dayF*.075 + S.lumino*.04 + (nearLamp ? .018 : 0) + (breathT > 0 ? 2.2 : 0);
     LUCWHY.dn = [night && 'notte', !S.torchOn && 'torcia spenta', phase>=1 && 'profondità', (S.pumps[4]||S.pumps[5]) && 'macchine di carne'].filter(Boolean);
     LUCWHY.up = [dayF>.5 && 'luce del giorno', S.lumino && 'lumini votivi', nearLamp && 'la lanterna', breathT>0 && 'respiri'].filter(Boolean);
     LUCWHY.net = regen - drain;
@@ -2305,7 +2317,7 @@ function update(dt){
     else S.luc = clamp(S.luc + (regen - drain)*dt, 0, 100);
     // eventi
     EV.next -= dt;
-    if (EV.next <= 0){ EV.next = rand(10,22)/(1+phase*.35); if (!inCall && $('prompt').classList.contains('hidden')) runEvent(); }
+    if (EV.next <= 0){ EV.next = rand(15,30)/(1+phase*.25); if (!inCall && $('prompt').classList.contains('hidden')) runEvent(); }
     // storia
     STORY.forEach((s,i)=>{ if (S.d >= s.d && !S.story.includes(i)){ S.story.push(i); s.f(); } });
     // lore riaffiorata
