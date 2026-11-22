@@ -492,3 +492,8 @@ export function creatureSfx({ kind='call', vol=.8, far=.5, dur=0, delay=0, pan=0
   nodes.forEach(n=>{ n.start(t0); n.stop(end + .1); });
 }
 function lerpN(a, b, t){ return a + (b - a)*Math.max(0, Math.min(1, t)); }
+// il bip dell'ecoscandaglio: un sinusoide che rimbalza nell'acqua (il secondo, più piano, è l'eco dal fondo)
+export function pingSfx(vol=.05, urgent=false){ const ctx = AU.ctx; if (!ctx) return; const t = ctx.currentTime + .01, f = urgent ? 1480 : 1180;
+  for (const [d, k] of [[0, 1], [urgent ? .09 : .32, .35]]){ const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f, t + d); o.frequency.exponentialRampToValueAtTime(f*.97, t + d + .5);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(vol*k, t + d + .008); g.gain.exponentialRampToValueAtTime(.0001, t + d + .55);
+    o.connect(g); g.connect(AU.dry); const r = ctx.createGain(); r.gain.value = .5; g.connect(r); r.connect(AU.rev); o.start(t + d); o.stop(t + d + .6); } }
