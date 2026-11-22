@@ -125,7 +125,7 @@ scene.add(camera);
 
 const HDR_OK = renderer.capabilities.isWebGL2 && (renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float'));
 const RT_TYPE = HDR_OK ? THREE.HalfFloatType : THREE.UnsignedByteType;
-const rt = new THREE.WebGLRenderTarget(innerWidth*DPR*qScale, innerHeight*DPR*qScale, { type: RT_TYPE, samples: renderer.capabilities.isWebGL2 ? (MOBILE ? 0 : DPR>1.2?2:4) : 0 });
+const rt = new THREE.WebGLRenderTarget(innerWidth*DPR*qScale, innerHeight*DPR*qScale, { type: RT_TYPE, samples: renderer.capabilities.isWebGL2 ? (MOBILE ? 0 : 2) : 0 });
 // bloom a un quarto di risoluzione
 const bloomA = new THREE.WebGLRenderTarget(4,4,{type:RT_TYPE}), bloomB = new THREE.WebGLRenderTarget(4,4,{type:RT_TYPE});
 const FS_VS = `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }`;
@@ -477,21 +477,24 @@ const waterMat = new THREE.ShaderMaterial({
     col+=pow(max(dot(N,normalize(Ll+V)),0.),60.)*uLampI/(dl*dl)*vec3(1.,.65,.35)*.6;
     col+=pow(max(dot(R,uMoonDir),0.),30.)*uMoonCol*.04;
     // qualcosa di enorme passa sotto la superficie
-    vec3 eyeAdd=vec3(0.);
     if (uShadow.w > 0.) {
-      vec2 sd=vW.xz-uShadow.xy; float c0=cos(uShadowA), s0=sin(uShadowA); sd=mat2(c0,-s0,s0,c0)*sd; sd/=uShadow.z;
-      float sa=atan(sd.y,sd.x); float rr=length(sd*vec2(1.,1.5));
-      float lob=.72+.28*sin(sa*9.+uTime*.9+sin(sa*4.+uTime*.3)*2.);
-      float sh=smoothstep(1.,.25,rr/lob)*uShadow.w;
-      col*=1.-.9*sh;
-      vec2 ep=sd-vec2(.42,0.); float eyes=smoothstep(.08,.02,length(vec2(ep.x,abs(ep.y)-.14)*vec2(1.,2.2)));
-      eyeAdd=vec3(.9,.6,.08)*eyes*uShadow.w*(.6+.4*sin(uTime*2.));
+      // la massa sta a qualche metro sotto: si sposta con la parallasse, non è dipinta sulla superficie
+      float c0=cos(uShadowA), s0=sin(uShadowA); mat2 rot=mat2(c0,-s0,s0,c0);
+      vec2 sd=rot*(vW.xz-uShadow.xy) + rot*(-V.xz/max(V.y,.22))*uShadow.z*.22; sd/=uShadow.z;
+      float tx=clamp((sd.x+1.75)/2.65,0.,1.);
+      float wid=mix(.04,.36,smoothstep(0.,.6,tx))*(1.-smoothstep(.84,1.,tx)*.75);
+      float nz=texture2D(uNoise,vW.xz*.022+vec2(uTime*.008,-uTime*.006)).r-.5, nz2=texture2D(uNoise,vW.xz*.06-uTime*.01).g-.5;
+      float body=smoothstep(.16,-.1,abs(sd.y)-wid-nz*.16-nz2*.05)*smoothstep(-1.8,-1.35,sd.x)*smoothstep(1.02,.78,sd.x);
+      float finW=.22+.06*sin(uTime*.6+sd.x*1.7);
+      float fin=smoothstep(.12,-.04,abs(abs(sd.y)-wid-finW*.5)-finW*.5*(1.-smoothstep(0.,.6,abs(sd.x-.1))))*step(abs(sd.x-.1),.6);
+      float sh=clamp(max(body,fin*.55),0.,1.)*uShadow.w;
+      col*=1.-.8*sh; col=mix(col,col*vec3(.55,.75,.7),sh*.35);
     }
     col=mix(col, col*vec3(2.6,.25,.2)+vec3(.018,0.,0.), uBlood);
     gl_FragColor=vec4(col, mix(.38, 1., clamp(fr*1.6 + uBlood*.5, 0., 1.))*(1.-uClear*.8));
     #include <fog_fragment>
     float gd=length(vW.xz); float pulse=.75+.25*sin(uTime*1.3);
-    gl_FragColor.rgb+=vec3(.25,.35,.08)*uGlow*exp(-gd*gd/260.)*pulse + eyeAdd;
+    gl_FragColor.rgb+=vec3(.25,.35,.08)*uGlow*exp(-gd*gd/260.)*pulse;
     }
   }`
 });
@@ -1365,10 +1368,10 @@ const STORY = [
   {d:113, f:()=> call(`DITTA SESTI`, `Ancora poco. Si sta svegliando per lei, lo sa? La riconosce. Respira quando lei respira. Non si fermi proprio adesso.`)},
   {d:96, f:()=> call(`QUADERNO DI DON AURELIO`, `(Una pagina fradicia, incollata al fondo del secchio.) «Non è morto ciò che dorme sotto l'acqua. Dorme, e nel sonno ci pensa. Noi esistiamo finché Lui ci sogna. Ho dato da bere al suo sonno un paese intero, perché non si svegliasse. Che Dio mi perdoni: non era il nostro Dio a guardarmi, mentre aprivo le chiuse.»`)},
   {d:121, f:()=> { toast(`Il fondo ti guarda.`, 'warn'); groanSfx(.7,6); creatureSfx({ kind:'call', far:.05, vol:1 }); }},
-  {d:.35, f:()=> farCall(.9)},
+  {d:6.5, f:()=> farCall(.9)},
   {d:6, f:()=> { S.sonar = 1; call(`DITTA SESTI`, `Signor Ferri, le abbiamo montato un ecoscandaglio sulla zattera. Guardi lo schermo verde. Se vede qualcosa che risale dal fondo, spenga la torcia. Spenga i fari. Tutto. E aspetti al buio che sia passato.`); }},
-  {d:.9, f:()=> startDrift('cradle')},
-  {d:4.5, f:()=> startEv('grip')},
+  {d:.6, f:()=> startDrift('hat')},
+  {d:9, f:()=> startEv('grip')},
   {d:26, f:()=> setTimeout(()=>{ if (running && !ending && gazeOK()) startEv('gaze'); }, 4000)}
 ];
 
@@ -1393,7 +1396,7 @@ function loseLuc(x, why='', raw=false){ if (!(x > 0)) return; if (!raw) x *= CHA
   if (!S.tipLuc && S.luc < 85){ S.tipLuc = 1; setTimeout(()=>toast(`La tua LUCIDITÀ è scesa. Le cose che vedi e senti la consumano. Tocca RESPIRA o guarda il DIARIO › MENTE per capire come recuperarla.`, 'lore'), 1500); } }
 function gainLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.min(100, S.luc + x); if (x >= 1) lucPop(`+${Math.round(x)} · ${why}`, true); }
 let subT = 0; const LUCWHY = { dn:[], up:[], net:0 }; let breathT = 0, breathCd = 0;
-function sub(text, dur=3){ const s = $('subs'); s.textContent = text; s.style.opacity = 1; subT = Math.max(dur, 1.8 + text.length*.055); }
+function sub(text, dur=3, cls=''){ const s = $('subs'); s.className = cls; s.textContent = text; s.style.opacity = 1; subT = Math.max(dur, 1.8 + text.length*.055); }
 const callQ = []; let inCall = false, callTimer = null;
 // telefonate e radio con tempi da cinema: squilli veri, linea vuota, voce con pause, riattacca
 let callSt = null;
@@ -1620,6 +1623,7 @@ let findT = 0;
 function showFind(idx){
   const f = FINDS[idx]; drawRelic($('findCv'), f[2], idx+1); $('findTxt').textContent = f[1];
   const fc = $('findCard'); fc.classList.remove('hidden'); fc.style.animation = 'none'; void fc.offsetWidth; fc.style.animation = ''; findT = 6;
+  think(S.relics.length >= 3 ? 'relic2' : 'relic', 3.5);
   if (!S.relics.includes(idx)){ S.relics.push(idx); $('diaryDot').classList.remove('hidden'); }
 }
 $('findCard').addEventListener('pointerdown', e=>{ e.stopPropagation(); $('findCard').classList.add('hidden'); findT = 0; });
@@ -1752,7 +1756,7 @@ function directorPick(night){
   if (S.evPh !== phase){ S.evPh = phase; S.evc = {}; }
   const now = performance.now()/1000, cand = []; let tot = 0;
   for (const k in EV_DEF){ const [md, cond, cd, mx, w] = EV_DEF[k], c = S.evc[k]||0;
-    if (S.d < md || c >= mx || (EV.cool[k]||0) > now || S.evRecent.includes(k) || (cond && !cond(night))) continue;
+    if (S.d < md || (EV_ACT[k] ?? 0) > actOf(S.d) || c >= mx || (EV.cool[k]||0) > now || S.evRecent.includes(k) || (cond && !cond(night))) continue;
     const seenAll = (S.evAll||{})[k]||0, ww = w / (1 + c*1.2) / (1 + seenAll*.25); cand.push([k, ww]); tot += ww; }
   if (!cand.length) return null;
   let r = Math.random()*tot; let e = cand[cand.length-1][0]; for (const [k,w] of cand){ r -= w; if (r <= 0){ e = k; break; } }
@@ -1949,6 +1953,7 @@ const gone = (obj, r=2) => obj.position.y < waterY - 22 || obj.position.y < H(ob
 function wetSpot(x, z, need=1.5){ return H(x,z) < waterY - need && Math.hypot(x,z) < shoreR(S.d) - 1; }
 
 function startEv(name){
+  think(name, 7);
   if (NEWEV[name]){ NEWEV[name](); return; }
   const sr = shoreR(S.d);
   if (name==='hand'){ headObj.position.set(raftPos.x + rand(-1.5,1.5), waterY - .5, raftPos.z - rand(3.5,5)); headObj.visible = true; setTimeout(()=>{ splashFX(headObj.position.x, waterY, headObj.position.z, .5, .6); surfaceSfx(.5); }, 500); setTimeout(()=>{ handObj.getWorldPosition(wfPos); splashFX(wfPos.x, waterY, wfPos.z, .35, .4); slitherSfx(.25); }, 900); handObj.position.set(rand(-.9,.9), -.7, -1.66); handObj.rotation.set(0, rand(-.3,.3), 0); handObj.visible = true; X_.hand = {t:0, seen:0, gone:false}; X_.big = 11; setTimeout(()=>{ dripSfx(.2); knockSfx(.3); }, 600); setTimeout(()=>breathSfx(false,1.6,.18), 2500); }
@@ -2067,7 +2072,7 @@ function eventsUpdate(dt){
     torches.forEach((t,i)=>{ if (e.out && t.on && e.outT > i*.45 + (i === torches.length-1 ? 2.5 : 0)){ t.on = false; if (i%4 === 0) sfxNoise({dur:.6, f:2400, q:.5, vol:.03, a:.02, rev:.3}); }
       t.k += ((t.on ? 1 : 0) - t.k)*Math.min(1, dt*(t.on ? 1.2 : 6)); const fk = t.k*(.85 + .15*Math.sin(T*17 + t.ph) + .1*Math.sin(T*7.3 + t.ph*2));
       t.fl.scale.set(.5*fk, .95*fk*(1 + .12*Math.sin(T*11 + t.ph)), 1); t.ha.scale.setScalar(3.6*fk); t.fl.visible = t.ha.visible = fk > .02; lit += fk; });
-    dockLight.intensity = lit*9; dockLight.position.y = 4.5 + Math.sin(T*9)*.05;
+    dockLight.color.setHex(0xff8a3a); dockLight.distance = 34; dockLight.position.set(0, 4.5 + Math.sin(T*9)*.05, 91); dockLight.intensity = lit*9;
     // chi resta senza fuoco sparisce nel buio, non davanti ai tuoi occhi
     if (e.out && e.outT > torches.length*.45 + 4){ dockFigs.forEach(f=>f.visible = false); dockLight.intensity = 0; X_.dock = null; } }
   if (X_.breath > 0){ X_.breath -= dt; const ph = (X_.breathPh += dt) / 5.5; const prev = Math.floor((X_.breathPh - dt)/5.5*2); if (Math.floor(ph*2) !== prev) breathSfx(Math.floor(ph*2)%2===0, 2.6, .28); }
@@ -2252,8 +2257,7 @@ const creature = (()=>{ const g = new THREE.Group();
   const b = mesh(bg, creatureMat); b.scale.set(6.5,3.2,21); g.add(b);
   const hd = mesh(new THREE.SphereGeometry(1,36,24), creatureMat, 0,.8,19); hd.scale.set(5,3.4,6); g.add(hd);
   const spots = []; for (let i=0;i<60;i++){ const t = i/60, z = lerp(-18, 22, t); const sp = new THREE.SphereGeometry(.32,8,6); sp.translate((i%2?1:-1)*(2+Math.sin(t*9)*1.5), 2.6*Math.cos((z/21)*1.4)+.5, z); spots.push(sp); }
-  g.add(new THREE.Mesh(mergeGeometries(spots), new THREE.MeshBasicMaterial({color:new THREE.Color(.6,2.4,1.2)})));
-  for (const sx of [-1,1]){ const e = mesh(new THREE.SphereGeometry(1.1,20,14), new THREE.MeshBasicMaterial({color:new THREE.Color(5,3.4,.8)}), sx*3.4,1.6,23); e.scale.set(1,.45,.6); g.add(e); }
+  for (const sx of [-1,1]){ const e = mesh(new THREE.SphereGeometry(1.1,20,14), new THREE.MeshBasicMaterial({color:new THREE.Color(1.1,.75,.2)}), sx*3.4,1.6,23); e.scale.set(.6,.25,.4); g.add(e); }
   for (let k=0;k<10;k++){ const a = k/10*Math.PI*2, pts = []; for (let j=0;j<=10;j++){ const t = j/10; pts.push(new THREE.Vector3(Math.cos(a)*(3+t*4) + Math.sin(t*5+k)*2, Math.sin(a)*2 - t*3, -15 - t*36)); }
     g.add(new THREE.Mesh(tube(pts, 1.1 - k*.04, .08, 60, 12), M.tentacle)); }
   g.visible = false; scene.add(g); return g; })();
@@ -2328,7 +2332,8 @@ function bigUpdate(dt){
   const night = dayF < .5;
   { const base = phase>=2 && (night || phase>=3) ? 1 : 0; COL_EYES.forEach((m,i)=> m.color.setRGB(4,3.2,.9).multiplyScalar(Math.max(base, i < R2.gazeEyes ? 2.4 + Math.sin(T*6 + i)*.3 : 0))); }
   colOrbMat.emissiveIntensity = phase>=2 ? .6 + .4*Math.sin(T*.9) + (phase>=3 ? 1 : 0) : .08 + .05*Math.sin(T*.5);
-  colOrbLight.intensity = colOrbMat.emissiveIntensity * 55 * (night ? 1 : .5);
+  { if (!COL_ORB_P.lengthSq()) COL_ORB_P.copy(colOrbLight.position); const fk = X_.gaze ? R2.faceK : 0; colOrbLight.position.lerpVectors(COL_ORB_P, COL_FACE_P, fk); colOrbLight.color.setRGB(lerp(.36,1,fk), lerp(1,.78,fk), lerp(.6,.44,fk)); colOrbLight.distance = lerp(60, 75, fk);
+    colOrbLight.intensity = Math.max(colOrbMat.emissiveIntensity * 55 * (night ? 1 : .5), fk*(120 + Math.sin(T*7)*15)); }
   // la pietra non è del tutto pietra: dalla terza fase i tentacoli del volto si muovono, piano, quando non lo guardi
   COLU.uTime.value = T; COLU.uSway.value += ((phase>=3 ? (seen ? .15 : 1) * (.4 + clamp((S.d-65)/40,0,1)*.8) : phase>=2 && !seen ? .12 : 0) - COLU.uSway.value)*Math.min(1, dt*.4);
   fovKick = Math.max(0, fovKick - dt*1.5); subBoost = Math.max(0, subBoost - dt*.2);
@@ -2441,21 +2446,21 @@ const CINE_EV = [
   [20.6, ()=>capOff()],
   [21.2, ()=>{ cap(`Restarono seduti a tavola, a lume di candela,<br>ad aspettare l'acqua.`); lightning(); }],
   [23.0, ()=>whisperSfx(3,.22)],
-  [24.6, ()=>{ capOff(); bubbleSfx(); sfxNoise({dur:1.4,f:280,q:.6,type:'lowpass',vol:.7,rev:.7}); }],
+  [24.6, ()=>{ capOff(); bubbleSfx(); sfxNoise({dur:1.4,f:280,q:.6,type:'lowpass',vol:.7,rev:.7}); creatureSfx({ kind:'breath', far:.35, vol:.75, delay:1.2 }); }],
   [30.5, ()=>cap(`Non era una diga.`)],
   [33.4, ()=>capOff()],
   [34.2, ()=>{ cap(`Era una ninna nanna.`); heartSfx(.5); }],
   [36.0, ()=>heartSfx(.6)], [37.4, ()=>capOff()],
-  [37.6, ()=>heartSfx(.7)],
+  [37.6, ()=>{ heartSfx(.7); creatureSfx({ kind:'call', far:.25, vol:.9 }); }],
   [38.0, ()=>{ cap(`<span style="font-style:normal;letter-spacing:.12em">«CHE DORMA. CHE DORMA PER SEMPRE.»</span>`); groanSfx(.6,5); }],
   [39.0, ()=>heartSfx(.8)], [40.0, ()=>heartSfx(.9)], [40.8, ()=>heartSfx(1)],
-  [41.4, ()=>{ capOff(); stingerSfx(); shakeAmt = 1.2; }],
+  [41.4, ()=>{ capOff(); stingerSfx(); creatureSfx({ kind:'roar', far:.05, vol:1 }); shakeAmt = 1.2; }],
   [44.0, ()=>cMid(`<div class="big">SETTANT'ANNI DOPO</div>`)],
   [47.0, ()=>cMid(null)],
   [49.0, ()=>cap(`La Ditta Sesti cerca un uomo che svuoti il lago.`)],
   [52.4, ()=>capOff()],
   [53.0, ()=>cap(`Paga bene. Paga ogni litro.`)],
-  [54.5, ()=>deepCallSfx(.6)],
+  [54.5, ()=>{ creatureSfx({ kind:'call', far:.9, vol:.9 }); pingSfx(.04); }], [57.5, ()=>{ makeWave(-6, 64, 1.1); }],
   [56.0, ()=>capOff()],
   [56.8, ()=>cap(`Nessuno ha mai visto il fondo.`)],
   [60.2, ()=>capOff()],
@@ -2580,13 +2585,14 @@ function applyUnder(){
   mists.forEach(m=>m.visible = !u);
   return u;
 }
+let shadowTick = false;
 function fxUpdate(dt=.016){
   dropsUpdate(dt);
   mistU.uTime.value = T; mistU.uCol.value.copy(scene.fog.color);
   mists.forEach(m=>{ m.position.set(camera.position.x, water.position.y + m.userData.off, camera.position.z); });
   moteU.uTime.value = T; moteU.uCam.value.copy(camera.position); camera.getWorldDirection(moteU.uDir.value);
   terrainU.uTime.value = T; ghoulU.uTime.value = T;
-  renderer.shadowMap.needsUpdate = flash.intensity > 0;
+  renderer.shadowMap.needsUpdate = flash.intensity > 0 && (shadowTick = !shadowTick);
 }
 
 /* =====================================================================
@@ -2622,7 +2628,7 @@ function showLetter(){
   $('cardClose').onclick = ()=>{ $('card').classList.add('hidden'); $('cardClose').textContent = 'CHIUDI'; $('cardClose').onclick = ()=> $('card').classList.add('hidden'); begin(); setTimeout(()=>toast(`Tieni premuto SECCHIO per calarlo nel lago. Trascina per guardarti intorno: anche dietro di te.`), 1200); };
 }
 function begin(){
-  running = true; buildPlumbMarks(); ['hud','bottom','sideBtns'].forEach(id=>$(id).classList.remove('hidden'));
+  running = true; if (S.d < .5){ EV.next = 55; VIG.next = 22; } buildPlumbMarks(); ['hud','bottom','sideBtns'].forEach(id=>$(id).classList.remove('hidden'));
   $('torchBtn').classList.toggle('off', !S.torchOn);
   corpse2.visible = S.cycle > 1; layoutHelpers(); layoutMachines();
   waterY = -S.d; waterVel = 0; water.position.y = waterY; terrainU.uWater.value = waterY; raftPos.copy(raftTarget(waterY)); raftVel.set(0,0,0); rebuildPipes(true);
@@ -2748,11 +2754,12 @@ const DRIFT_TXT = { chair:`Una sedia galleggia davanti alla zattera. È ancora a
   coffin:`Il coperchio di una bara passa davanti alla zattera. È graffiato dall'interno.`, doll:`Una bambola galleggia a pancia in giù. Quando le passi davanti, la testa si gira.`,
   musicbox:`Un carillon aperto galleggia vicino alla zattera. Suona da solo. La ballerina gira al contrario.`, frame:`Una cornice galleggia con la foto rivolta in su. È una famiglia a tavola. C'è una sedia vuota. È la tua.` };
 const DR = { o:null };
-function startDrift(kind, near=false){ if (DR.o) return false; const k = kind || pick(Object.keys(DRIFT).filter(k=>k!=='musicbox' && k !== S.lastDrift));
+function startDrift(kind, near=false){ if (DR.o) return false; const k = kind || pick(DRIFT_BY_ACT[actOf(S.d)].filter(k=>k !== S.lastDrift));
   const p = spotAhead(near ? 3.5 : 6, near ? 5.5 : 10, 1.2, .5); if (!p) return false; camera.getWorldDirection(fwd);
   const side = new THREE.Vector3(fwd.z, 0, -fwd.x).normalize(), sg = Math.random()<.5 ? -1 : 1, a = p.clone().addScaledVector(side, sg*9), b = p.clone().addScaledVector(side, -sg*9);
   const o = DRIFT[k]; o.visible = true; o.position.copy(a); o.rotation.y = rand(0,6.3); DR.o = { k, o, a, b, t:0, dur:rand(22,30), sink:0, seen:0, out:false }; S.lastDrift = k;
   if (k === 'candle') o.userData.flame.visible = true; if (k === 'musicbox') musicBoxSfx(.2);
+  think(['cradle','doll','candle','coffin','musicbox'].includes(k) ? 'drift2' : 'drift', 7);
   S.vigSeen = S.vigSeen || {}; if (!S.vigSeen[k]){ S.vigSeen[k] = 1; setTimeout(()=>toast(DRIFT_TXT[k]), 2500); } return true; }
 function driftUpdate(dt){ const e = DR.o; if (!e) return; e.t += dt; const o = e.o, k = clamp(e.t/e.dur, 0, 1);
   // a metà strada rallenta, proprio davanti a te
@@ -2779,7 +2786,7 @@ const VIG_DEF = {
   drift:{ ok:()=>!DR.o, w:2.4, go:()=>startDrift() },
   shoreLight:{ ok:()=>dayF < .6 || phase >= 2, w:1, go:()=>{ camera.getWorldDirection(fwd); const a = Math.atan2(fwd.z, fwd.x) + rand(-.45,.45), r = shoreR(S.d) + rand(2,6), x = Math.cos(a)*r, z = Math.sin(a)*r;
       shoreLamp.position.set(x, H(x,z) + 1.3, z); shoreLamp.visible = true; VIG.cur = { k:'shoreLight', t:0, a, r, dir:Math.random()<.5?-1:1 }; return true; } },
-  jump:{ ok:()=>underRaft() > 2, w:1.3, go:()=>{ const p = spotAhead(6, 13, 1.5, .7); if (!p) return false; const arm = phase >= 2 && Math.random() < .55, o = arm ? armJ : jumper;
+  jump:{ ok:()=>underRaft() > 2, w:1.3, go:()=>{ const p = spotAhead(6, 13, 1.5, .7); if (!p) return false; const arm = actOf(S.d) >= 2 && Math.random() < .55, o = arm ? armJ : jumper;
       o.position.copy(p); o.visible = true; o.rotation.set(0, rand(0,6.3), 0); VIG.cur = { k:'jump', t:0, p, o, arm, sp:0 }; return true; } },
   bubbles:{ ok:()=>true, w:1.2, go:()=>{ const p = spotAhead(4, 9, 1, .6); if (!p) return false; VIG.cur = { k:'bubbles', t:0, p }; bubbleSfx(); return true; } },
   lurch:{ ok:()=>true, w:.8, go:()=>{ raftOffV.x += rand(-.8,.8); raftOffV.y += rand(.5,1); raftJolt = Math.max(raftJolt, .35); creakSfx(); setTimeout(creakSfx, 350); splashFX(raftPos.x + rand(-1.5,1.5), waterY, raftPos.z - 1.8, .4, .5);
@@ -2790,14 +2797,14 @@ const VIG_DEF = {
   ridge:{ ok:()=>S.d > 10 && underRaft() > 8, w:.8, go:()=>{ const p = spotAhead(24, 40, 7, .6); if (!p) return false; ridge.position.set(p.x, waterY - 3, p.z); ridge.rotation.y = rand(0,6.3); ridge.visible = true; VIG.cur = { k:'ridge', t:0, p }; return true; } }
 };
 function startVignette(){ if (VIG.cur || ending) return false; const c = []; let tot = 0;
-  for (const k in VIG_DEF){ const d = VIG_DEF[k]; if (VIG.last.includes(k) || !d.ok()) continue; c.push([k, d.w]); tot += d.w; }
-  let r = Math.random()*tot; for (const [k,w] of c){ r -= w; if (r <= 0){ if (VIG_DEF[k].go()){ VIG.last.push(k); if (VIG.last.length > 3) VIG.last.shift(); return true; } return false; } } return false; }
+  for (const k in VIG_DEF){ const d = VIG_DEF[k]; if (VIG.last.includes(k) || (VIG_ACT[k] ?? 0) > actOf(S.d) || !d.ok()) continue; c.push([k, d.w]); tot += d.w; }
+  let r = Math.random()*tot; for (const [k,w] of c){ r -= w; if (r <= 0){ if (VIG_DEF[k].go()){ think(k, 3); VIG.last.push(k); if (VIG.last.length > 3) VIG.last.shift(); return true; } return false; } } return false; }
 function vignetteUpdate(dt){ const v = VIG.cur; if (!v) return; v.t += dt;
   if (v.k === 'shoreLight'){ v.a += v.dir*dt*.012; const x = Math.cos(v.a)*v.r, z = Math.sin(v.a)*v.r; shoreLamp.position.set(x, H(x,z) + 1.3 + Math.abs(Math.sin(T*3.2))*.08, z);
     const k = smooth(0,1.5,v.t)*(1 - smooth(10,10.4,v.t)); flicker(shoreLamp, k*1.3); if (v.t > 10.5){ shoreLamp.visible = false; VIG.cur = null; } }
   else if (v.k === 'jump'){ const o = v.o, y0 = water.position.y;
     if (v.arm){ const u = clamp(v.t/2.6, 0, 1), up = Math.sin(Math.PI*u); o.position.y = y0 - 1 + up*1.7; o.rotation.x = -.3 + u*1.6; if (!v.sp && v.t > .2){ v.sp = 1; splashFX(v.p.x, y0, v.p.z, .5, .5); } if (u >= 1){ splashFX(v.p.x, y0, v.p.z, 1, .8); makeWave(v.p.x, v.p.z, .5); o.visible = false; VIG.cur = null; } }
-    else { const u = clamp(v.t/1.1, 0, 1); o.position.y = y0 + Math.sin(Math.PI*u)*1.3; o.position.x = v.p.x + u*1.5*Math.sin(o.rotation.y); o.position.z = v.p.z + u*1.5*Math.cos(o.rotation.y); o.rotation.z = (u - .5)*2.4;
+    else { const u = clamp(v.t/1.1, 0, 1); v.ry = v.ry ?? o.rotation.y; o.rotation.order = 'YZX'; o.position.y = y0 + Math.sin(Math.PI*u)*1.3; o.position.x = v.p.x + u*2*Math.cos(v.ry); o.position.z = v.p.z - u*2*Math.sin(v.ry); o.rotation.z = (.5 - u)*2.2; o.rotation.y = v.ry + Math.sin(v.t*34)*.22*(1 - u*.5); o.rotation.x = Math.sin(v.t*9)*.15;
       if (!v.sp){ v.sp = 1; splashFX(v.p.x, y0, v.p.z, .35, .4); splashSfx(10, 3); } if (u >= 1){ splashFX(o.position.x, y0, o.position.z, .45, .4); splashSfx(10, 4); o.visible = false; VIG.cur = null; } } }
   else if (v.k === 'bubbles'){ if (Math.random() < dt*30) emitDrop(v.p.x + rand(-.5,.5), water.position.y, v.p.z + rand(-.5,.5), 0, rand(.4,1.1), 0, .7, rand(.6,1.4)); if (Math.random() < dt*3) ripple(v.p.x + rand(-.4,.4), v.p.z + rand(-.4,.4), .5);
     if (v.t > 4 && !v.end){ v.end = 1; if (phase >= 2){ splashFX(v.p.x, water.position.y, v.p.z, .5, .4); groanSfx(.25, 2); } } if (v.t > 5) VIG.cur = null; }
@@ -2921,7 +2928,7 @@ const whale = (()=>{ const g = new THREE.Group(), N = 14, pts = []; for (let k=0
   const rs = []; for (let k=0;k<=8;k++){ const t = k/8; rs.push(1.5 + 4.2*Math.sin(Math.PI*Math.min(1, t*1.15))); } g.add(new THREE.Mesh(limb(pts, rs, 90, 16), creatureMat));
   for (let k=0;k<26;k++){ const x = -78 + k*6.2, c = mesh(new THREE.ConeGeometry(.6, 2.6 + Math.sin(k*.5)*1.2, 6), creatureMat, x, 4.6 + Math.sin(k*.35)*1.4, Math.sin((x+85)/170*N*.45)*3); c.rotation.z = -.55; g.add(c); }
   const spots = []; for (let k=0;k<50;k++){ const s = new THREE.SphereGeometry(.25,6,4); s.translate(-80 + k*3.2, 3.6 + Math.sin(k)*.5, (k%2 ? 1.6 : -1.6) + Math.sin((k*3.2+5)/170*N*.45)*3); spots.push(s); }
-  g.add(new THREE.Mesh(mergeGeometries(spots), new THREE.MeshBasicMaterial({color:new THREE.Color(.5,2.2,1.1)}))); g.visible = false; scene.add(g); return g; })();
+  g.visible = false; scene.add(g); return g; })();
 function whaleOK(){ return shoreR(S.d) > 34 && waterY - H(0, raftPos.z - 40) > 12; }
 function evWhale(){ camera.getWorldDirection(fwd); const a = Math.atan2(fwd.x, fwd.z), dist = Math.min(48, shoreR(S.d)*.55), P = new THREE.Vector3(raftPos.x + Math.sin(a)*dist, 0, raftPos.z + Math.cos(a)*dist);
   const dir = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a)); X_.whale = { t:0, P, dir, start:P.clone().addScaledVector(dir, -95), wv:0 }; whale.rotation.y = Math.atan2(-dir.z, dir.x); whale.visible = true; X_.big = 26; }
@@ -2946,7 +2953,7 @@ function dunkUpdate(dt){ const e = X_.dunk; if (!e){ R2.dunk = Math.max(0, R2.du
 const NEWEV = { abyss:evAbyss, horizon:evHorizon, pupil:evPupil, darkness:evDarkness, dinner:evDinner, priest:evPriest, heads:evHeads, whaleback:evWhale, dunk:evDunk };
 function regiaUpdate(dt){
   if (!uiBusy() && !VIG.cur) VIG.next -= dt;
-  if (VIG.next <= 0 && (X_.big <= 0 || VIG.next < -7) && tensionT <= 0 && !uiBusy()){ VIG.next = rand(5, 10)/(1 + phase*.12); startVignette(); }
+  if (VIG.next <= 0 && (X_.big <= 0 || VIG.next < -7) && tensionT <= 0 && !uiBusy()){ VIG.next = [rand(11,17), rand(7,12), rand(5,10), rand(5,9), rand(4,8)][actOf(S.d)]; startVignette(); }
   vignetteUpdate(dt); driftUpdate(dt); abyssUpdate(dt); giantUpdate(dt); pupilUpdate(dt); darkUpdate(dt); dinnerUpdate(dt); priestUpdate(dt); headsUpdate(dt); whaleUpdate(dt); dunkUpdate(dt);
   if (R2.still > 0){ R2.still -= dt; waterU.uCalm.value = 0; if (R2.still <= 0){ splashFX(raftPos.x + rand(-1,1), waterY, raftPos.z - 2.2, .5, .4); ripple(raftPos.x, raftPos.z - 2.2, 1.5); } } }
 // i colpi sotto la zattera si vedono: il legno sobbalza, l'acqua schizza tra le assi
@@ -2959,7 +2966,7 @@ function hideRegia(){ X_.pass = null; X_.endless = null; R2.drag = null; R2.yank
    ===================================================================== */
 // il richiamo dal fondo: arriva da lontano, e il lago intero vibra come la pelle di un tamburo
 R2.callT = 40; R2.trem = 0; R2.zoom = 0; R2.gazeEyes = 0;
-function farCall(far=.8){ const pan = rand(-.7,.7); creatureSfx({ kind:'call', far, vol:.9, pan }); R2.trem = 8; R2.tremK = 1 - far*.5;
+function farCall(far=.8){ think('call', 7); const pan = rand(-.7,.7); creatureSfx({ kind:'call', far, vol:.9, pan }); R2.trem = 8; R2.tremK = 1 - far*.5;
   setTimeout(()=>{ shakeAmt = Math.max(shakeAmt, .22*R2.tremK); creakSfx(); }, 1800);
   if (!S.tipCall){ S.tipCall = 1; setTimeout(()=>toast(`Dal fondo è salito un suono. Non era un animale. Il lago ha vibrato tutto insieme, come la pelle di un tamburo.`, 'cosmic'), 3500); }
   else if (Math.random() < .5) setTimeout(()=>sub(pick([`(Lui, dal fondo. Più forte dell'ultima volta)`,`(il suono arriva dai piedi prima che dalle orecchie)`,`(l'acqua si increspa a cerchi, dappertutto, nello stesso istante)`]), 4), 2500); }
@@ -2970,13 +2977,13 @@ function tremUpdate(dt){ if (R2.trem <= 0) return; R2.trem -= dt; const k = Math
 
 /* ---------- lo sguardo del Guardiano: i sette occhi si accendono, e la visuale gli va addosso ---------- */
 const gazeP = new THREE.Vector3();
-const colFaceLight = new THREE.PointLight(0xffc870, 0, 70, 1.3); colFaceLight.position.set(0, -1.5, 9); colHead.add(colFaceLight);
+R2.faceK = 0; const COL_FACE_P = new THREE.Vector3(0, 24.7, 10.4), COL_ORB_P = new THREE.Vector3();
 function gazeOK(){ colHead.getWorldPosition(gazeP); return gazeP.y > waterY + 4 && gazeP.distanceTo(camera.position) < 140; }
 function evGaze(){ colHead.getWorldPosition(gazeP); gazeP.y += 2.5*COL_S; X_.gaze = { t:0 }; X_.big = 16; attend(gazeP, 1.2, 5.5); rumbleSfx(9,.55); heartSfx(.6);
   creatureSfx({ kind:'roar', far:.3, vol:1, delay:2.4 }); setTimeout(()=>heartSfx(.8), 1800); }
 function gazeUpdate(dt){ const e = X_.gaze; if (!e){ R2.zoom = Math.max(0, R2.zoom - dt*.5); R2.gazeEyes = 0; return; } e.t += dt; const t = e.t;
   R2.zoom = smooth(.6, 3.8, t)*(1 - smooth(9.5, 12, t))*.74; R2.gazeEyes = t < 10 ? clamp(Math.floor((t - 1.3)/.32), 0, 7) : clamp(7 - Math.floor((t - 10)/.25), 0, 7);
-  colFaceLight.intensity = smooth(1.3, 3.5, t)*(1 - smooth(9.5, 12, t))*(110 + Math.sin(T*7)*15);
+  R2.faceK = smooth(1.3, 3.5, t)*(1 - smooth(9.5, 12, t));
   if (t < 11){ colHead.getWorldPosition(gazeP); const want = clamp(Math.atan2(camera.position.x - gazeP.x, camera.position.z - gazeP.z) - colossus.rotation.y, -1.1, 1.1); colHead.rotation.y += (want - colHead.rotation.y)*Math.min(1, dt*.9); }
   if (t > 2.4 && !e.s){ e.s = 1; shakeAmt = Math.max(shakeAmt, .55); makeWave(COL_X, COL_Z, 1.2); for (let k=0;k<6;k++) setTimeout(()=>{ const a = rand(0,6.3); splashFX(COL_X + Math.cos(a)*14, waterY, COL_Z + Math.sin(a)*14, 1.4, 1.4); }, k*260); }
   if (t > 4.2 && !e.txt){ e.txt = 1; toast(`Il Guardiano ha aperto gli occhi. Tutti e sette. Non guardano la zattera: guardano te.`, 'warn'); loseLuc(8, `lo sguardo del Guardiano`); }
@@ -3013,17 +3020,32 @@ function reachUpdate(dt){ const e = X_.reach; if (!e) return; e.t += dt; const u
 /* ---------- la presa: qualcosa afferra il secchio, e devi strapparglielo ---------- */
 function startGrip(){ X_.grip = { t:0, p:.45 }; armJ.visible = true; $('bucketBtn').classList.add('grip'); $('bucketSub').textContent = 'TIRA!'; heartSfx(.7); slitherSfx(.4); shakeAmt = Math.max(shakeAmt, .3);
   if (!S.tipGrip){ S.tipGrip = 1; toast(`Qualcosa ha afferrato il secchio sott'acqua. Tocca SECCHIO più in fretta che puoi per strapparglielo.`, 'warn'); } }
-function gripTap(){ const g = X_.grip; if (!g) return false; g.p += .12; creakSfx(); shakeAmt = Math.max(shakeAmt, .22); splashFX(bucket.position.x, water.position.y, bucket.position.z, .35, .35); return true; }
-function gripUpdate(dt){ const g = X_.grip; if (!g) return; g.t += dt; g.p -= dt*(.13 + phase*.02); armJ.position.set(bucket.position.x + .08, water.position.y - .3 + Math.sin(T*14)*.04, bucket.position.z + .12); armJ.rotation.set(-.2, Math.atan2(camera.position.x - armJ.position.x, camera.position.z - armJ.position.z), Math.sin(T*9)*.12);
-  bucket.rotation.x = Math.sin(T*22)*.25; if (Math.random() < dt*6) ripple(bucket.position.x + rand(-.4,.4), bucket.position.z + rand(-.4,.4), .5);
+function gripTap(){ const g = X_.grip; if (!g) return false; g.p += .12; g.tap = 1; creakSfx(); shakeAmt = Math.max(shakeAmt, .18); pitchT += .02; return true; }
+const gripDir = new THREE.Vector3(), gripTo = new THREE.Vector3();
+function gripPose(){ const g = X_.grip, wy = water.position.y, pull = clamp(1 - g.p, 0, 1);
+  gripDir.set(B.target.x - raftPos.x, 0, B.target.z - raftPos.z).normalize();
+  // più la cosa vince, più il secchio è lontano e sotto; ogni tuo tocco lo strappa indietro
+  bucket.position.copy(B.target).addScaledVector(gripDir, pull*1.4 - g.tap*.35); bucket.position.y = wy - .1 - pull*.42 - g.yank*.4 + g.tap*.25 + Math.sin(T*9)*.03;
+  bucket.rotation.set(-.35 - pull*.5 - g.yank*.35 + g.tap*.3, Math.atan2(gripDir.x, gripDir.z), Math.sin(T*13)*.18*(.4 + pull));
+  // la mano: dal lato lontano, le dita piegate sul bordo verso di te
+  gripTo.copy(bucket.position).addScaledVector(gripDir, .2); armJ.position.set(gripTo.x, Math.max(gripTo.y - .3, wy - .42), gripTo.z); armJ.scale.setScalar(1.35);
+  armJ.rotation.set(.55 + g.yank*.3, Math.atan2(-gripDir.x, -gripDir.z), Math.sin(T*7)*.06);
+  // l'acqua ribolle dove lottate
+  if (Math.random() < .5) emitDrop(bucket.position.x + rand(-.4,.4), wy, bucket.position.z + rand(-.4,.4), rand(-.4,.4), rand(.6,1.6)*(.5 + g.yank), rand(-.4,.4), .8, rand(.7,1.4));
+  if (Math.random() < .12) ripple(bucket.position.x + rand(-.3,.3), bucket.position.z + rand(-.3,.3), .5 + g.yank*.6);
+  if (g.yank > .95) splashFX(bucket.position.x, wy, bucket.position.z, .7, .6); if (g.tap > .95) splashFX(bucket.position.x, wy, bucket.position.z, .45, .4); }
+function gripUpdate(dt){ const g = X_.grip; if (!g) return; g.t += dt; g.p -= dt*(.13 + phase*.02);
+  // la cosa tira a strattoni: ogni strattone ruba un po' di corda e trascina il secchio più giù
+  g.yank = Math.max(0, (g.yank || 0) - dt*2.2); g.tap = Math.max(0, (g.tap || 0) - dt*4);
+  if (Math.random() < dt*1.3 && g.t > .4){ g.yank = 1; g.p -= .05; shakeAmt = Math.max(shakeAmt, .4); pitchT -= .05; slitherSfx(.35); knockSfx(.4, 0); }
   $('bucketRing').style.setProperty('--p', Math.round(clamp(g.p,0,1)*100));
   const end = (win)=>{ X_.grip = null; $('bucketBtn').classList.remove('grip'); bucket.rotation.x = 0; splashFX(armJ.position.x, water.position.y, armJ.position.z, win ? .8 : 1.3, .7); ripple(armJ.position.x, armJ.position.z, 1.2);
     setTimeout(()=>{ armJ.visible = false; }, win ? 200 : 500);
-    if (win){ B.relic = true; gainLuc(3, `gliel'hai strappato`); toast(`Hai strappato il secchio a qualcosa. Sul bordo restano tre unghie conficcate nel metallo.`, 'find'); }
+    if (win){ B.relic = true; bucket.rotation.set(0,0,0); gainLuc(3, `gliel'hai strappato`); toast(`Hai strappato il secchio a qualcosa. Sul bordo restano tre unghie conficcate nel metallo.`, 'find'); }
     else { B.lost = true; stingerSfx(); loseLuc(6, `ti ha preso il secchio`); shakeAmt = .8; toast(`La corda ti scorre tra le mani. Quando il secchio torna su è vuoto, piegato, con l'impronta di una mano tutto intorno.`, 'warn'); } };
   if (g.p >= 1) end(true); else if (g.p <= 0 || g.t > 7) end(false); }
 
-function regia3Update(dt){ if (!uiBusy() && S.d >= 1 && !ending){ R2.callT -= dt; if (R2.callT <= 0 && X_.big <= 0 && tensionT <= 0){ R2.callT = rand(45, 85)/(1 + phase*.15); farCall(clamp(1 - S.d/MAXD, .25, .95)); } }
+function regia3Update(dt){ if (!uiBusy() && S.d >= 6 && !ending){ R2.callT -= dt; if (R2.callT <= 0 && X_.big <= 0 && tensionT <= 0){ R2.callT = rand(45, 85)/(1 + phase*.15); farCall(clamp(1 - S.d/MAXD, .25, .95)); } }
   tremUpdate(dt); gazeUpdate(dt); moonUpdate(dt); reachUpdate(dt); }
 Object.assign(NEWEV, { gaze:evGaze, moon:evMoon, reach:evReach, grip:()=>{ X_.gripNext = true; }, call:()=>farCall(.5) });
 
@@ -3057,7 +3079,7 @@ const flood = (()=>{ const g = new THREE.Group(), beamMat = new THREE.MeshBasicM
   const headMat = new THREE.MeshStandardMaterial({color:0x111111, emissive:0xdfe8ff, emissiveIntensity:0}); const heads = [];
   for (const x of [-1.3, 1.3]){ g.add(mesh(new THREE.CylinderGeometry(.03,.04,2.4,6), M.metal, x,1.5,-1.55)); const h = mesh(new THREE.CylinderGeometry(.12,.09,.18,10).rotateX(Math.PI/2), headMat, x,2.7,-1.6); h.rotation.x = .5; g.add(h);
     const b = mesh(new THREE.ConeGeometry(2.2, 9, 16, 1, true).translate(0,-4.5,0).rotateX(Math.PI/2 + .5), beamMat, x, 2.7, -1.6); b.rotation.y = -x*.06; g.add(b); heads.push(h); }
-  const L = new THREE.PointLight(0xdfe8ff, 0, 28, 1.5); L.position.set(0, 2.4, -4.5); g.add(L); g.userData = { L, headMat, beamMat }; g.visible = false; raft.add(g); return g; })();
+  const L = new THREE.Object3D(); L.position.set(0, 2.4, -4.5); g.add(L); g.userData = { L, headMat, beamMat }; g.visible = false; raft.add(g); return g; })();
 function layoutMachines(){ $('floodBtn').classList.toggle('hidden', !S.flood); $('floodBtn').classList.toggle('off', S.floodOn === false); noria.visible = (S.noria||0) > 0; noria.scale.setScalar(1 + Math.max(0,(S.noria||0)-1)*.12); crane.visible = (S.crane||0) > 0; flood.visible = (S.flood||0) > 0;
   noriaBk.color.setHex(S.noria >= 4 ? 0x5a2522 : 0x4a2416); noriaBk.emissive.setHex(S.noria >= 4 ? 0x200404 : 0x000000); }
 const cTip = new THREE.Vector3(), cTmp = new THREE.Vector3();
@@ -3077,7 +3099,7 @@ function machinesUpdate(dt){
     const a = u.cable.geometry.attributes.position; a.setXYZ(0, cTip.x, cTip.y, cTip.z); a.setXYZ(1, u.grab.position.x, u.grab.position.y + .25, u.grab.position.z); a.needsUpdate = true; }
   else { u.grab.visible = u.cable.visible = false; }
   const fl = S.flood||0; if (fl){ const on = S.floodOn === false ? 0 : blackT <= 0 && !X_.dark && lampOverride <= 0 ? 1 : (Math.random() < .1 ? .4 : 0), k = on*(.85 + .15*Math.sin(T*31)*(phase >= 3 ? 1 : .1));
-    flood.userData.L.intensity = k*(14 + fl*10); flood.userData.headMat.emissiveIntensity = k*4*(1 - dayF*.7); flood.userData.beamMat.opacity = k*.05*(1 - dayF*.7); } else flood.userData.L.intensity = 0; }
+    if (!X_.dock){ flood.userData.L.getWorldPosition(dockLight.position); dockLight.color.setHex(0xdfe8ff); dockLight.distance = 28; dockLight.intensity = k*(14 + fl*10); } flood.userData.headMat.emissiveIntensity = k*4*(1 - dayF*.7); flood.userData.beamMat.opacity = k*.05*(1 - dayF*.7); } else if (!X_.dock) dockLight.intensity = 0; }
 
 /* =====================================================================
    IL PROFONDO: l'ecoscandaglio, le luci da spegnere, le perdite che restano
@@ -3182,10 +3204,66 @@ function regia4Update(dt){ passageUpdate(dt); hullUpdate(dt); yankUpdate(dt); dr
   if (X_.vanish){ const k = HELPERS[S.helper||0].k; if (!k || dayF >= .5){ X_.vanish = null; } else { const g = helperFigs[k-1]; if (!inView(g, 1)){ X_.vanish = null; helperLost(k-1, false); splashSfx(30, 6); } } } }
 Object.assign(NEWEV, { passage:()=>{ if (!X_.pass) startPassage(); }, endless:()=>{ X_.endlessNext = true; }, vanish:()=>{ X_.vanish = true; } });
 
+/* =====================================================================
+   IL COPIONE: cinque atti. Ogni cosa arriva quando è il suo momento, e la prima volta Tobia ci pensa su.
+   I · Il lavoro (0–6 m): un lago, un secchio, troppa calma. Cose che galleggiano. Da dove vengono?
+   II · Il paese (6–20 m): le cose del paese tornano su. Qualcuno è stato qui. Qualcuno è ancora qui.
+   III · Loro (20–45 m): gli annegati sanno. Ti guardano lavorare.
+   IV · Lui (45–90 m): la scala delle cose cambia. Il lago è una coperta.
+   V · Il risveglio (90 m e oltre)
+   ===================================================================== */
+const actOf = d => d < 6 ? 0 : d < 20 ? 1 : d < 45 ? 2 : d < 90 ? 3 : 4;
+const EV_ACT = { knock:0, tug:0, prints:0, bump:0, lightning:0,
+  music:1, silent:1, fish:1, behind:1, hand:1, torch:1, left:1, bodies:1, fog:1, car:1, rowboat:1, silence:1, neck:1, tide:1, scrawl:1, bellNear:1, figure:1, flicker:1, ladder:1, priest:1, grip:1, passage:1, call:1,
+  sublim:2, green:2, dg:2, lost:2, titan:2, mouth:2, dock:2, tentRaft:2, hands:2, selfCorpse:2, bucketThing:2, reflection:2, name:2, eyes:2, darkness:2, dinner:2, heads:2, gaze:2, endless:2, vanish:2,
+  levx:3, blood:3, breath:3, surfEye:3, rain:3, starsOut:3, swarm:3, scare:3, leviathan:3, chant:3, abyss:3, horizon:3, pupil:3, whaleback:3, dunk:3, moon:3, reach:3 };
+const VIG_ACT = { drift:0, bubbles:0, lurch:0, jump:0, shoreLight:1, hair:1, face:2, ridge:3 };
+const DRIFT_BY_ACT = [['hat','chair','frame'], ['hat','chair','frame','cradle','doll','candle'], ['cradle','doll','candle','frame','coffin','chair'], ['coffin','cradle','doll','candle'], ['coffin','doll','candle']];
+// i pensieri di Tobia: una volta sola, quando qualcosa accade per la prima volta
+const THINK = {
+  drift:`Da dove vengono queste cose? Dal fondo del lago... o qualcuno le butta in acqua, di notte?`,
+  drift2:`Sono le cose del paese. Come se qualcuno, laggiù, stesse svuotando le case. O come se le case si svuotassero da sole.`,
+  relic:`Era nel secchio. Settant'anni sott'acqua, e sembra perso ieri. Chi l'ha perso?`,
+  relic2:`Non può essere stato sott'acqua tutto questo tempo. Qualcuno l'ha messo lì. Per me.`,
+  knock:`Un tronco. Sarà un tronco sotto la zattera. I tronchi non bussano tre volte.`,
+  prints:`Impronte. Le mie? Non mi sono mai tolto gli stivali.`,
+  shoreLight:`Una lanterna sulla riva. Qualcuno del paese, a quest'ora? Qui non viene nessuno.`,
+  jump:`Un pesce. Almeno qualcosa, qui dentro, è vivo.`,
+  bubbles:`Bolle. Il fondo che si assesta, dicono. Il fondo che respira, dico io.`,
+  call:`Non era un animale. Non c'è niente, in un lago, che faccia quel suono.`,
+  hair:`Capelli. Lunghi. Di chi sono?`,
+  face:`C'era un volto. Sott'acqua, a due metri da me. Aveva gli occhi aperti.`,
+  heads:`Sono loro. Il paese. Sanno che sono qui. Sanno cosa sto facendo.`,
+  priest:`Il prete. Quello dell'architrave. Don Aurelio. Mi guarda come si guarda un figlio.`,
+  dinner:`Hanno aspettato l'acqua seduti a tavola. E aspettano ancora. Me.`,
+  gaze:`Non è una statua. Le statue non aprono gli occhi.`,
+  horizon:`Non era una montagna. Le montagne non si avvicinano.`,
+  ridge:`Quanto è grande il lago? Quanto è grande quello che c'è dentro?`,
+  abyss:`Non c'è un fondo. C'è Lui, disteso. E il lago è la sua coperta.`,
+  endless:`Il lago è profondo centoventotto metri. Ho calato più corda di quanta ne abbia mai avuta.`,
+  passage:`Non mi ha visto. Finché resto al buio, non mi vede.`,
+  bodies:`Corpi. Vestiti della domenica. Non sono annegati scappando: sono annegati aspettando.`,
+  rowboat:`Una barca senza remi. Chi c'è sopra non rema. Non ne ha bisogno.`,
+  titan:`Quella cosa era alta come il campanile. E sotto ce n'erano altre.`,
+  darkness:`Erano sulla zattera. Con me. Nel buio li sentivo respirare.`,
+  grip:`Qualcosa, laggiù, voleva il secchio. O voleva me.`,
+  moon:`La luna non è la luna. Non lo è mai stata.`,
+  reach:`Il bordo della valle. Qualcosa si è aggrappato al bordo della valle.`,
+  whaleback:`Non finiva. Continuava a passare, e non finiva.`,
+  dunk:`Laggiù erano in piedi. Tutti. E guardavano in su, verso di me.`
+};
+function think(key, delay=4){ if (!THINK[key]) return; S.thought = S.thought || {}; if (S.thought[key]) return; S.thought[key] = 1;
+  const show = (n=0)=>{ if (!running || ending) return; if ((subT > .3 || uiBusy()) && n < 12) return setTimeout(()=>show(n+1), 900); sub(`(${THINK[key]})`, 5.5, 'think'); };
+  setTimeout(show, delay*1000); }
+
 // ombre portate dalla torcia: tutto tranne terreno, acqua, effetti e la zattera (su cui stai)
 scene.traverse(o=>{ if (o.isMesh || o.isInstancedMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(addMurk); });
 addMurk(pipeMatN);
 scene.traverse(o=>{ if (!o.isMesh || o.userData.noCast) return; let p = o, skip = false; while (p){ if (p === raft || p === bucket || p.userData.noCast) { skip = true; break; } p = p.parent; } o.castShadow = !skip; o.receiveShadow = !skip; });
+// le cose enormi non proiettano l'ombra della torcia: il cono arriva a 70 m e da lì non la vedresti, ma costano un'intera passata in più
+{ const sph = new THREE.Sphere(); scene.traverse(o=>{ if (!o.isMesh || !o.castShadow) return; if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); sph.copy(o.geometry.boundingSphere).applyMatrix4(o.matrixWorld);
+    let p = o; while (p){ if (p === colossus || p === giant || p === whale || p === reach || p === titan) break; p = p.parent; }
+    if (p || sph.radius > 9) o.castShadow = false; }); }
 
 /* =====================================================================
    LOOP
@@ -3352,8 +3430,10 @@ function update(dt){
     rope.visible = true;
   } else { bucket.position.copy(handPos); bucket.rotation.set(0, yaw, Math.sin(T*1.3)*.04); rope.visible = false; }
   if (B.busy){ const a = ropeGeo.attributes.position; const top = ropeTop.copy(bucket.position); top.y += .34; const len = handRope.distanceTo(top);
-    for (let i=0;i<20;i++){ const t = i/19; tmpV.lerpVectors(handRope, top, t); tmpV.y -= Math.sin(t*Math.PI)*Math.min(len*.04,2); a.setXYZ(i, tmpV.x, tmpV.y, tmpV.z); } a.needsUpdate = true; }
+    for (let i=0;i<20;i++){ const t = i/19; tmpV.lerpVectors(handRope, top, t); const taut = X_.grip || X_.tug > 0 || X_.endless; tmpV.y -= taut ? 0 : Math.sin(t*Math.PI)*Math.min(len*.04,2); if (taut){ const vb = Math.sin(t*Math.PI)*Math.sin(T*70 + t*9)*.025; tmpV.x += vb; tmpV.y += vb; } a.setXYZ(i, tmpV.x, tmpV.y, tmpV.z); } a.needsUpdate = true; }
   if (X_.endless){ bucket.position.y = water.position.y - .2 - Math.min(X_.endless.len, 18); bucket.rotation.z = .2; }
+  if (X_.grip) gripPose();
+  else if (X_.tug > 0 && B.busy){ const k = Math.min(1, X_.tug); bucket.position.y = water.position.y - .25 - (.35 + Math.abs(Math.sin(T*6))*.5)*k; bucket.rotation.x = -.5*k + Math.sin(T*11)*.15*k; if (Math.random() < .3) emitDrop(bucket.position.x + rand(-.3,.3), water.position.y, bucket.position.z + rand(-.3,.3), 0, rand(.8,1.8), 0, .7, rand(.8,1.4)); }
   bucket.visible = !ending;
   if (sprayLife > 0){ sprayLife -= dt; const a = sprayGeo.attributes.position; for (let i=0;i<sprayN;i++){ sprayV[i].y -= 9.8*dt; a.setXYZ(i, a.getX(i)+sprayV[i].x*dt, Math.max(water.position.y, a.getY(i)+sprayV[i].y*dt), a.getZ(i)+sprayV[i].z*dt); } a.needsUpdate = true; spray.visible = true; } else spray.visible = false;
 
@@ -3415,7 +3495,14 @@ function frame(now){
   fxUpdate(dt);
   renderFrame();
 }
-if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, consequence, hullDamage, helperLost, dragMachine, get DRo(){ return DR.o; }, farCall, evGaze, R2get: ()=>R2, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
+if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, mists, water, scene, consequence, hullDamage, helperLost, dragMachine, get DRo(){ return DR.o; }, farCall, evGaze, R2get: ()=>R2, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
+// riscaldamento: ogni shader del gioco viene compilato adesso, dietro il caricamento, e non nel momento in cui l'evento ti salta addosso
+function warmUp(){ const hidden = [], counts = [];
+  scene.traverse(o=>{ if (!o.visible){ hidden.push(o); o.visible = true; } if (o.isInstancedMesh && o.count === 0){ counts.push(o); o.count = 1; } });
+  const fl = flash.intensity, sh = renderer.shadowMap.needsUpdate; flash.intensity = 1;
+  try { renderer.compile(scene, camera); renderer.shadowMap.needsUpdate = true; renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null); } catch(e){ console.warn(e); }
+  hidden.forEach(o=> o.visible = false); counts.forEach(o=> o.count = 0); flash.intensity = fl; renderer.shadowMap.needsUpdate = sh; }
+warmUp();
 $('loading').remove();
 requestAnimationFrame(frame);
 document.addEventListener('contextmenu', e=>e.preventDefault());
