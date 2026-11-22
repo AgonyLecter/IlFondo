@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { AU, initAudio, setUnder, sfxNoise, play, splashSfx, castSfx, reelSfx, duck, silence, coinSfx, bellSfx, groanSfx, whisperSfx, stingerSfx, heartSfx, creakSfx, ringSfx, staticSfx, bubbleSfx,
-  thunderSfx, deepCallSfx, slitherSfx, surfaceSfx, voiceSfx, riserSfx, pageSfx, rumbleSfx, knockSfx, revealSfx, musicBoxSfx, breathSfx, honkSfx, dripSfx, clankSfx, dripsSfx, footstepSfx } from './audio.js';
+  thunderSfx, deepCallSfx, creatureSfx, slitherSfx, surfaceSfx, voiceSfx, riserSfx, pageSfx, rumbleSfx, knockSfx, revealSfx, musicBoxSfx, breathSfx, honkSfx, dripSfx, clankSfx, dripsSfx, footstepSfx } from './audio.js';
 
 const $ = id => document.getElementById(id);
 const rand = (a,b) => a + Math.random()*(b-a);
@@ -367,19 +367,19 @@ if (uEyes > 0. && vWP.y < -42.) {
    CIELO
    ===================================================================== */
 const skyU = { uTop:{value:new THREE.Color()}, uHor:{value:new THREE.Color()}, uMoon:{value:new THREE.Vector3(-.4,.55,-.7).normalize()}, uNight:{value:1}, uTime:{value:0}, uRed:{value:0},
-  uWrong:{value:0}, uSkyEye:{value:0}, uLight:{value:0}, uOut:{value:0} };
+  uWrong:{value:0}, uSkyEye:{value:0}, uLight:{value:0}, uOut:{value:0}, uMoonEye:{value:0} };
 const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
   uniforms: skyU, side:THREE.BackSide, depthWrite:false, fog:false,
   vertexShader:`varying vec3 vD; void main(){ vD=position; vec4 p=projectionMatrix*modelViewMatrix*vec4(position,1.); gl_Position=p.xyww; gl_Position.z=p.w*.99995; }`,
-  fragmentShader:`uniform vec3 uTop,uHor,uMoon; uniform float uNight,uTime,uRed,uWrong,uSkyEye,uLight,uOut; varying vec3 vD;
+  fragmentShader:`uniform vec3 uTop,uHor,uMoon; uniform float uNight,uTime,uRed,uWrong,uSkyEye,uLight,uOut,uMoonEye; varying vec3 vD;
   float h(vec3 p){ return fract(sin(dot(p,vec3(12.9898,78.233,45.164)))*43758.5453); }
   float n2(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f); float a=h(vec3(i,0)),b=h(vec3(i+vec2(1,0),0)),c=h(vec3(i+vec2(0,1),0)),d=h(vec3(i+1.,0)); return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
   void main(){ vec3 d=normalize(vD); float t=clamp(d.y,0.,1.);
     vec3 c=mix(uHor,uTop,pow(t,.55));
     vec2 cp=d.xz/(d.y+.18)*1.5;
     float cl=n2(cp+uTime*.008)*.5+n2(cp*2.1-uTime*.014)*.3+n2(cp*4.6+uTime*.02)*.2;
-    float cm=smoothstep(.38,.78,cl)*smoothstep(0.,.22,d.y);
-    float m=dot(d,normalize(uMoon));
+    float m=dot(d,normalize(uMoon)); float mAng=acos(clamp(m,-1.,1.)), mR=mix(.032,.17,uMoonEye);
+    float cm=smoothstep(.38,.78,cl)*smoothstep(0.,.22,d.y)*(1.-uMoonEye*smoothstep(mR*3.,mR*1.1,mAng));
     vec3 cloudCol=uHor*1.7+vec3(.003,.0035,.003);
     cloudCol+=pow(max(m,0.),7.)*vec3(.06,.065,.07)*uNight*(1.2-cl);
     cloudCol+=uLight*vec3(.7,.75,.95)*(.4+cl);
@@ -387,8 +387,14 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.Shad
     vec3 sd=d; float ra=uWrong*uTime*.04; sd.xz=mat2(cos(ra),-sin(ra),sin(ra),cos(ra))*sd.xz;
     float s=step(.9982-uWrong*.001,h(floor(sd*260.)))*uNight*smoothstep(.05,.4,d.y)*(1.-cm)*step(uOut*1.02,h(floor(sd*260.)+7.));
     c+=s*mix(vec3(.5,.55,.6),vec3(.55,.95,.35),uWrong)*(.6+.4*sin(uTime*3.+h(floor(sd*260.))*50.));
-    float md=smoothstep(.99935,.9996,m); float cr=n2(d.xy*1800.)*.35+n2(d.zy*700.)*.2;
-    c+=md*vec3(.62,.61,.52)*(1.-cr)*mix(.3,1.,uNight)*(1.-cm*.75)*(1.-smoothstep(.6,1.,uOut));
+    float md=smoothstep(mR,mR*.92,mAng); float cr=n2(d.xy*1800./(1.+uMoonEye*5.))*.35+n2(d.zy*700./(1.+uMoonEye*5.))*.2;
+    vec3 mc=vec3(.62,.61,.52)*(1.-cr);
+    if(uMoonEye>0.){ vec3 Mn=normalize(uMoon); vec3 rt=normalize(cross(Mn,vec3(0.,1.,0.))); vec3 up=cross(rt,Mn); vec2 q=vec2(dot(d,rt),dot(d,up))/sin(mR);
+      float open=smoothstep(.25,.9,uMoonEye); float lid=abs(q.y)-(1.-q.x*q.x)*.62*open; float ein=smoothstep(.02,-.02,lid)*step(abs(q.x),1.);
+      float ir=length(q); vec3 irc=mix(vec3(.95,.62,.12),vec3(.25,.4,.05),smoothstep(0.,.5,ir))*(.6+.4*n2(vec2(atan(q.y,q.x)*10.,ir*14.)));
+      float pup=smoothstep(.08,.04,abs(q.x))*step(ir,.5); vec3 ec=mix(vec3(.85,.8,.66),irc,smoothstep(.55,.48,ir)); ec=mix(ec,vec3(0.),pup);
+      mc=mix(mc, mc*vec3(.75,.68,.6), smoothstep(.0,.05,lid)*open*step(abs(q.x),1.)*.8); mc=mix(mc, ec*1.3, ein); mc+=vec3(.15,.05,.01)*smoothstep(.06,0.,abs(lid))*open; }
+    c+=md*mc*mix(.3,1.,uNight)*(1.-cm*.75)*(1.-smoothstep(.6,1.,uOut));
     c+=pow(max(m,0.),70.)*.07*vec3(.55,.6,.62)+pow(max(m,0.),8.)*.012*vec3(.45,.5,.5)*uNight;
     if(uSkyEye>0.){ vec3 E=normalize(vec3(0.,.42,-1.)); float me=dot(d,E);
       if(me>0.){ vec3 rt=normalize(cross(E,vec3(0.,1.,0.))); vec3 up=cross(rt,E); vec2 p=vec2(dot(d,rt),dot(d,up))/.34;
@@ -970,13 +976,13 @@ for (let i=0;i<8;i++){
   if (i===2) addLore('statue', st, st.position.y + 2); else scene.add(st);
 }
 const colOrbMat = new THREE.MeshStandardMaterial({color:0x0c100d, roughness:.15, emissive:0x6aff9a, emissiveIntensity:0});
-const colEyeMat = new THREE.MeshBasicMaterial({color:new THREE.Color(4,3.2,.9)});
+const colEyeMat = new THREE.MeshBasicMaterial({color:new THREE.Color(4,3.2,.9)}), COL_EYES = [];
 const colOrbLight = new THREE.PointLight(0x5cff9a, 0, 60, 1.6);
 const COL_ORB = new THREE.Vector3(0, 15.6, 7.9), COL_ORB_R = 2.3;
 const colossus = (()=>{
   const V = V3;
   const body = [], tents = [], wings = [], crust = [];
-  const g = new THREE.Group(); g.position.set(COL_X, COL_Y0, COL_Z); g.scale.setScalar(COL_S); g.rotation.y = Math.atan2(-COL_X, 32-COL_Z);
+  const g = new THREE.Group(); g.position.set(COL_X, COL_Y0, COL_Z); g.scale.setScalar(COL_S); g.rotation.y = Math.atan2(-COL_X, 62-COL_Z);
 
   // basamento: due blocchi sbozzati, con gli scalini consumati
   { const b = new THREE.BoxGeometry(13,6,12.5,14,8,14); b.translate(0,1,-.4); body.push(sculpt(b, .7, .3, .85));
@@ -1050,7 +1056,7 @@ const colossus = (()=>{
   for (const s of [-1,1]) for (let k=0;k<3;k++){ const b = V(s*(1.3+k*.55), 5.6 - k*.9, -2.6 - k*.3); hp.push(sculpt(limb([b, b.clone().add(V(s*(.9+k*.3), 1.8-k*.3, -1.6)), b.clone().add(V(s*(1.2+k*.5), 2.4-k*.9, -3.9+k*.4))], [.7-k*.12,.42,.04], 16, 10), .06, 1)); }
   const sockets = [[-.85,2.75,.45],[.85,2.75,.45],[-1.55,2.25,.32],[1.55,2.25,.28],[0,3.35,.5],[-.35,2.05,.45],[.4,2.0,.42]];
   sockets.forEach(([x,y,r])=>{ const sk = new THREE.SphereGeometry(r*1.3, 10, 8); sk.scale(1.3,.8,.6); sk.translate(x, y, 3.25 - Math.abs(x)*.28); hp.push(sculpt(sk, .02, 2, .25));
-    const e = mesh(new THREE.SphereGeometry(r*.75, 12, 8), colEyeMat, x, y + .05, 3.5 - Math.abs(x)*.28); e.scale.set(1.25,.7,.7); e.userData.colEye = true; colHead.add(e); });
+    const em = colEyeMat.clone(); COL_EYES.push(em); const e = mesh(new THREE.SphereGeometry(r*.75, 12, 8), em, x, y + .05, 3.5 - Math.abs(x)*.28); e.scale.set(1.25,.7,.7); e.userData.colEye = true; colHead.add(e); });
   colHead.add(new THREE.Mesh(mergeGeometries(hp), colMat));
   for (let k=0;k<15;k++){ const u = (k-7)/7, x0 = u*1.9, len = 7.5 + (1-Math.abs(u))*5 + rand(-1,1), pts = [];
     for (let j=0;j<=10;j++){ const t = j/10, curl = Math.max(0, t-.72)/.28;
@@ -1351,7 +1357,11 @@ const STORY = [
   {d:102, f:()=> call(`RADIO VALLE NÀRRENA`, `(Nessuno parla. Si sente acqua che gocciola, e tante persone che respirano insieme, vicinissime al microfono.) Il paese è vuoto. Sono tutti al lago. Ti guardano lavorare.`, true)},
   {d:113, f:()=> call(`DITTA SESTI`, `Ancora poco. Si sta svegliando per lei, lo sa? La riconosce. Respira quando lei respira. Non si fermi proprio adesso.`)},
   {d:96, f:()=> call(`QUADERNO DI DON AURELIO`, `(Una pagina fradicia, incollata al fondo del secchio.) «Non è morto ciò che dorme sotto l'acqua. Dorme, e nel sonno ci pensa. Noi esistiamo finché Lui ci sogna. Ho dato da bere al suo sonno un paese intero, perché non si svegliasse. Che Dio mi perdoni: non era il nostro Dio a guardarmi, mentre aprivo le chiuse.»`)},
-  {d:121, f:()=> { toast(`Il fondo ti guarda.`, 'warn'); groanSfx(.7,6); deepCallSfx(.9); }}
+  {d:121, f:()=> { toast(`Il fondo ti guarda.`, 'warn'); groanSfx(.7,6); creatureSfx({ kind:'call', far:.05, vol:1 }); }},
+  {d:.35, f:()=> farCall(.9)},
+  {d:.9, f:()=> startDrift('cradle')},
+  {d:4.5, f:()=> startEv('grip')},
+  {d:26, f:()=> setTimeout(()=>{ if (running && !ending && gazeOK()) startEv('gaze'); }, 4000)}
 ];
 
 /* =====================================================================
@@ -1483,7 +1493,7 @@ $('breathBtn').addEventListener('pointerdown', e=>{ e.stopPropagation(); if (bre
 $('torchBtn').onclick = ()=>{ S.torchOn = !S.torchOn; $('torchBtn').classList.toggle('off', !S.torchOn); play('click', {vol:.5, rev:.05}); };
 $('sellBtn').onclick = ()=>{ if (S.tank < 1) return; const v = S.tank * priceNow(); S.money += v; S.tank = 0; coinSfx(); toast(`Venduti al Compratore: € ${fmt(v)}`); };
 let holdBucket = false;
-$('bucketBtn').addEventListener('pointerdown', e=>{ e.preventDefault(); holdBucket = true; initAudio(); throwBucket(); });
+$('bucketBtn').addEventListener('pointerdown', e=>{ e.preventDefault(); initAudio(); if (gripTap()) return; holdBucket = true; throwBucket(); });
 ['pointerup','pointerleave','pointercancel'].forEach(ev=> $('bucketBtn').addEventListener(ev, ()=> holdBucket = false));
 
 /* =====================================================================
@@ -1617,12 +1627,12 @@ function throwBucket(){
 function finishBucket(){
   B.busy = false; clankSfx(); dripsSfx();
   if (B.thing){ B.thing = false; bucketTent.visible = false; bucket.rotation.x = 0; toast(pick([`Il secchio torna su scosso da qualcosa che si dimena. Una punta di tentacolo sporge dal bordo. Poi scivola giù, nel buio.`,`Nel secchio qualcosa si contorce. Ti guarda con un occhio solo, poi si arrotola e sparisce oltre il bordo.`]), 'warn'); loseLuc(6, `qualcosa nel secchio`); heartSfx(.7); }
-  let L = BUCKETS[S.bucket].s * 10;
+  let L = BUCKETS[S.bucket].s * 10; if (B.lost){ L = 0; B.lost = false; }
   if (B.vein === 'trap'){ L = 0; B.vein = false; scare(); loseLuc(7, `la vena era una bocca`); toast(`Il secchio torna su vuoto e morso. Sul bordo, il segno di denti. Non era una vena.`, 'warn'); }
   else if (B.vein){ L *= 5; S.veins = (S.veins||0) + 1; revealSfx(); toast(`Acqua antica: secchio ×5.`, 'find'); }
   addLiters(L);
   if (BUCKETS[S.bucket].org) loseLuc(.3, `il secchio che respira`);
-  const ch = (.05 + phase*.022) * NETS[S.net||0].f * (B.vein ? 3 : 1); B.vein = false;
+  const ch = B.relic ? 1 : (.05 + phase*.022) * NETS[S.net||0].f * (B.vein ? 3 : 1); B.vein = false; B.relic = false;
   if (phase >= 0 && Math.random() < ch && S.d > 2){ const unseen = FINDS.map((f,i)=>i).filter(i=>!S.relics.includes(i)); let pool = unseen.filter(i=>FINDS[i][0]<=phase && FINDS[i][0]>=phase-1); if (!pool.length) pool = unseen.filter(i=>FINDS[i][0]<=phase+1); if (pool.length){ const fi = pick(pool); showFind(fi); loseLuc(2+phase, `ciò che era nel secchio`); if (phase>=2) whisperSfx(1.5,.15); }
     const val = Math.round(35*Math.pow(3, phase)*(1 + (S.net||0)*.35)); S.money += val; setTimeout(()=>{ coinSfx(); toast(pool.length ? `Il Compratore vuole anche questo: +€ ${fmt(val)}` : `Cianfrusaglie dal fondo. Il Compratore le prende tutte: +€ ${fmt(val)}`); }, pool.length ? 1800 : 0); }
   if (holdBucket) setTimeout(throwBucket, 30);
@@ -1710,20 +1720,20 @@ const RADIO_LINES = [`(radio, da sola) ...previsioni: nebbia densa sul lago. Neb
 /* ---------- il regista: varia, non ripete, sceglie ciò che hai visto meno ---------- */
 // nome: [profondità minima, condizione, attesa minima (s), massimo per partita, peso]
 const EV_DEF = {
-  knock:[1.5,null,80,5,1], prints:[1.5,null,130,4,1], music:[1.5,n=>n||phase>=1,140,2,1], silent:[3,null,260,2,.8], tug:[2,null,70,3,.8], fish:[4,null,170,2,1],
-  behind:[5,null,95,3,1.2], hand:[8,null,85,3,1.2], torch:[8,n=>n,110,3,1], sublim:[8,null,70,6,.6], green:[8,n=>n,120,2,.8], left:[8,null,240,1,1],
-  bodies:[12,null,170,2,1], dg:[12,n=>n,220,2,1.2], fog:[12,null,180,2,1], lost:[12,()=>S.luc<65,320,1,1], car:[12,n=>n&&S.revealed.includes('car'),200,1,1],
-  titan:[10,null,150,3,1.3], levx:[18,()=>!LEV.on,110,3,1.2], mouth:[35,null,120,2,1.1], blood:[35,null,160,2,1], breath:[35,null,150,2,1], dock:[14,n=>n,170,3,1.2],
-  bump:[3,null,60,4,1.3], tentRaft:[9,null,110,3,1.3], surfEye:[14,null,120,3,1.2], hands:[20,null,150,2,1.2], rowboat:[6,null,200,2,1.1], selfCorpse:[25,null,400,1,1.3],
-  rain:[15,null,220,2,1], starsOut:[30,n=>n,240,1,1.2], swarm:[18,null,160,2,1.1], silence:[6,null,200,2,1], neck:[4,null,140,3,1.1], tide:[10,null,150,2,1],
+  knock:[.8,null,80,5,1], prints:[1,null,130,4,1], music:[1,null,140,2,1], silent:[2,null,260,2,.8], tug:[1,null,70,3,.8], fish:[2,null,170,2,1],
+  behind:[2,null,95,3,1.2], hand:[3,null,85,3,1.2], torch:[3,n=>n,110,3,1], sublim:[4,null,70,6,.6], green:[5,n=>n,120,2,.8], left:[4,null,240,1,1],
+  bodies:[6,null,170,2,1], dg:[8,n=>n,220,2,1.2], fog:[6,null,180,2,1], lost:[12,()=>S.luc<65,320,1,1], car:[12,n=>n&&S.revealed.includes('car'),200,1,1],
+  titan:[5,()=>underRaft()>=3,150,3,1.4], levx:[18,()=>!LEV.on,110,3,1.2], mouth:[35,null,120,2,1.1], blood:[35,null,160,2,1], breath:[35,null,150,2,1], dock:[14,n=>n,170,3,1.2],
+  bump:[1,null,60,4,1.3], tentRaft:[3,null,110,3,1.3], surfEye:[5,null,120,3,1.2], hands:[10,null,150,2,1.2], rowboat:[3,null,200,2,1.1], selfCorpse:[25,null,400,1,1.3],
+  rain:[15,null,220,2,1], starsOut:[30,n=>n,240,1,1.2], swarm:[18,null,160,2,1.1], silence:[3,null,200,2,1], neck:[1.5,null,140,3,1.1], tide:[4,null,150,2,1],
   scrawl:[5,null,160,3,1], bucketThing:[8,null,120,3,1], bellNear:[22,null,200,2,1.1], reflection:[10,null,180,2,1.2],
   figure:[12,n=>(n||phase>=3)&&!wf.on,60,99,.6], flicker:[12,n=>n,60,99,.5], name:[35,null,160,3,1], ladder:[12,n=>n,220,2,1], scare:[65,()=>S.luc<30,110,99,.8],
-  abyss:[15,()=>underRaft()>=14 && !LEV.on,160,2,1.4], horizon:[8,n=>n||phase>=2,220,1,1.4], pupil:[20,()=>underRaft()>=15 && !X_.deepEye,200,1,1.2], darkness:[6,n=>n||phase>=2,170,2,1.3],
-  dinner:[14,null,230,1,1.5], priest:[10,null,260,1,1.5], heads:[8,null,150,2,1.3], whaleback:[18,()=>whaleOK(),220,1,1.3], dunk:[12,()=>underRaft()>=8,260,1,1.1],
+  abyss:[12,()=>underRaft()>=12 && !LEV.on,160,2,1.4], horizon:[3,n=>n||phase>=2,220,1,1.5], gaze:[24,()=>gazeOK(),200,2,1.7], moon:[4,n=>n,240,1,1.4], reach:[8,null,260,1,1.5], grip:[2,()=>!X_.gripNext,100,3,1.4], pupil:[20,()=>underRaft()>=15 && !X_.deepEye,200,1,1.2], darkness:[2,n=>n||phase>=2,170,2,1.3],
+  dinner:[8,null,230,1,1.5], priest:[5,null,260,1,1.5], heads:[3,null,150,2,1.3], whaleback:[18,()=>whaleOK(),220,1,1.3], dunk:[6,()=>underRaft()>=6,260,1,1.1],
   leviathan:[35,()=>!LEV.on,120,99,.7], eyes:[12,n=>n&&SE.t<=0,70,99,.7], chant:[35,null,90,99,.6], lightning:[2,n=>n,50,99,.5]
 };
 const OLD_EV = new Set(['figure','bubbles','flicker','bell','whisper','name','ladder','radio','glitch','scare','quake','lightning','leviathan','eyes','chant']);
-const TENSE = new Set(['dinner','heads','pupil','whaleback','priest','titan','levx','hands','rowboat','selfCorpse','tentRaft','surfEye','mouth','dg','fog','bellNear','reflection','behind','hand','swarm','rain','starsOut','dock','bodies','blood','breath','scrawl']);
+const TENSE = new Set(['gaze','reach','dinner','heads','pupil','whaleback','priest','titan','levx','hands','rowboat','selfCorpse','tentRaft','surfEye','mouth','dg','fog','bellNear','reflection','behind','hand','swarm','rain','starsOut','dock','bodies','blood','breath','scrawl']);
 let tensionT = 0, tensionD = 1;
 function tension(sec, fire){ tensionT = tensionD = sec; X_.big = sec + 2; riserSfx(); duck(true); setTimeout(()=>heartSfx(.45), sec*400); const go = ()=>{ if (uiBusy() && running) return setTimeout(go, 400); duck(false); if (running && !ending) fire(); }; setTimeout(go, sec*1000); }
 function directorPick(night){
@@ -1798,7 +1808,7 @@ function startLeviathan(){
   LEV.c = new THREE.Vector2(2*P.x - (LEV.a.x+LEV.b.x)/2, 2*P.y - (LEV.a.y+LEV.b.y)/2);
   LEV.sc = clamp(Math.min(under/9.5, centerDepth/14, sr*.035), .35, 1.6); LEV.r = LEV.sc*9;
   LEV.t = 0; LEV.waved = 0; LEV.dur = rand(16,21); LEV.on = true; LEV.y = null;
-  deepCallSfx(.55); setTimeout(()=>bubbleSfx(), 3000); return true;
+  creatureSfx({ kind:'call', far:.45, vol:.95 }); setTimeout(()=>bubbleSfx(), 3000); return true;
 }
 const levP = new THREE.Vector3(), levQ = new THREE.Vector3();
 function levUpdate(dt){
@@ -2255,7 +2265,7 @@ function startTitan(){
   if (best === -1e9){ const r = Math.max(.1, Math.hypot(raftPos.x, raftPos.z - 40)), k = Math.max(0, sr - 6)/r; x = raftPos.x*k*.5; z = (raftPos.z - 40)*k*.5; }
   titan.position.set(x, waterY - 75, z); titan.rotation.y = rand(0, Math.PI*2); titan.visible = true; X_.titan = {t:0, py:titan.position.y, out:false}; X_.big = 22; attend(new THREE.Vector3(x, waterY + 25, z), .45, 6);
   bubbleSfx(); setTimeout(bubbleSfx, 900); for (let k=0;k<6;k++) setTimeout(()=>ripple(x + rand(-4,4), z + rand(-4,4), 1.6), k*300);
-  deepCallSfx(.9); rumbleSfx(14,.6); setTimeout(()=>groanSfx(.8,7), 2500); }
+  creatureSfx({ kind:'roar', far:.4, vol:1, delay:1.2 }); rumbleSfx(14,.6); setTimeout(()=>groanSfx(.8,7), 2500); }
 function startDeepEye(){
   const dir = new THREE.Vector2(-raftPos.x, -raftPos.z).normalize(), sr = shoreR(S.d), dist = Math.min(sr*.5, 22);
   const x = raftPos.x + dir.x*dist, z = raftPos.z + dir.y*dist; deepEye.position.set(x, Math.max(H(x,z) + .8, waterY - 22), z); deepEye.rotation.y = Math.atan2(dir.x, dir.y);
@@ -2305,14 +2315,14 @@ function bigUpdate(dt){
   if (!seen){ const lx = camera.position.x - wfPos.x, lz = camera.position.z - wfPos.z; const target = clamp(Math.atan2(lx, lz), -1.1, 1.1) * clamp((S.d-6)/40, 0, 1);
     colHead.rotation.y += (target - colHead.rotation.y) * Math.min(1, dt*.08); }
   const night = dayF < .5;
-  colEyeMat.color.setRGB(4,3.2,.9).multiplyScalar(phase>=2 && (night || phase>=3) ? 1 : 0);
+  { const base = phase>=2 && (night || phase>=3) ? 1 : 0; COL_EYES.forEach((m,i)=> m.color.setRGB(4,3.2,.9).multiplyScalar(Math.max(base, i < R2.gazeEyes ? 2.4 + Math.sin(T*6 + i)*.3 : 0))); }
   colOrbMat.emissiveIntensity = phase>=2 ? .6 + .4*Math.sin(T*.9) + (phase>=3 ? 1 : 0) : .08 + .05*Math.sin(T*.5);
   colOrbLight.intensity = colOrbMat.emissiveIntensity * 55 * (night ? 1 : .5);
   // la pietra non è del tutto pietra: dalla terza fase i tentacoli del volto si muovono, piano, quando non lo guardi
   COLU.uTime.value = T; COLU.uSway.value += ((phase>=3 ? (seen ? .15 : 1) * (.4 + clamp((S.d-65)/40,0,1)*.8) : phase>=2 && !seen ? .12 : 0) - COLU.uSway.value)*Math.min(1, dt*.4);
   fovKick = Math.max(0, fovKick - dt*1.5); subBoost = Math.max(0, subBoost - dt*.2);
   const vert = downT > .5 ? Math.sin(T*.8)*2.5*clamp(downT/3,0,1) : 0;
-  const fov = 70 - fovKick + vert; if (Math.abs(camera.fov - fov) > .05){ camera.fov = fov; camera.updateProjectionMatrix(); }
+  const fov = lerp(70 - fovKick + vert, 24, R2.zoom); if (Math.abs(camera.fov - fov) > .05){ camera.fov = fov; camera.updateProjectionMatrix(); }
 }
 /* ---------- jumpscare ---------- */
 const scv = $('scare'), sctx = scv.getContext('2d');
@@ -2679,7 +2689,7 @@ function hudFx(dt){
   if (low !== HC.low){ HC.low = low; EL.lucIris.setAttribute('fill', low ? '#b03020' : '#c9a640'); }
   if (bob !== HC.bob){ HC.bob = bob; EL.plumbBob.style.top = bob + '%'; }
   if (mad !== HC.mad){ HC.mad = mad; EL.hud.classList.toggle('mad', mad); }
-  const bp = B.busy ? Math.round(clamp(B.t/B.dur,0,1)*50)*2 : 0; if (bp !== HC.bp){ HC.bp = bp; EL.bucketRing.style.setProperty('--p', bp); }
+  const bp = B.busy ? Math.round(clamp(B.t/B.dur,0,1)*50)*2 : 0; if (!X_.grip && bp !== HC.bp){ HC.bp = bp; EL.bucketRing.style.setProperty('--p', bp); }
   const di = dayF >= .5 ? '☉' : '☾'; if (di !== HC.di){ HC.di = di; EL.dayIc.textContent = di; }
   if (findT > 0){ findT -= dt; if (findT <= 0) $('findCard').classList.add('hidden'); }
 }
@@ -2791,7 +2801,7 @@ function evAbyss(){ const sc = clamp(underRaft()/9, .9, 2.4); creature.visible =
   creature.position.set(raftPos.x + Math.sin(a)*4, H(raftPos.x, raftPos.z - 6) + 3*sc, raftPos.z - 6 + Math.cos(a)*4); creature.rotation.set(0, a, 0);
   X_.abyss = { t:0, sc, y0:creature.position.y, flashes:[1.2, 3.8, 6.3], i:0 }; X_.big = 14; }
 function abyssUpdate(dt){ const e = X_.abyss; if (!e) return; e.t += dt;
-  if (e.i < e.flashes.length && e.t > e.flashes[e.i]){ lightning(true); e.i++; creature.position.y = Math.min(waterY - 5*e.sc, e.y0 + e.i*2.2*e.sc); if (e.i === 2) heartSfx(.8); if (e.i === 3){ deepCallSfx(.8); loseLuc(8, `quello che c'è sotto`); } }
+  if (e.i < e.flashes.length && e.t > e.flashes[e.i]){ lightning(true); e.i++; creature.position.y = Math.min(waterY - 5*e.sc, e.y0 + e.i*2.2*e.sc); if (e.i === 2) heartSfx(.8); if (e.i === 3){ creatureSfx({ kind:'call', far:.1, vol:1 }); loseLuc(8, `quello che c'è sotto`); } }
   const clear = clamp(lightK*1.6, 0, 1); waterU.uClear.value = clear; MURK.uMurkK.value = lerp(.12, .006, clear);
   if (e.t > 8.2 && !e.txt){ e.txt = 1; toast(`Nei lampi l'acqua è diventata trasparente come vetro. Sotto la zattera, sul fondo, era disteso qualcosa. Era più lungo del lago.`, 'cosmic'); }
   if (e.t > 9){ creature.visible = false; X_.abyss = null; waterU.uClear.value = 0; MURK.uMurkK.value = .12; } }
@@ -2808,7 +2818,7 @@ function evHorizon(){ camera.getWorldDirection(fwd); const a = Math.atan2(fwd.x,
 function giantUpdate(dt){ const e = X_.giant; if (!e) return; e.t += dt; const dist = [620, 470, 340, 340][Math.min(3, Math.max(0, e.i - 1))];
   giant.position.set(raftPos.x + Math.sin(e.a)*dist, -70, raftPos.z + Math.cos(e.a)*dist); giant.rotation.y = e.a + Math.PI + (e.i >= 3 ? 0 : .5); giant.visible = e.i < 4;
   if (e.i < e.fl.length && e.t > e.fl[e.i]){ e.i++; lightning(true); if (e.i === 1) setTimeout(()=>attend(new THREE.Vector3(giant.position.x, 120, giant.position.z), .5, 2.5), 100);
-    if (e.i === 2){ toast(`All'orizzonte, oltre le montagne, nel lampo c'era qualcosa. Più alto delle montagne.`, 'cosmic'); deepCallSfx(.5); }
+    if (e.i === 2){ creatureSfx({ kind:'call', far:1, vol:1 }); toast(`All'orizzonte, oltre le montagne, nel lampo c'era qualcosa. Più alto delle montagne.`, 'cosmic'); deepCallSfx(.5); }
     if (e.i === 3){ giant.userData.eyes.forEach(s=>s.material.opacity = 1); heartSfx(.9); setTimeout(()=>toast(`Al lampo dopo era più vicino. E aveva girato la testa verso di te.`, 'warn'), 900); loseLuc(9, `il gigante all'orizzonte`); }
     if (e.i === 4){ setTimeout(()=>sub(`(all'ultimo lampo l'orizzonte era vuoto. Non è andato via. Si è abbassato.)`, 5), 900); } }
   if (e.i === 3) giant.userData.eyes.forEach(s=>{ s.material.opacity = .6 + .4*Math.sin(T*2); });
@@ -2816,7 +2826,7 @@ function giantUpdate(dt){ const e = X_.giant; if (!e) return; e.t += dt; const d
 
 /* ---------- la pupilla: la zattera galleggia sopra un occhio ---------- */
 function evPupil(){ const x = raftPos.x, z = raftPos.z - 9; deepEye.position.set(x, Math.min(waterY - 5, Math.max(H(x,z) + 1, waterY - 9)), z); deepEye.rotation.y = rand(-.3,.3); deepEye.scale.set(3.2, 1, .02); deepEye.visible = true;
-  X_.pupil = { t:0 }; X_.big = 14; heartSfx(.6); setTimeout(()=>deepCallSfx(.7), 600); setTimeout(()=>attend(new THREE.Vector3(x, waterY - 6, z - 2), .7, 2.5), 900); }
+  X_.pupil = { t:0 }; X_.big = 14; heartSfx(.6); creatureSfx({ kind:'breath', far:.15, vol:1, delay:.6 }); setTimeout(()=>attend(new THREE.Vector3(x, waterY - 6, z - 2), .7, 2.5), 900); }
 function pupilUpdate(dt){ const e = X_.pupil; if (!e) return; e.t += dt; const open = smooth(.5,5,e.t)*(1 - smooth(10,12,e.t)); deepEye.scale.set(3.2, 1, Math.max(.02, open)); deepEye.material.opacity = Math.min(1, open*1.2);
   if (e.t > 5 && !e.txt){ e.txt = 1; raftJolt = .5; toast(`Sotto la zattera l'acqua è diventata un occhio. La zattera galleggia sulla pupilla.`, 'cosmic'); loseLuc(7, `l'occhio sotto la zattera`); }
   if (e.t > 12.5){ deepEye.visible = false; X_.pupil = null; } }
@@ -2907,7 +2917,7 @@ function evWhale(){ camera.getWorldDirection(fwd); const a = Math.atan2(fwd.x, f
 function whaleUpdate(dt){ const e = X_.whale; if (!e) return; e.t += dt; const pos = e.start.clone().addScaledVector(e.dir, e.t*9); whale.position.set(pos.x, water.position.y - 3.9, pos.z);
   const head = pos.clone().addScaledVector(e.dir, 80); if (e.t > e.wv){ e.wv = e.t + 2.6; if (Math.hypot(head.x, head.z) < shoreR(S.d) - 4) makeWave(head.x, head.z, .9); }
   if (Math.random() < dt*10){ const s = rand(-80, 80), q = pos.clone().addScaledVector(e.dir, s); if (Math.hypot(q.x,q.z) < shoreR(S.d) - 2){ ripple(q.x, q.z, .9); if (Math.random() < .3) splashFX(q.x, water.position.y, q.z, .5, 1); } }
-  if (e.t > 5 && !e.txt){ e.txt = 1; toast(`Una schiena passa davanti alla zattera. Continua a passare. Non finisce.`, 'cosmic'); loseLuc(6, `la schiena che non finisce`); rumbleSfx(10,.5); }
+  if (e.t > 5 && !e.txt){ e.txt = 1; toast(`Una schiena passa davanti alla zattera. Continua a passare. Non finisce.`, 'cosmic'); creatureSfx({ kind:'call', far:.5, vol:.9 }); loseLuc(6, `la schiena che non finisce`); rumbleSfx(10,.5); }
   if (e.t > 22){ whale.visible = false; X_.whale = null; } }
 
 /* ---------- sott'acqua: un'onda ti porta giù per tre secondi ---------- */
@@ -2924,13 +2934,87 @@ function dunkUpdate(dt){ const e = X_.dunk; if (!e){ R2.dunk = Math.max(0, R2.du
 
 const NEWEV = { abyss:evAbyss, horizon:evHorizon, pupil:evPupil, darkness:evDarkness, dinner:evDinner, priest:evPriest, heads:evHeads, whaleback:evWhale, dunk:evDunk };
 function regiaUpdate(dt){
-  if (!uiBusy() && X_.big <= 0 && tensionT <= 0 && !VIG.cur){ VIG.next -= dt; if (VIG.next <= 0){ VIG.next = rand(8, 15)/(1 + phase*.15); startVignette(); } }
+  if (!uiBusy() && !VIG.cur) VIG.next -= dt;
+  if (VIG.next <= 0 && (X_.big <= 0 || VIG.next < -7) && tensionT <= 0 && !uiBusy()){ VIG.next = rand(5, 10)/(1 + phase*.12); startVignette(); }
   vignetteUpdate(dt); driftUpdate(dt); abyssUpdate(dt); giantUpdate(dt); pupilUpdate(dt); darkUpdate(dt); dinnerUpdate(dt); priestUpdate(dt); headsUpdate(dt); whaleUpdate(dt); dunkUpdate(dt);
   if (R2.still > 0){ R2.still -= dt; waterU.uCalm.value = 0; if (R2.still <= 0){ splashFX(raftPos.x + rand(-1,1), waterY, raftPos.z - 2.2, .5, .4); ripple(raftPos.x, raftPos.z - 2.2, 1.5); } } }
 // i colpi sotto la zattera si vedono: il legno sobbalza, l'acqua schizza tra le assi
 function knockFX(v=1){ raftJolt = Math.max(raftJolt, .25*v); for (let k=0;k<5;k++) emitDrop(raftPos.x + rand(-1.3,1.3), waterY + .3 + raftHeave, raftPos.z + rand(-1.5,1.5), 0, rand(.8,1.8)*v, 0, .8, .7); ripple(raftPos.x + rand(-1.8,1.8), raftPos.z + rand(-2,2), .4*v); }
-function hideRegia(){ [whale, giant, priest, dinner, ridge, hairMass, shoreLamp, jumper, armJ, ...dunkFigs, ...Object.values(DRIFT)].forEach(o=>o.visible = false); headsM.count = headEyes.count = 0;
+function hideRegia(){ reach.visible = false; armJ.visible = false; X_.reach = X_.moon = X_.gaze = X_.grip = null; R2.zoom = 0; R2.trem = 0; [whale, giant, priest, dinner, ridge, hairMass, shoreLamp, jumper, armJ, ...dunkFigs, ...Object.values(DRIFT)].forEach(o=>o.visible = false); headsM.count = headEyes.count = 0;
   X_.whale = X_.giant = X_.priest = X_.dinner = X_.heads = X_.dunk = X_.pupil = X_.abyss = X_.dark = null; DR.o = null; VIG.cur = null; R2.darkK = 0; R2.dunk = 0; waterU.uClear.value = 0; MURK.uMurkK.value = .12; }
+
+/* =====================================================================
+   REGIA 3: la voce di Lui, lo sguardo del Guardiano, la luna, la mano, la presa
+   ===================================================================== */
+// il richiamo dal fondo: arriva da lontano, e il lago intero vibra come la pelle di un tamburo
+R2.callT = 40; R2.trem = 0; R2.zoom = 0; R2.gazeEyes = 0;
+function farCall(far=.8){ const pan = rand(-.7,.7); creatureSfx({ kind:'call', far, vol:.9, pan }); R2.trem = 8; R2.tremK = 1 - far*.5;
+  setTimeout(()=>{ shakeAmt = Math.max(shakeAmt, .22*R2.tremK); creakSfx(); }, 1800);
+  if (!S.tipCall){ S.tipCall = 1; setTimeout(()=>toast(`Dal fondo è salito un suono. Non era un animale. Il lago ha vibrato tutto insieme, come la pelle di un tamburo.`, 'cosmic'), 3500); }
+  else if (Math.random() < .5) setTimeout(()=>sub(pick([`(Lui, dal fondo. Più forte dell'ultima volta)`,`(il suono arriva dai piedi prima che dalle orecchie)`,`(l'acqua si increspa a cerchi, dappertutto, nello stesso istante)`]), 4), 2500); }
+function tremUpdate(dt){ if (R2.trem <= 0) return; R2.trem -= dt; const k = Math.sin(Math.PI*clamp(1 - R2.trem/8, 0, 1))*R2.tremK;
+  camera.getWorldDirection(fwd); for (let i=0;i<Math.round(dt*26*k);i++){ const a = Math.atan2(fwd.x, fwd.z) + rand(-1,1), r = rand(2, 28), x = raftPos.x + Math.sin(a)*r, z = raftPos.z + Math.cos(a)*r; if (wetSpot(x, z, .3)) ripple(x, z, .25 + k*.3); }
+  for (let i=0;i<Math.round(dt*70*k);i++) emitDrop(raftPos.x + rand(-5,5), water.position.y, raftPos.z - rand(1,8), 0, rand(.4,1.1)*k, 0, .5, rand(.4,.8));
+  if (raft.userData.lantern) raft.userData.lantern.rotation.z += Math.sin(T*9)*.02*k; }
+
+/* ---------- lo sguardo del Guardiano: i sette occhi si accendono, e la visuale gli va addosso ---------- */
+const gazeP = new THREE.Vector3();
+const colFaceLight = new THREE.PointLight(0xffc870, 0, 70, 1.3); colFaceLight.position.set(0, -1.5, 9); colHead.add(colFaceLight);
+function gazeOK(){ colHead.getWorldPosition(gazeP); return gazeP.y > waterY + 4 && gazeP.distanceTo(camera.position) < 140; }
+function evGaze(){ colHead.getWorldPosition(gazeP); gazeP.y += 2.5*COL_S; X_.gaze = { t:0 }; X_.big = 16; attend(gazeP, 1.2, 5.5); rumbleSfx(9,.55); heartSfx(.6);
+  creatureSfx({ kind:'roar', far:.3, vol:1, delay:2.4 }); setTimeout(()=>heartSfx(.8), 1800); }
+function gazeUpdate(dt){ const e = X_.gaze; if (!e){ R2.zoom = Math.max(0, R2.zoom - dt*.5); R2.gazeEyes = 0; return; } e.t += dt; const t = e.t;
+  R2.zoom = smooth(.6, 3.8, t)*(1 - smooth(9.5, 12, t))*.74; R2.gazeEyes = t < 10 ? clamp(Math.floor((t - 1.3)/.32), 0, 7) : clamp(7 - Math.floor((t - 10)/.25), 0, 7);
+  colFaceLight.intensity = smooth(1.3, 3.5, t)*(1 - smooth(9.5, 12, t))*(110 + Math.sin(T*7)*15);
+  if (t < 11){ colHead.getWorldPosition(gazeP); const want = clamp(Math.atan2(camera.position.x - gazeP.x, camera.position.z - gazeP.z) - colossus.rotation.y, -1.1, 1.1); colHead.rotation.y += (want - colHead.rotation.y)*Math.min(1, dt*.9); }
+  if (t > 2.4 && !e.s){ e.s = 1; shakeAmt = Math.max(shakeAmt, .55); makeWave(COL_X, COL_Z, 1.2); for (let k=0;k<6;k++) setTimeout(()=>{ const a = rand(0,6.3); splashFX(COL_X + Math.cos(a)*14, waterY, COL_Z + Math.sin(a)*14, 1.4, 1.4); }, k*260); }
+  if (t > 4.2 && !e.txt){ e.txt = 1; toast(`Il Guardiano ha aperto gli occhi. Tutti e sette. Non guardano la zattera: guardano te.`, 'warn'); loseLuc(8, `lo sguardo del Guardiano`); }
+  if (t > 12.5){ X_.gaze = null; } }
+
+/* ---------- la luna si apre ---------- */
+function evMoon(){ X_.moon = { t:0 }; X_.big = 16; const M = skyU.uMoon.value; attend(camera.position.clone().addScaledVector(M, 200), .8, 4); creatureSfx({ kind:'breath', far:.6, vol:.8, delay:1 }); }
+function moonUpdate(dt){ const e = X_.moon; if (!e){ skyU.uMoonEye.value = Math.max(0, skyU.uMoonEye.value - dt*.3); return; } e.t += dt;
+  skyU.uMoonEye.value = smooth(.5, 5, e.t)*(1 - smooth(11, 14, e.t));
+  if (e.t > 5.2 && !e.txt){ e.txt = 1; toast(`La luna è diventata più grande. Poi si è aperta. Non è mai stata la luna.`, 'cosmic'); loseLuc(6, `la luna`); heartSfx(.8); }
+  if (e.t > 14.5) X_.moon = null; }
+
+/* ---------- la mano: oltre la nebbia, qualcosa si aggrappa al bordo della valle ---------- */
+const reach = (()=>{ const m = new THREE.MeshBasicMaterial({ color:0x020303, transparent:true, opacity:.9, fog:false, depthWrite:true }); m.userData.murk = true;
+  // una mano vera: dorso largo, nocche, quattro dita grosse a tre falangi che si piegano ad artiglio, il pollice di lato, l'avambraccio che sparisce nella nebbia
+  const P = [], fing = (x0, len, r, spread)=>{ const pts = [V3(x0, .14, 0)]; let y = .14, z = 0, a = 0; for (let k=1;k<=3;k++){ a += .55; const L = len*(k===1 ? .45 : k===2 ? .32 : .23); y += Math.cos(a)*L; z += Math.sin(a)*L; pts.push(V3(x0 + spread*k*.012, y, z)); }
+    P.push(limb(pts, [r*1.15, r*1.05, r*.95, r*.8, r*.55], 24, 10)); for (let k=1;k<3;k++) P.push(ell(pts[k].x, pts[k].y, pts[k].z, r*1.2, r*1.1, r*1.2, 0,0,0, 10)); };
+  P.push(ell(0,.075,0, .085,.085,.03, 0,0,0, 20)); P.push(ell(0,.13,.0, .08,.03,.026, 0,0,0, 16));
+  fing(-.058, .2, .015, -1); fing(-.02, .24, .017, -.3); fing(.02, .23, .017, .3); fing(.057, .18, .014, 1);
+  P.push(limb([V3(-.08,.05,.01), V3(-.12,.1,.04), V3(-.13,.15,.08), V3(-.115,.19,.11)], [.02,.018,.015,.011], 14, 8));
+  P.push(limb([V3(0,.02,0), V3(.005,-.3,-.02), V3(.02,-.9,-.08)], [.05,.055,.065], 16, 12));
+  const hg = mergeGeometries(P.map(q=>{ const n = q.index ? q.toNonIndexed() : q; for (const k of Object.keys(n.attributes)) if (k !== 'position' && k !== 'normal') n.deleteAttribute(k); return n; }));
+  const h = new THREE.Mesh(hg, m); h.scale.setScalar(270); h.visible = false; scene.add(h); return h; })();
+function evReach(){ camera.getWorldDirection(fwd); const a = Math.atan2(fwd.z, fwd.x) + rand(-.35,.35), r = 150, x = Math.cos(a)*r, z = Math.sin(a)*r;
+  X_.reach = { t:0, x, z, y0:H(x,z) }; reach.position.set(x, X_.reach.y0 - 280, z); reach.rotation.set(0, Math.atan2(-x, -z), 0); reach.visible = true; X_.big = 20;
+  rumbleSfx(11,.65); creatureSfx({ kind:'call', far:.85, vol:.9, delay:1.5 }); const y0 = X_.reach.y0; setTimeout(()=>{ if (X_.reach) attend(new THREE.Vector3(x, y0 + 60, z), .6, 3); }, 2500); }
+function reachUpdate(dt){ const e = X_.reach; if (!e) return; e.t += dt; const up = smooth(1, 8, e.t)*(1 - smooth(14, 19, e.t)); const grab = smooth(5, 9, e.t)*(1 - smooth(13, 16, e.t)); reach.position.y = e.y0 - 280 + up*262; reach.rotation.x = .05 + grab*1.05;
+  shakeAmt = Math.max(shakeAmt, up*.18); scene.fog.density += .012*up;
+  if (up > .5 && Math.random() < dt*3){ const a = Math.atan2(e.z, e.x) + rand(-.12,.12), r = shoreR(S.d) - .5; splashFX(Math.cos(a)*r, waterY, Math.sin(a)*r, 1.6, 1.6); if (Math.random() < .3) bigSplash(Math.cos(a)*r, Math.sin(a)*r, .8); }
+  if (e.t > 6.5 && !e.fl){ e.fl = 1; lightning(true); }
+  if (e.t > 8 && !e.txt){ e.txt = 1; toast(`Oltre la nebbia, una mano si è aggrappata al bordo della valle. Le dita da sole erano più alte del campanile. Poi ha lasciato la presa.`, 'cosmic'); loseLuc(8, `la mano oltre la nebbia`); }
+  if (e.t > 19.5){ reach.visible = false; X_.reach = null; } }
+
+/* ---------- la presa: qualcosa afferra il secchio, e devi strapparglielo ---------- */
+function startGrip(){ X_.grip = { t:0, p:.45 }; armJ.visible = true; $('bucketBtn').classList.add('grip'); $('bucketSub').textContent = 'TIRA!'; heartSfx(.7); slitherSfx(.4); shakeAmt = Math.max(shakeAmt, .3);
+  if (!S.tipGrip){ S.tipGrip = 1; toast(`Qualcosa ha afferrato il secchio sott'acqua. Tocca SECCHIO più in fretta che puoi per strapparglielo.`, 'warn'); } }
+function gripTap(){ const g = X_.grip; if (!g) return false; g.p += .12; creakSfx(); shakeAmt = Math.max(shakeAmt, .22); splashFX(bucket.position.x, water.position.y, bucket.position.z, .35, .35); return true; }
+function gripUpdate(dt){ const g = X_.grip; if (!g) return; g.t += dt; g.p -= dt*(.13 + phase*.02); armJ.position.set(bucket.position.x + .08, water.position.y - .3 + Math.sin(T*14)*.04, bucket.position.z + .12); armJ.rotation.set(-.2, Math.atan2(camera.position.x - armJ.position.x, camera.position.z - armJ.position.z), Math.sin(T*9)*.12);
+  bucket.rotation.x = Math.sin(T*22)*.25; if (Math.random() < dt*6) ripple(bucket.position.x + rand(-.4,.4), bucket.position.z + rand(-.4,.4), .5);
+  $('bucketRing').style.setProperty('--p', Math.round(clamp(g.p,0,1)*100));
+  const end = (win)=>{ X_.grip = null; $('bucketBtn').classList.remove('grip'); bucket.rotation.x = 0; splashFX(armJ.position.x, water.position.y, armJ.position.z, win ? .8 : 1.3, .7); ripple(armJ.position.x, armJ.position.z, 1.2);
+    setTimeout(()=>{ armJ.visible = false; }, win ? 200 : 500);
+    if (win){ B.relic = true; gainLuc(3, `gliel'hai strappato`); toast(`Hai strappato il secchio a qualcosa. Sul bordo restano tre unghie conficcate nel metallo.`, 'find'); }
+    else { B.lost = true; stingerSfx(); loseLuc(6, `ti ha preso il secchio`); shakeAmt = .8; toast(`La corda ti scorre tra le mani. Quando il secchio torna su è vuoto, piegato, con l'impronta di una mano tutto intorno.`, 'warn'); } };
+  if (g.p >= 1) end(true); else if (g.p <= 0 || g.t > 7) end(false); }
+
+function regia3Update(dt){ if (!uiBusy() && S.d >= 1 && !ending){ R2.callT -= dt; if (R2.callT <= 0 && X_.big <= 0 && tensionT <= 0){ R2.callT = rand(45, 85)/(1 + phase*.15); farCall(clamp(1 - S.d/MAXD, .25, .95)); } }
+  tremUpdate(dt); gazeUpdate(dt); moonUpdate(dt); reachUpdate(dt); }
+Object.assign(NEWEV, { gaze:evGaze, moon:evMoon, reach:evReach, grip:()=>{ X_.gripNext = true; }, call:()=>farCall(.5) });
 
 /* =====================================================================
    MACCHINE: lavorano da sole, e si vedono lavorare
@@ -3022,7 +3106,7 @@ function update(dt){
     else S.luc = clamp(S.luc + (regen - drain)*dt, 0, 100);
     // eventi
     if (!uiBusy()) EV.next -= dt;
-    if (EV.next <= 0 && !inCall && !uiBusy()){ EV.next = rand(20,34)/(1+phase*.2); runEvent(); }
+    if (EV.next <= 0 && !inCall && !uiBusy()){ EV.next = rand(16,28)/(1+phase*.2); runEvent(); }
     // storia
     STORY.forEach((s,i)=>{ if (S.d >= s.d && !S.story.includes(i)){ S.story.push(i); s.f(); } });
     // lore riaffiorata
@@ -3113,7 +3197,7 @@ function update(dt){
   if (wf.sink > 0){ wf.sink -= dt; waterFigure.position.y -= dt*3.2; if (wf.sink <= 0 && !X_.left) waterFigure.visible = false; }
   if (paleT > 0){ paleT -= dt; if (paleT <= 0){ paleFigure.visible = false; } }
   machinesUpdate(dt);
-  if (!ending){ eventsUpdate(dt); regiaUpdate(dt); helpersUpdate(dt); ordersUpdate(dt); } veinUpdate(dt); aimUpdate();
+  if (!ending){ eventsUpdate(dt); regiaUpdate(dt); regia3Update(dt); helpersUpdate(dt); ordersUpdate(dt); } veinUpdate(dt); aimUpdate();
   attnUpdate(dt);
   if (tensionT > 0) tensionT -= dt; if (!ending) postMat.uniforms.uDark.value = Math.max(R2.darkK, tensionT > 0 ? Math.sin(Math.PI*clamp(1 - tensionT/tensionD, 0, 1))*.22 : 0);
   bigUpdate(dt);
@@ -3144,9 +3228,9 @@ function update(dt){
   handPos.set(.5 + Math.sin(T*1.1)*.006, -.58 + Math.sin(T*1.7)*.008, -.85); camera.localToWorld(handPos);
   handRope.set(.38,-.3,-.6); camera.localToWorld(handRope);
   if (B.busy){
-    B.t += dt; const u = B.t / B.dur;
+    if (X_.grip) gripUpdate(dt); else B.t += dt; const u = B.t / B.dur;
     if (u < .42){ const e = u/.42; const ee = e*e; bucket.position.lerpVectors(handPos, B.target, ee); bucket.position.y += Math.sin(e*Math.PI)*1.2*(1-e); bucket.rotation.z = e*.5; }
-    else if (u < .58){ if (!B.splashed){ B.splashed = true; ripple(B.target.x, B.target.z, .9); splashSfx(B.dist, BUCKETS[S.bucket].s); splashFX(B.target.x, water.position.y, B.target.z, .7 + Math.log2(BUCKETS[S.bucket].s+1)*.25, 1); if (X_.tugNext){ X_.tugNext = false; X_.tug = 2.6; B.dur += 2.6; } }
+    else if (u < .58){ if (!B.splashed){ B.splashed = true; ripple(B.target.x, B.target.z, .9); splashSfx(B.dist, BUCKETS[S.bucket].s); splashFX(B.target.x, water.position.y, B.target.z, .7 + Math.log2(BUCKETS[S.bucket].s+1)*.25, 1); if (X_.gripNext){ X_.gripNext = false; startGrip(); } if (X_.tugNext){ X_.tugNext = false; X_.tug = 2.6; B.dur += 2.6; } }
       if (X_.tug > 0 && Math.random() < dt*4) ripple(B.target.x + rand(-.5,.5), B.target.z + rand(-.5,.5), .6);
       bucket.position.copy(B.target); bucket.position.y = water.position.y - .2 + Math.sin(T*8)*.03; bucket.rotation.z = .9; }
     else if (u < 1){ if (Math.random() < dt*14) dripFX(bucket.position.x, bucket.position.y, bucket.position.z, 1, .12); if (!B.reeled){ B.reeled = true; reelSfx(B.dur*.42); if (X_.thingNext){ X_.thingNext = false; B.thing = true; bucketTent.visible = true; slitherSfx(.35, .4); } } if (B.thing){ bucket.rotation.x = Math.sin(T*30)*.15; } const e = (u-.58)/.42; const ee = 1-(1-e)*(1-e); bucket.position.lerpVectors(B.target, handPos, ee); bucket.rotation.z = (1-e)*.6; }
@@ -3194,7 +3278,7 @@ function update(dt){
     $('rateTxt').textContent = `${fmt(pumpRate() + noriaRate())} L/s · ${priceNow().toLocaleString('it-IT',{maximumFractionDigits:2})} €/L`;
     $('timeTxt').textContent = (dayF>=.5 ? 'GIORNO ' : 'NOTTE ') + (Math.floor(S.time/240)+1);
     { const o = S.order, el = $('orderTxt'); if (o){ const m = Math.max(0, Math.ceil(o.left)); el.textContent = `COMMESSA ${fmt(Math.min(o.got,o.need))} / ${fmt(o.need)} L · ${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`; el.classList.toggle('dn', o.left < 30); } else el.textContent = ''; }
-    $('bucketSub').textContent = fmt(BUCKETS[S.bucket].s*10) + ' L';
+    if (!X_.grip) $('bucketSub').textContent = fmt(BUCKETS[S.bucket].s*10) + ' L';
     $('sellBtn').style.opacity = S.contract ? .5 : 1;
     if (!$('shop').classList.contains('hidden')) updateShop();
   }
@@ -3216,7 +3300,7 @@ function frame(now){
   fxUpdate(dt);
   renderFrame();
 }
-if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
+if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, get DRo(){ return DR.o; }, farCall, evGaze, R2get: ()=>R2, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
 $('loading').remove();
 requestAnimationFrame(frame);
 document.addEventListener('contextmenu', e=>e.preventDefault());
