@@ -447,3 +447,48 @@ export function surfaceSfx(size=1, delay=0){ play('surface', { vol:clamp(.35*siz
 export function voiceSfx(rate=1){ play('voice', { vol:.32, rate:rate*R(.95,1.05), rev:.05, lp:3200, max:1 }); }
 export function riserSfx(){ play('riser', { vol:.45, rev:.4 }); }
 export function pageSfx(){ play('page', { vol:.35, rate:R(.9,1.1), rev:.1 }); }
+
+/* ---------- la voce di Lui ----------
+   Sintetizzata dal vivo, mai uguale: un corpo enorme a 30 Hz con un intervallo di tritono (nessuna gola umana lo fa),
+   formanti che passano da U ad A a O come una bocca grande quanto il paese, un raschio di gola a 23 Hz,
+   infrabassi che fanno tremare il petto e un armonico metallico che non appartiene a nessun animale.
+   kind: 'call' (il lamento lungo, dal fondo), 'roar' (vicino, aggressivo), 'breath' (respiro, basso e lento).
+   far: 0 = addosso, 1 = dall'altra parte della valle. */
+export function creatureSfx({ kind='call', vol=.8, far=.5, dur=0, delay=0, pan=0 } = {}){
+  const ctx = AU.ctx; if (!ctx) return; const t0 = ctx.currentTime + delay + .02;
+  const D = dur || (kind === 'roar' ? 4.8 : kind === 'breath' ? 7 : R(7, 10)), f0 = (kind === 'roar' ? R(44,52) : kind === 'breath' ? R(24,28) : R(29,34)) * (1 - far*.08);
+  const end = t0 + D, out = ctx.createGain(), sum = ctx.createGain(); sum.gain.value = .5;
+  // distorsione morbida: la voce satura come un altoparlante troppo piccolo per lei
+  const sh = ctx.createWaveShaper(), cv = new Float32Array(1024); for (let i=0;i<1024;i++){ const x = i/511.5 - 1; cv[i] = Math.tanh(x*(kind === 'roar' ? 3.2 : 2)); } sh.curve = cv;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .7; lp.frequency.setValueAtTime(lerpN(5200, 700, far), t0);
+  sum.connect(sh); sh.connect(lp); lp.connect(out);
+  // inviluppo: sale lento, un secondo respiro a metà, poi si spegne scendendo
+  const g = out.gain, pk = vol*.42*(1 - far*.45);
+  g.setValueAtTime(0, t0); g.linearRampToValueAtTime(pk*.55, t0 + D*.12); g.linearRampToValueAtTime(pk, t0 + D*.3); g.linearRampToValueAtTime(pk*.7, t0 + D*.5); g.linearRampToValueAtTime(pk*.95, t0 + D*.62); g.linearRampToValueAtTime(0, end);
+  const p = ctx.createStereoPanner(); p.pan.value = pan; out.connect(p); p.connect(AU.dry); const rv = ctx.createGain(); rv.gain.value = .55 + far*.9; p.connect(rv); rv.connect(AU.rev);
+  const nodes = [];
+  const pitch = (param, base)=>{ param.setValueAtTime(base*.78, t0); param.exponentialRampToValueAtTime(base, t0 + D*.25); param.setValueAtTime(base, t0 + D*.55); param.exponentialRampToValueAtTime(base*(kind === 'roar' ? .7 : .52), end); };
+  const osc = (type, mult, gv, dest)=>{ const o = ctx.createOscillator(); o.type = type; pitch(o.frequency, f0*mult); const og = ctx.createGain(); og.gain.value = gv; o.connect(og); og.connect(dest); nodes.push(o);
+    const w = ctx.createOscillator(); w.frequency.value = R(.15,.35); const wg = ctx.createGain(); wg.gain.value = f0*mult*.025; w.connect(wg); wg.connect(o.frequency); nodes.push(w); return o; };
+  // il corpo, attraverso una gola: tre formanti che cambiano vocale
+  const throat = ctx.createGain(); throat.gain.value = 1;
+  [[R(170,210), R(300,340), R(240,260), .9],[R(480,560), R(740,820), R(520,600), .55],[R(1050,1200), R(900,1000), R(700,780), .22]].forEach(([a,b,c,gv])=>{
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 5; bp.frequency.setValueAtTime(a, t0); bp.frequency.linearRampToValueAtTime(b, t0 + D*.45); bp.frequency.linearRampToValueAtTime(c, end);
+    const fg = ctx.createGain(); fg.gain.value = gv*14; throat.connect(bp); bp.connect(fg); fg.connect(sum); });
+  const dryBody = ctx.createGain(); dryBody.gain.value = .3; throat.connect(dryBody); dryBody.connect(sum);
+  osc('sawtooth', 1, .5, throat); osc('sawtooth', 1.414, .32, throat); osc('square', 2.02, .12, throat); osc('sawtooth', .5, .35, throat);
+  // il raschio: la gola che vibra a scatti (vocal fry), modulando tutto il corpo
+  const fry = ctx.createOscillator(); fry.type = 'square'; fry.frequency.setValueAtTime(kind === 'roar' ? 27 : 21, t0); fry.frequency.linearRampToValueAtTime(kind === 'roar' ? 31 : 17, end);
+  const fryG = ctx.createGain(); fryG.gain.value = kind === 'breath' ? .15 : .45; fry.connect(fryG); fryG.connect(throat.gain); nodes.push(fry);
+  const nz = ctx.createBufferSource(); nz.buffer = AU.noise; nz.loop = true; const nbp = ctx.createBiquadFilter(); nbp.type = 'bandpass'; nbp.frequency.value = kind === 'breath' ? 420 : 260; nbp.Q.value = 1.4;
+  const nam = ctx.createGain(); nam.gain.value = 0; const fry2 = ctx.createGain(); fry2.gain.value = kind === 'breath' ? .9 : .6; fry.connect(fry2); fry2.connect(nam.gain);
+  const ng = ctx.createGain(); ng.gain.value = kind === 'breath' ? 3.2 : kind === 'roar' ? 2.6 : 1.6; nz.connect(nbp); nbp.connect(nam); nam.connect(ng); ng.connect(sum); nodes.push(nz);
+  // infrabassi: non si sentono, si sentono nel petto
+  for (const [m, gv] of [[.5, .32], [1, .22]]){ const o = ctx.createOscillator(); o.type = 'sine'; pitch(o.frequency, f0*m); const og = ctx.createGain(); og.gain.value = gv*(1 - far*.3); o.connect(og); og.connect(out); nodes.push(o); }
+  // l'armonico che non è di nessun animale: un fischio metallico ring-modulato dal corpo
+  if (kind !== 'breath'){ const m = ctx.createOscillator(); m.type = 'sine'; m.frequency.setValueAtTime(R(380,440), t0); m.frequency.exponentialRampToValueAtTime(R(250,290), end);
+    const vib = ctx.createOscillator(); vib.frequency.value = R(5,7); const vg = ctx.createGain(); vg.gain.value = 9; vib.connect(vg); vg.connect(m.frequency);
+    const rm = ctx.createGain(); rm.gain.value = 0; const body = ctx.createOscillator(); body.type = 'sine'; pitch(body.frequency, f0); body.connect(rm.gain); const mg = ctx.createGain(); mg.gain.value = .14 + (1-far)*.1; m.connect(rm); rm.connect(mg); mg.connect(lp); nodes.push(m, vib, body); }
+  nodes.forEach(n=>{ n.start(t0); n.stop(end + .1); });
+}
+function lerpN(a, b, t){ return a + (b - a)*Math.max(0, Math.min(1, t)); }
