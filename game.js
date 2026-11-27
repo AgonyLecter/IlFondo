@@ -271,8 +271,13 @@ const hemi = new THREE.HemisphereLight(0x5a6670, 0x0b0a08, .1); scene.add(hemi);
 const moon = new THREE.DirectionalLight(0x7e8ca8, .15); moon.position.set(-60,120,-80); scene.add(moon);
 const lamp = new THREE.PointLight(0xffaa66, 4, 30, 2); lamp.position.set(.95, 2.15, 80.3); scene.add(lamp);
 const LAMP_COL = new THREE.Color(0xffaa66);
-const flash = new THREE.SpotLight(0xdfe7ff, 60, 0, .42, .55, 1.2);
+// la torcia non brucia ciò che ha a un passo: entro 3 m illumina come a 3 m (riconosciuta dalla distanza di taglio 5000, solo lei).
+// Senza questo un garzone o una figura a un metro e mezzo, col faro marino, diventano un manichino bianco e lucido.
+THREE.ShaderChunk.lights_pars_begin = THREE.ShaderChunk.lights_pars_begin.replace('float distanceFalloff = 1.0 / max( pow( lightDistance, decayExponent ), 0.01 );',
+  'float distanceFalloff = 1.0 / max( pow( cutoffDistance > 4000.0 ? max( lightDistance, 3.2 ) : lightDistance, decayExponent ), 0.01 );');
+const flash = new THREE.SpotLight(0xdfe7ff, 60, 5000, .42, .55, 1.2);
 flash.position.set(-.18,.12,.1); camera.add(flash);
+{ const um = Object.getPrototypeOf(flash.shadow).updateMatrices; flash.shadow.updateMatrices = function(l){ const d = l.distance; l.distance = 70; um.call(this, l); l.distance = d; }; } // l'ombra resta a 70 m di profondità
 flash.castShadow = true; flash.shadow.mapSize.set(MOBILE?512:1024, MOBILE?512:1024); flash.shadow.camera.near = .4; flash.shadow.camera.far = 70; flash.shadow.bias = -.0015; flash.shadow.normalBias = .09;
 const flashTarget = new THREE.Object3D(); flashTarget.position.set(0,-.05,-10); camera.add(flashTarget); flash.target = flashTarget;
 
@@ -295,7 +300,7 @@ function H(x,z){
     const amp = 3.2*smooth(9,24,r)*(1-smooth(84,95,r));
     h += fbm(x*.045,z*.045)*amp + fbm(x*.2,z*.2)*.6*smooth(9,20,r)*(1-smooth(88,95,r));
     const dv = Math.hypot(x-VX, z-VZ); if (dv < 27){ const k = 1-smooth(18,27,dv); h += (VY+fbm(x*.3,z*.3)*.3 - h)*k; }
-    { const dc = Math.hypot(x-COL_X, z-COL_Z); if (dc < 25){ const k = 1-smooth(15,25,dc); h += (COL_Y0 + .6 + fbm(x*.22,z*.22)*.7 - h)*k*k*(3-2*k); } }
+    { const dc = Math.hypot(x-COL_X, z-COL_Z); if (dc < 25){ const k = (1-smooth(15,25,dc))*smooth(9.5,16,r); h += (COL_Y0 + .6 + fbm(x*.22,z*.22)*.7 - h)*k*k*(3-2*k); } }
     if (r < 9) h = -136 + fbm(x*.3,z*.3)*.8;
   } else {
     h = Math.min((r-R)*.35, 3.5) + fbm(x*.03,z*.03)*2.2*smooth(R,R+10,r) + fbm(x*.15,z*.15)*.3*smooth(R,R+3,r);
@@ -324,7 +329,8 @@ vec3 pNArb(vec3 sp, vec3 sn, vec2 dH, float fd){ vec3 sx=dFdx(sp), sy=dFdy(sp); 
     .replace('#include <color_fragment>', `#include <color_fragment>
 { vec3 q=vWP*vec3(.8,1.5,.8);
   float wv = smoothstep(.35,.85,1.-abs(vWN.y));
-  vec4 nA = texture2D(uNoise, vWP.xz*.012), nB = texture2D(uNoise, vWP.xz*.085 + .37), nV = texture2D(uNoise, vec2(vWP.x+vWP.z, vWP.y*1.6)*.06);
+  vec4 nA = texture2D(uNoise, vWP.xz*.012), nB = texture2D(uNoise, vWP.xz*.085 + .37), nV;
+  { vec3 an = abs(vWN); vec2 wsel = an.xz/(an.x+an.z+1e-4); nV = texture2D(uNoise, vWP.zy*vec2(.06,.085))*wsel.x + texture2D(uNoise, vWP.xy*vec2(.06,.085) + .53)*wsel.y; }
   tdn = mix(nA.g*.32 + nA.b*.22 + nB.r*.26 + nB.g*.2, nV.r*.35 + nV.g*.35 + nV.b*.3, wv);
   float fine = mix(nB.b, nV.a, wv); tfine = mix(nB.a, nV.b, wv);
   diffuseColor.rgb *= .55 + .9*tdn*(.75+.5*fine);
@@ -332,7 +338,8 @@ vec3 pNArb(vec3 sp, vec3 sn, vec2 dH, float fd){ vec3 sx=dFdx(sp), sy=dFdy(sp); 
   diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*vec3(1.25,1.15,.9), strata*.5);
   float wet = (1.-smoothstep(0.,6.,vWP.y-uWater))*step(vWP.y,.3);
   diffuseColor.rgb *= mix(1.,.45,wet);
-  float slime = smoothstep(.55,.75,texture2D(uNoise, vWP.xz*.02 + vec2(uTime*.002,0.)).g)*step(vWP.y,-60.);
+  vec3 an2 = abs(vWN); vec2 wuv = an2.x > an2.z ? vWP.zy : vWP.xy;
+  float slime = smoothstep(.55,.75,mix(texture2D(uNoise, vWP.xz*.02 + vec2(uTime*.002,0.)).g, texture2D(uNoise, wuv*vec2(.02,.035) + vec2(0.,uTime*.001)).g, wv))*step(vWP.y,-60.);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.03,.06,.025), slime*.7); }`)
     .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
 { float wet = (1.-smoothstep(0.,6.,vWP.y-uWater))*step(vWP.y,.3); roughnessFactor = max(.38, mix(roughnessFactor,.3,wet) - .2*smoothstep(.6,.8,tdn)); }`)
@@ -363,10 +370,20 @@ if (uEyes > 0. && vWP.y < -42.) {
 }`);
 };
 {
-  const SEG = 190, SIZE = 330;
-  const g = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG); g.rotateX(-Math.PI/2);
+  // griglia polare: gli anelli sono distribuiti lungo il profilo del pendio (non in pianta), così le pareti verticali della voragine
+  // hanno tanti vertici quanto il piano e la pietra non si stira. Fuori dal lago gli anelli si diradano.
+  const ANG = MOBILE ? 240 : 300, rings = [0];
+  { let r = 0, acc = 0, hp = bowl(0); const step = .02;
+    while (r < 240){ r += step; const hb = r < R ? bowl(r) : Math.min((r-R)*.35, 3.5); acc += Math.hypot(step, hb - hp); hp = hb;
+      const ds = r < 9 ? 1.6 : r < R + 4 ? 1.15 : 1.4 + (r - R - 4)*.06; if (acc >= ds){ rings.push(r); acc = 0; } }
+    rings.push(240); }
+  const NR = rings.length, pos = new Float32Array(NR*ANG*3), idx = [];
+  for (let j=0;j<NR;j++){ const r = rings[j], off = (j % 2) * .5;
+    for (let i=0;i<ANG;i++){ const a = (i + off)/ANG*Math.PI*2, x = Math.cos(a)*r, z = Math.sin(a)*r, v = (j*ANG + i)*3; pos[v] = x; pos[v+1] = H(x,z); pos[v+2] = z; } }
+  for (let j=0;j<NR-1;j++) for (let i=0;i<ANG;i++){ const a = j*ANG + i, b = j*ANG + (i+1)%ANG, c = (j+1)*ANG + i, d = (j+1)*ANG + (i+1)%ANG;
+    if (j % 2 === 0) idx.push(a, b, c, b, d, c); else idx.push(a, d, c, a, b, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(idx);
   const p = g.attributes.position;
-  for (let i=0;i<p.count;i++){ p.setY(i, H(p.getX(i), p.getZ(i))); }
   g.computeVertexNormals();
   const n = g.attributes.normal, cols = new Float32Array(p.count*3);
   for (let i=0;i<p.count;i++){
@@ -676,36 +693,54 @@ function tube(pts, r0, r1, seg=10, rad=6){ const cv = new THREE.CatmullRomCurve3
   for (let v=0; v<p.count; v++){ const ring = Math.floor(v/(rad+1)), t = ring/seg, c = cv.getPointAt(t), r = r0 + (r1-r0)*t; p.setXYZ(v, c.x+(p.getX(v)-c.x)*r, c.y+(p.getY(v)-c.y)*r, c.z+(p.getZ(v)-c.z)*r); }
   g.computeVertexNormals(); return g; }
 function figureGeo(tall=2.2, hunch=1){
+  // una donna annegata: vestito lungo fradicio incollato al corpo, braccia lunghe, capelli bagnati che coprono il viso
   const t = tall, P = [], V = (x,y,z)=>new THREE.Vector3(x*t, y*t, z*t);
-  // busto: bacino stretto, costole, spalle cadenti
-  const prof = [[.0,.43],[.068,.44],[.074,.48],[.058,.54],[.066,.6],[.078,.67],[.086,.72],[.07,.755],[.03,.77],[0,.775]].map(([r,y])=>new THREE.Vector2(r*t, y*t));
-  const torso = new THREE.LatheGeometry(prof, 14); torso.scale(1,1,.62); P.push(torso);
-  P.push(tube([V(.0,.76,0), V(.008,.8,.012), V(.012,.83,.03)], .022*t, .018*t, 4, 6));
-  const head = new THREE.SphereGeometry(.052*t, 12, 10); head.scale(.82,1.22,.95); head.translate(.012*t, .868*t, .045*t); P.push(head);
-  const jaw = new THREE.SphereGeometry(.036*t, 10, 6, 0, Math.PI*2, Math.PI*.5, Math.PI*.5); jaw.scale(.9,1.5,1); jaw.rotateX(.35); jaw.translate(.012*t, .838*t, .058*t); P.push(jaw);
+  // vestito: dal petto alle caviglie, pieghe verticali che si aprono verso l'orlo, orlo strappato e pesante d'acqua
+  const prof = [[.0,.035],[.1,.04],[.104,.1],[.094,.22],[.082,.34],[.07,.44],[.062,.5],[.068,.56],[.076,.62],[.08,.68],[.074,.72],[.056,.75],[.03,.765],[0,.77]].map(([r,y])=>new THREE.Vector2(r*t, y*t));
+  const dress = new THREE.LatheGeometry(prof, 30); { const q = dress.attributes.position;
+    for (let v=0; v<q.count; v++){ const x = q.getX(v), y = q.getY(v)/t, z = q.getZ(v), a = Math.atan2(z, x), low = clamp((.5 - y)/.46, 0, 1);
+      const fold = Math.sin(a*11 + Math.sin(a*3)*1.3)*.09*low + Math.sin(a*23)*.025*low, bust = y > .55 && y < .72 ? .1*Math.max(0, Math.cos(a - Math.PI/2))*Math.sin((y-.55)/.17*Math.PI) : 0;
+      let k = 1 + fold + bust; let ny = y; if (y < .07){ ny = y + (Math.sin(a*7)*.5 + .5)*hash2(Math.floor(a*9), 3)*.06; }
+      q.setXYZ(v, x*k, ny*t, z*k*.72); } dress.computeVertexNormals(); }
+  P.push(dress);
+  // spalle, clavicole, collo
+  P.push(new THREE.SphereGeometry(.07*t, 14, 10).scale(1.55, .55, .8).translate(0, .735*t, 0));
+  P.push(tube([V(0,.74,0), V(.004,.79,.01), V(.01,.83,.028)], .021*t, .017*t, 5, 8));
+  const head = new THREE.SphereGeometry(.05*t, 16, 12); head.scale(.84,1.18,.96); head.translate(.012*t, .868*t, .045*t); P.push(head);
+  const jaw = new THREE.SphereGeometry(.034*t, 12, 8, 0, Math.PI*2, Math.PI*.5, Math.PI*.5); jaw.scale(.9,1.45,1); jaw.rotateX(.35); jaw.translate(.012*t, .838*t, .058*t); P.push(jaw);
   for (const s of [-1,1]){
-    // braccia lunghe fino alle ginocchia, gomiti piegati, dita sottili
-    const sh = V(s*.088,.735,0), el = V(s*.104,.53,.03), wr = V(s*.098,.34,.06+(hunch-1)*.08);
-    P.push(tube([sh, V(s*.1,.64,.01), el], .02*t, .015*t, 8, 6), tube([el, V(s*.102,.44,.05), wr], .015*t, .011*t, 8, 6));
-    for (let f=0; f<4; f++){ const a = (f-1.5)*.012; P.push(tube([wr, V(s*.099+a,.3,.07), V(s*.1+a*1.4,.255,.075+f*.004)], .0045*t, .002*t, 4, 4)); }
-    // gambe magre, ginocchia sporgenti
-    const hp = V(s*.042,.44,0), kn = V(s*.048,.24,.022), an = V(s*.05,.04,0);
-    P.push(tube([hp, V(s*.046,.34,.01), kn], .03*t, .02*t, 8, 6), tube([kn, V(s*.05,.14,.0), an], .02*t, .014*t, 8, 6));
-    const foot = new THREE.BoxGeometry(.04*t, .018*t, .1*t); foot.translate(s*.05*t, .012*t, .03*t); P.push(foot);
+    // braccia: deltoide, gomito ossuto, avambraccio, polso sottile; pendono lungo il vestito fino alle cosce
+    const sh = V(s*.098,.728,0), el = V(s*.112,.535,.022), wr = V(s*.104,.375,.05+(hunch-1)*.06);
+    P.push(tube([sh, V(s*.108,.66,.008), V(s*.112,.6,.014), el], .025*t, .016*t, 10, 8));
+    P.push(tube([el, V(s*.11,.47,.04), wr], .0165*t, .011*t, 9, 8));
+    P.push(new THREE.SphereGeometry(.014*t, 8, 6).scale(1, .9, 1.1).translate(el.x, el.y, el.z - .006*t));
+    // mano: palmo, quattro dita lunghe e piegate, pollice
+    const palm = new THREE.SphereGeometry(.022*t, 10, 8); palm.scale(.5, 1.1, .95); palm.translate(wr.x, wr.y - .025*t, wr.z + .006*t); P.push(palm);
+    for (let f=0; f<4; f++){ const dz = (f - 1.5)*.0085, b0 = V(wr.x/t, wr.y/t - .045, wr.z/t + dz), L = .05 + (f === 1 || f === 2 ? .01 : 0);
+      P.push(tube([b0, V(b0.x/t + s*.003, b0.y/t - L*.55, b0.z/t + dz*.3 + .006), V(b0.x/t + s*.001, b0.y/t - L, b0.z/t + dz*.2 + .016)], .0042*t, .0022*t, 5, 5)); }
+    P.push(tube([V(wr.x/t - s*.006, wr.y/t - .03, wr.z/t + .016), V(wr.x/t - s*.008, wr.y/t - .058, wr.z/t + .024)], .0045*t, .0028*t, 4, 5));
+    // piedi nudi sotto l'orlo
+    const foot = new THREE.SphereGeometry(.026*t, 10, 6); foot.scale(.75, .45, 1.9); foot.translate(s*.05*t, .012*t, .03*t); P.push(foot);
+    P.push(tube([V(s*.048,.12,0), V(s*.05,.03,.005)], .016*t, .013*t, 4, 6));
   }
-  // sudario stracciato
-  const sp = []; for (let i=0;i<=6;i++){ const u = i/6; sp.push(new THREE.Vector2((.07 + u*.06)*t, (.62 - u*.4)*t)); }
-  const shroud = new THREE.LatheGeometry(sp, 18); { const p = shroud.attributes.position; for (let v=0; v<p.count; v++){ const y = p.getY(v); if (y < .3*t){ const a = Math.atan2(p.getZ(v), p.getX(v)); p.setY(v, y + (Math.sin(a*7)*.5+.5)*Math.random()*.09*t); } p.setZ(v, p.getZ(v)*.75); } shroud.computeVertexNormals(); }
-  P.push(shroud);
-  // capelli fradici che pendono sul viso
-  for (let k=0;k<12;k++){ const a = rand(-1.4,1.4), x0 = Math.sin(a)*.045, z0 = Math.cos(a)*.03; P.push(tube([V(.012+x0,.9,.04+z0*.4), V(.012+x0*1.3,.84,.05+z0*1.1), V(.012+x0*1.1,rand(.7,.78),.06+z0)], .006*t, .002*t, 5, 3)); }
-  const g = mergeGeometries(P.map(q=>q.index ? q.toNonIndexed() : q));
+  // capelli: una massa fradicia che dalla nuca cade sul viso e sul petto, divisa in ciocche; una fessura lascia intravedere gli occhi
+  { const NA = 26, NY = 14, hp = [], hi = [], gap = .3;
+    for (let j=0;j<=NY;j++){ const v = j/NY, y = .925 - v*.4;
+      for (let i=0;i<=NA;i++){ const u = i/NA, a = Math.PI/2 + gap + u*(Math.PI*2 - gap*2), strand = Math.abs(Math.sin(u*NA*.5*Math.PI));
+        const rr = (v < .25 ? .045 + v*.08 : .065 + (v-.25)*.035) + strand*.006, cz = .04 + v*.06;
+        hp.push((.012 + Math.cos(a)*rr*.95)*t, (y - strand*v*.035 - (i%3)*v*.012)*t, (cz + Math.sin(a)*rr)*t); } }
+    for (let j=0;j<NY;j++) for (let i=0;i<NA;i++){ const a0 = j*(NA+1)+i, b0 = a0+NA+1; hi.push(a0, b0, a0+1, b0, b0+1, a0+1); }
+    const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute(hp, 3)); hg.setIndex(hi); hg.computeVertexNormals(); P.push(hg);
+    const cap = new THREE.SphereGeometry(.054*t, 14, 8, 0, Math.PI*2, 0, Math.PI*.55); cap.scale(.92, 1.05, 1); cap.translate(.012*t, .875*t, .04*t); P.push(cap);
+    for (let k=0;k<9;k++){ const a = Math.PI/2 + rand(-.25,.25), x0 = Math.cos(a)*.05, z0 = .06 + Math.sin(a)*.05;
+      P.push(tube([V(.012+x0,.9,z0), V(.012+x0*1.1,.84,z0+.012), V(.012+x0*1.2,rand(.62,.74),z0+.02)], .0055*t, .0015*t, 6, 3)); } }
+  const g = mergeGeometries(P.map(q=>{ const n = q.index ? q.toNonIndexed() : q; for (const k of Object.keys(n.attributes)) if (k !== 'position') n.deleteAttribute(k); return n; }));
   // postura: schiena curva in avanti, testa piegata; superficie irregolare
   const p = g.attributes.position;
   for (let v=0; v<p.count; v++){ let x = p.getX(v), y = p.getY(v), z = p.getZ(v); const hy = Math.max(0, y/t - .5);
     z += hy*hy*.55*t*hunch; if (y/t > .8){ x += (y/t-.8)*.25*t; }
-    const n = Math.sin(x*41.3+y*17.1)*Math.sin(z*37.7-y*23.3)*.004*t; p.setXYZ(v, x+n, y, z+n); }
-  g.deleteAttribute('normal'); g.deleteAttribute('uv'); const gm = mergeVertices(g, 1e-4); gm.computeVertexNormals(); return gm;
+    const n = Math.sin(x*41.3+y*17.1)*Math.sin(z*37.7-y*23.3)*.003*t; p.setXYZ(v, x+n, y, z+n); }
+  const gm = mergeVertices(g, 1e-4); gm.computeVertexNormals(); return gm;
 }
 const eyeAt = (t, h=1) => [ .03*t, .876*t, (.096 + .0752*h)*t + .004 ];
 const ghoulU = { uTime:{value:0} };
@@ -920,8 +955,10 @@ const sculpt = (g, amp=.35, freq=.55, tone=1)=>{
   const p = g.attributes.position, n = g.attributes.normal, col = new Float32Array(p.count*3);
   for (let i=0;i<p.count;i++){ const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
     const f = fbm3(x*freq, y*freq, z*freq) - .5, ridge = Math.abs(fbm3(x*freq*2.3+9, y*freq*2.3, z*freq*2.3) - .5);
-    const d = f*amp*2 - ridge*amp*.9; p.setXYZ(i, x + n.getX(i)*d, y + n.getY(i)*d, z + n.getZ(i)*d);
-    const c = clamp(.5 + f*1.4 - ridge*.7, .15, 1)*tone; col[i*3] = .36*c + .03; col[i*3+1] = .38*c + .035; col[i*3+2] = .33*c + .03; }
+    // seconda ottava: nodi, solchi e scheggiature dello scalpello, così la pietra non sembra gomma tirata
+    const fine = fbm3(x*freq*3.4+3.1, y*freq*3.4-7.7, z*freq*3.4) - .5, chip = Math.max(0, .12 - Math.abs(fbm3(x*freq*5.1+1.7, y*freq*5.1, z*freq*5.1+4.4) - .5))*8;
+    const d = f*amp*2 - ridge*amp*.9 + fine*amp*.85 - chip*amp*.22; p.setXYZ(i, x + n.getX(i)*d, y + n.getY(i)*d, z + n.getZ(i)*d);
+    const c = clamp(.5 + f*1.4 - ridge*.7 + fine*.5 - chip*.25, .12, 1)*tone; col[i*3] = .36*c + .03; col[i*3+1] = .38*c + .035; col[i*3+2] = .33*c + .03; }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
   g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(p.count*2), 2)); return g; };
 // arto: tubo con profilo di raggi (muscoli, nocche, ossa che sporgono), estremità chiuse
@@ -963,7 +1000,7 @@ function stonify(m, o={}){ const sc = o.sc || 1;
       float cH = big*.9 + fine*.22 - crk*.4;
       float alg = smoothstep(.25, .8, vCN.y + (big-.5)*1.4) * smoothstep(.35,.65, fine);
       float streak = smoothstep(.5, .85, texture2D(tNz, vec2(vCW.x*.06 + vCW.z*.04, vCW.y*.004)).g) * (1. - abs(vCN.y));
-      float tide = smoothstep(.86, 1., sin(vCW.y*1.7 + big*3.))*.35;
+      float tide = smoothstep(.88, 1., sin(vCW.y*1.7 + big*5. + fine*3.))*.22*smoothstep(.3, .7, triN(vCW*vec3(1.,.2,1.), cw, .05, vec4(0.,1.,0.,0.)));
       diffuseColor.rgb *= (.62 + big*.55) * (1. - crk*.5) * (1. - streak*.45) * (1. - tide);
       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.07,.1,.055), alg*.75);`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = clamp(roughnessFactor - alg*.45 - streak*.3, .2, 1.);')
@@ -1024,6 +1061,11 @@ const colossus = (()=>{
 
   // basamento: due blocchi sbozzati, con gli scalini consumati
   { const b = new THREE.BoxGeometry(13,6,12.5,14,8,14); b.translate(0,1,-.4); body.push(sculpt(b, .7, .3, .85));
+    // il piedistallo prosegue giù nella parete della voragine: niente blocco sospeso sul vuoto
+    // uno sperone di roccia viva, irregolare, che si stringe e sparisce nella parete
+    const b0 = new THREE.CylinderGeometry(5.6, 2.6, 24, 28, 20, true); { const q = b0.attributes.position; for (let i=0;i<q.count;i++){ const x = q.getX(i), y = q.getY(i), z = q.getZ(i), a = Math.atan2(z, x);
+        const j = 1 + .22*(fbm3(Math.cos(a)*1.6 + 3, y*.09, Math.sin(a)*1.6) - .5)*2 + .1*Math.sin(a*3 + y*.15); q.setXYZ(i, x*j*1.02, y, z*j*.94); } }
+    b0.translate(0,-10.5,-1.2); body.push(sculpt(b0, 1.5, .16, .8));
     const b2 = new THREE.BoxGeometry(10.5,1.4,10,10,3,10); b2.translate(0,4.5,-.6); body.push(sculpt(b2, .45, .4, .9)); }
   // bacino, ventre incavato, gabbia toracica, spalle curve in avanti
   body.push(sculpt(ell(0,9.6,-1.6, 4.4,2.9,3.6), .3));
@@ -1073,10 +1115,22 @@ const colossus = (()=>{
         mp.push(q.x, q.y, q.z); }
       for (let i=0;i<NU;i++) for (let j=0;j<NV;j++){ if (i > NU*.55 && Math.random() < .09) continue; const a = base + i*(NV+1) + j, b = a + NV + 1; mi.push(a, b, a+1, b, b+1, a+1); } }
     const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.Float32BufferAttribute(mp, 3)); mg.setIndex(mi); wings.push(sculpt(mg, .12, .5, .8));
-    // catene arrugginite alle caviglie, spezzate
-    const ch = []; for (let k=0;k<13;k++){ const t = k/12, lk = new THREE.TorusGeometry(.42, .12, 6, 12); lk.scale(1, 1.5, 1); lk.rotateY(k%2 ? Math.PI/2 : 0); lk.rotateX(-.3 - t*.9);
-      lk.translate(s*(4.9 + t*1.8), 5.6 - t*3.3 + Math.sin(t*Math.PI)*.4, 5.6 + t*1.4 - t*t*1.2); ch.push(lk.toNonIndexed()); }
-    const cuff = new THREE.TorusGeometry(1.15, .3, 8, 20); cuff.rotateX(Math.PI/2); cuff.translate(s*4.8,6.6,4.6); ch.push(cuff.toNonIndexed());
+    // catene alle caviglie: dal ceppo scendono oltre il bordo del basamento, pendono in un'ansa davanti alla pietra
+    // e finiscono in un anello murato nel basamento. Ogni maglia segue la curva e si incastra nella precedente, girata di 90 gradi.
+    const ch = [];
+    const cuff = new THREE.TorusGeometry(1.12, .3, 10, 28); cuff.rotateX(Math.PI/2); cuff.translate(s*4.8,6.6,4.6); ch.push(cuff.toNonIndexed());
+    for (let k=0;k<6;k++){ const a = k/6*Math.PI*2, b = new THREE.SphereGeometry(.14, 6, 4); b.translate(s*4.8 + Math.cos(a)*1.38, 6.6, 4.6 + Math.sin(a)*1.38); ch.push(b.toNonIndexed()); }
+    const RX = s*6.15, RY = 1.55, RZ = 7.25, RR = .6;
+    const pts = [V(s*5.75,6.25,5.25), V(s*6.05,5.15,6.35), V(s*6.2,4.05,7.15), V(s*6.3,2.4,7.55), V(s*6.25,1.0,7.55), V(RX, RY - RR + .05, RZ + .08)];
+    const cv = new THREE.CatmullRomCurve3(pts, false, 'centripetal'), L = cv.getLength(), R0 = .34, TB = .1, EL = 1.55, pitch = 2*(R0 - TB)*EL + TB*.5, NL = Math.max(2, Math.round(L/pitch));
+    const up = V(0,1,0), qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
+    for (let k=0;k<NL;k++){ const t = (k + .5)/NL, pp = cv.getPointAt(t), tg = cv.getTangentAt(t).normalize();
+      const lk = new THREE.TorusGeometry(R0, TB, 6, 14); lk.scale(1, EL, 1);
+      qa.setFromUnitVectors(up, tg); qb.setFromAxisAngle(tg, (k % 2 ? Math.PI/2 : 0) + Math.sin(k*1.7)*.15); lk.applyQuaternion(qb.multiply(qa)); lk.translate(pp.x, pp.y, pp.z); ch.push(lk.toNonIndexed()); }
+    // l'anello pende da una staffa piantata nella pietra
+    const ring = new THREE.TorusGeometry(RR, .15, 8, 22); ring.rotateY(s*.35); ring.translate(RX, RY, RZ); ch.push(ring.toNonIndexed());
+    const stp = new THREE.TorusGeometry(.3, .12, 6, 12, Math.PI); stp.rotateX(-Math.PI/2); stp.rotateZ(Math.PI); stp.translate(RX, RY + RR, RZ - .45); ch.push(stp.toNonIndexed());
+    const plate = new THREE.CylinderGeometry(.55, .6, .2, 10); plate.rotateX(Math.PI/2); plate.translate(RX, RY + RR, RZ - .75); ch.push(plate.toNonIndexed());
     g.add(new THREE.Mesh(mergeGeometries(ch), M.rust));
   }
   // la sfera tra gli artigli, e la sua luce verde sul petto e sui tentacoli
@@ -1192,19 +1246,51 @@ M.tentacle.onBeforeCompile = sh => {
      transformed.x += sin(uTime*.7 + u*7. + position.y*.02)*u*u*7.;
      transformed.z += cos(uTime*.55 + u*6. + position.x*.03)*u*u*7.;`);
 };
+// i tentacoli del fondo: ognuno ha il suo ritmo (fase, velocità, ampiezza in un attributo), si muove con un'onda che corre
+// dalla base alla punta invece di girare tutti insieme, e si piega via dalla zattera: niente passa attraverso di te.
+const tentDeepU = { uTime:{value:0}, uAvoid:{value:new THREE.Vector4(0, 0, 0, -1e4)} };
+const tentDeepMat = new THREE.MeshStandardMaterial({color:0x18201b, roughness:.3, metalness:.15, emissive:0x020604});
+tentDeepMat.onBeforeCompile = sh => {
+  sh.uniforms.uTime = tentDeepU.uTime; sh.uniforms.uAvoid = tentDeepU.uAvoid;
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uTime; varying vec2 vTU; varying float vPh;')
+   .replace('#include <color_fragment>', `#include <color_fragment>
+     float ring = smoothstep(.4,1.,sin(vTU.x*520.)); diffuseColor.rgb *= 1.-ring*.22;
+     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.12,.06,.07), smoothstep(.3,.0,abs(fract(vTU.y)-.5))*.5);`)
+   .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = .25 + ring*.4;')
+   .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+     { vec2 sp = vec2(fract(vTU.x*150.)-.5, (fract(vTU.y*2.)-.5)*1.8); float dots = smoothstep(.22,.05,length(sp))*smoothstep(.35,.1,abs(fract(vTU.y)-.5));
+       totalEmissiveRadiance += vec3(.25,1.,.55)*dots*(.4+.6*pow(.5+.5*sin(vTU.x*30.-uTime*(1.6+vPh)+vPh*9.),4.))*1.6; }`);
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime; uniform vec4 uAvoid; attribute vec3 aPh; varying vec2 vTU; varying float vPh;')
+   .replace('#include <begin_vertex>', `#include <begin_vertex>
+     vTU = uv; vPh = aPh.x;
+     float u = uv.x, ph = aPh.x*6.2832, sp = aPh.y, amp = aPh.z;
+     float env = u*u*(1.6 - .6*u);
+     // onda che sale lungo il tentacolo (base ferma, punta che si arriccia) + una deriva lenta, diversa per ognuno
+     float w1 = sin(uTime*.62*sp + ph - u*5.5), w2 = cos(uTime*.47*sp + ph*1.7 - u*4.3), dr = sin(uTime*.13*sp + ph*2.3);
+     transformed.x += (w1*6. + dr*3.)*env*amp;
+     transformed.z += (w2*6. + cos(uTime*.11*sp + ph)*3.)*env*amp;
+     transformed.y += sin(uTime*.35*sp + ph*.7 - u*3.)*2.2*env*amp;
+     // la zattera: chi le passa vicino si scosta (spinta radiale continua, mai piegata su se stessa)
+     if (transformed.y > uAvoid.w){ vec2 d = transformed.xz - uAvoid.xy; float l = length(d); float R = uAvoid.z;
+       float k = 1. - smoothstep(0., R*1.7, l); transformed.xz = uAvoid.xy + (l > 1e-3 ? d/l : vec2(0.,-1.))*(l + k*R); }`);
+};
+tentDeepMat.customProgramCacheKey = ()=> 'tentDeep';
 const tentacles = new THREE.Group(); tentacles.position.set(0,-136,0); scene.add(tentacles);
-for (let i=0;i<9;i++){
-  const a = i/9*Math.PI*2 + rand(-.2,.2), pts = [];
-  for (let k=0;k<=8;k++){ const t = k/8; const rr = 4 + t*rand(14,26); const yy = t*rand(70,110); const aa = a + Math.sin(t*3+i)*.5; pts.push(new THREE.Vector3(Math.cos(aa)*rr, yy, Math.sin(aa)*rr)); }
-  const curve = new THREE.CatmullRomCurve3(pts);
-  const SEGS = 70, RAD = 7;
-  const g = new THREE.TubeGeometry(curve, SEGS, rand(1.6,2.6), RAD, false);
-  const pos = g.attributes.position;
-  for (let v=0; v<pos.count; v++){ const ring = Math.floor(v/(RAD+1)); const t = ring/SEGS; const c = curve.getPointAt(t); const k = 1 - t*.92;
-    pos.setXYZ(v, c.x + (pos.getX(v)-c.x)*k, c.y + (pos.getY(v)-c.y)*k, c.z + (pos.getZ(v)-c.z)*k); }
-  g.computeVertexNormals();
-  tentacles.add(new THREE.Mesh(g, M.tentacle));
-}
+{ // la zattera arriva da +z: in quel settore non nasce nessun tentacolo
+  const angs = []; for (let i=0;i<11;i++) angs.push(Math.PI/2 + .75 + i/11*(Math.PI*2 - 1.5) + rand(-.12,.12));
+  angs.forEach((a, i)=>{ const pts = [], reach = rand(14,24), tall = rand(70,104), curl = rand(-.7,.7);
+    for (let k=0;k<=9;k++){ const t = k/9; const rr = 4 + t*reach; const yy = t*tall; const aa = a + Math.sin(t*3+i)*.35 + curl*t*t; pts.push(new THREE.Vector3(Math.cos(aa)*rr, yy, Math.sin(aa)*rr)); }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const SEGS = 80, RAD = 9, r0 = rand(1.6,2.6);
+    const g = new THREE.TubeGeometry(curve, SEGS, r0, RAD, false);
+    const pos = g.attributes.position, ph = new Float32Array(pos.count*3), pv = Math.random(), spd = rand(.7,1.35), am = rand(.75,1.25);
+    for (let v=0; v<pos.count; v++){ const ring = Math.floor(v/(RAD+1)); const t = ring/SEGS; const c = curve.getPointAt(t); const k = (1 - t*.94)*(1 + .12*Math.sin(t*40));
+      pos.setXYZ(v, c.x + (pos.getX(v)-c.x)*k, c.y + (pos.getY(v)-c.y)*k, c.z + (pos.getZ(v)-c.z)*k); ph[v*3] = pv; ph[v*3+1] = spd; ph[v*3+2] = am; }
+    g.setAttribute('aPh', new THREE.BufferAttribute(ph, 3)); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, tentDeepMat); m.frustumCulled = false; tentacles.add(m); }); }
+// dove sta la zattera, nelle coordinate dei tentacoli (il gruppo cresce di scala, non ruota)
+function tentAvoidUpdate(){ const sc = Math.max(.01, tentacles.scale.x), raftR = 6.5;
+  tentDeepU.uAvoid.value.set((raftPos.x - tentacles.position.x)/sc, (raftPos.z - tentacles.position.z)/sc, raftR/sc, (waterY - 9 - tentacles.position.y)/sc); }
 tentacles.scale.setScalar(.01); tentacles.visible = false;
 
 /* ---------- pompe e tubi ---------- */
@@ -1307,17 +1393,21 @@ const raft = new THREE.Group();
   lan.add(mesh(new THREE.CylinderGeometry(.004,.004,.08,3), M.rust, 0,.21+.02,0)); raft.add(lan); raft.userData.lantern = lan;
 }
 bakeStatic(raft, o=>o===raft.userData.lantern); scene.add(raft); raft.position.set(0,0,79.4);
-const RAFT_MAX = 79.4, RAFT_MIN = 12.5;
+// la zattera scivola verso il centro fino a galleggiare sopra l'Occhio: con l'acqua a 128 m le resta ancora fondale sotto
+const RAFT_MAX = 79.4, RAFT_MIN = 8.2;
 const raftPos = new THREE.Vector3(0,0,RAFT_MAX), raftTmp = new THREE.Vector3();
 // profilo del fondale lungo il percorso della zattera, reso monotono: la zattera galleggia sempre e scivola senza scatti
-const RAFT_PROF = (()=>{ const N = 700, zs = [], gs = []; let gm = Infinity;
-  for (let i=0;i<=N;i++){ const z = RAFT_MAX - (RAFT_MAX-RAFT_MIN)*i/N; let g = -Infinity; for (const x of [-1.6,0,1.6]) for (const dz of [-1.9,0,1.9]) g = Math.max(g, H(x, z+dz)); gm = Math.min(gm, g); zs.push(z); gs.push(gm - i*1e-4); }
+const RAFT_PROF = (()=>{ const N = 900, zs = [], gs = []; let gm = Infinity;
+  for (let i=0;i<=N;i++){ const z = RAFT_MAX - (RAFT_MAX-RAFT_MIN)*i/N; let g = -Infinity; for (const x of [-1.7,-.8,0,.8,1.7]) for (const dz of [-2,-1,0,1,2]) g = Math.max(g, H(x, z+dz)); gm = Math.min(gm, g); zs.push(z); gs.push(gm - i*1e-4); }
   return {zs, gs}; })();
 function raftTarget(wy){
   const {zs, gs} = RAFT_PROF, need = wy - .85;
   let z = RAFT_MIN; for (let i=0;i<gs.length;i++){ if (gs[i] <= need){ if (i === 0){ z = zs[0]; } else { const k = (need - gs[i-1])/(gs[i]-gs[i-1]); z = zs[i-1] + (zs[i]-zs[i-1])*clamp(k,0,1); } break; } }
-  const y = Math.max(wy, (z <= RAFT_MIN + .01) ? H(0, RAFT_MIN) + .12 : wy);
+  const y = Math.max(wy, (z <= RAFT_MIN + .01) ? raftGround(RAFT_MIN) : wy);
   return raftTmp.set(0, y, z); }
+// in secca (solo nei finali, quando l'acqua va sotto il fondo): appoggiata sul fango, inclinata come il pendio, mai dentro la pietra
+function raftGround(z){ const hf = H(0, z - 1.9), hb = H(0, z + 1.9), hc = H(0, z); return Math.max(hc, (hf + hb)*.5) + .12; }
+function raftGroundTilt(z){ return -Math.atan2(H(0, z + 1.9) - H(0, z - 1.9), 3.8); }
 const raftVel = new THREE.Vector3();
 const lifeGeo = new THREE.BufferGeometry(); lifeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(30*3),3));
 const lifeline = new THREE.Line(lifeGeo, new THREE.LineBasicMaterial({color:0x4a3e30})); lifeline.frustumCulled = false; scene.add(lifeline);
@@ -1331,7 +1421,8 @@ const CAM_BASE = new THREE.Vector3(0, 1.95, RAFT_MAX - .3); const camWakeStart =
 let yaw = 0, pitch = -.18, yawT = 0, pitchT = -.18, shakeAmt = 0;
 let drag = null;
 canvas.addEventListener('pointerdown', e=>{ drag = {x:e.clientX, y:e.clientY, sx:e.clientX, sy:e.clientY, t:performance.now()}; canvas.setPointerCapture(e.pointerId); });
-canvas.addEventListener('pointermove', e=>{ if (!drag) return; const dx = e.clientX-drag.x, dy = e.clientY-drag.y; drag.x = e.clientX; drag.y = e.clientY;
+let lookT = 0; // l'ultima volta che il giocatore ha mosso lo sguardo da sé
+canvas.addEventListener('pointermove', e=>{ if (!drag) return; const dx = e.clientX-drag.x, dy = e.clientY-drag.y; drag.x = e.clientX; drag.y = e.clientY; if (Math.abs(dx) + Math.abs(dy) > 2) lookT = performance.now();
   yawT = yawT - dx*.0055*SET.sens; pitchT = clamp(pitchT - dy*.0055*SET.sens*(SET.inv ? -1 : 1), -1.45, .45); });
 canvas.addEventListener('pointerup', e=>{ if (!drag) return; const moved = Math.hypot(e.clientX-drag.sx, e.clientY-drag.sy); const dt = performance.now()-drag.t; drag = null;
   if (moved < 9 && dt < 400) tapWorld(e.clientX, e.clientY); });
@@ -1705,14 +1796,68 @@ function addLiters(L){ L *= hullK();
 const pumpRate = () => PUMPS.reduce((s,p,i)=> s + p.r*S.pumps[i], 0);
 
 /* ---------- i garzoni: lavorano da soli, ai lati della zattera ---------- */
-const helperFigs = [[-1.2,.95,-1],[1.25,.9,1],[-1.25,-.3,-1]].map(([x,z,side])=>{ const g = new THREE.Group(); g.position.set(x, .36, z); g.rotation.y = side*Math.PI/2;
-  const f = mesh(figureGeo(1.45, 1.5), ghoulMat); g.add(f); const b = mesh(new THREE.CylinderGeometry(.11,.085,.2,10,1,true), M.rust, .25, .55, .25); g.add(b);
-  g.userData = { side, b, t:0, f }; g.visible = false; raft.add(g); return g; });
+// un ragazzo di paese seduto sullo sgabello, cappotto troppo grande e coppola calata sugli occhi: non parla, non alza mai la testa.
+// Braccia e testa sono snodate: tira su la fune, si sporge, cala il secchio fuori bordo e lo riporta pieno.
+const HELP_M = { coat:new THREE.MeshStandardMaterial({color:0x1a1b16, roughness:1}), pants:new THREE.MeshStandardMaterial({color:0x131210, roughness:1}),
+  cap:new THREE.MeshStandardMaterial({color:0x1f1b15, roughness:1}), skin:new THREE.MeshStandardMaterial({color:0x4a463c, roughness:.85}), boot:new THREE.MeshStandardMaterial({color:0x120d0a, roughness:.6}),
+  rope:new THREE.LineBasicMaterial({color:0x6a5a40}) };
+function helperBody(){
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const L = (pts, r0, r1, mat, seg=8, rad=8)=> mesh(tube(pts.map(q=>new THREE.Vector3(...q)), r0, r1, seg, rad), mat);
+  // gambe sedute: cosce in avanti, stinchi giù, scarponi sulle assi
+  for (const s of [-1,1]){
+    body.add(L([[s*.09,.47,-.2],[s*.1,.47,0],[s*.105,.46,.17]], .068, .056, HELP_M.pants));
+    body.add(L([[s*.105,.45,.19],[s*.11,.25,.24],[s*.11,.07,.26]], .052, .042, HELP_M.pants));
+    const bt = new THREE.SphereGeometry(.06, 10, 8); bt.scale(.85, .7, 1.7); bt.translate(s*.11, .045, .31); body.add(mesh(bt, HELP_M.boot)); }
+  // cappotto: busto curvo, falde aperte sulle cosce, bavero alzato
+  const tp = [[.0,.42],[.15,.43],[.17,.5],[.165,.62],[.17,.76],[.175,.88],[.15,.95],[.09,.99],[.0,1.0]].map(([r,y])=>new THREE.Vector2(r, y));
+  const torso = new THREE.LatheGeometry(tp, 18); torso.scale(1, 1, .72); { const q = torso.attributes.position; for (let i=0;i<q.count;i++){ const y = q.getY(i); q.setZ(i, q.getZ(i) - .16 + (y - .45)*.32); } torso.computeVertexNormals(); }
+  body.add(mesh(torso, HELP_M.coat));
+  for (const s of [-1,1]){ const fl = new THREE.BoxGeometry(.16, .03, .3, 3, 1, 4); { const q = fl.attributes.position; for (let i=0;i<q.count;i++) q.setY(i, q.getY(i) - Math.pow(q.getZ(i) + .15, 2)*.5); fl.computeVertexNormals(); }
+    const m = mesh(fl, HELP_M.coat, s*.1, .53, .02); m.rotation.z = s*.12; body.add(m); }
+  const collar = new THREE.CylinderGeometry(.085, .13, .1, 14, 1, true); collar.translate(0, 1.0, -.01); body.add(mesh(collar, HELP_M.coat));
+  // testa china sotto la coppola: del viso si vedono solo il mento e la punta del naso
+  const head = new THREE.Group(); head.position.set(0, 1.02, .0); body.add(head);
+  const sk = new THREE.SphereGeometry(.085, 14, 12); sk.scale(.9, 1.08, 1); sk.translate(0, .1, .02); head.add(mesh(sk, HELP_M.skin));
+  const nose = new THREE.ConeGeometry(.016, .04, 6); nose.rotateX(Math.PI/2); nose.translate(0, .085, .11); head.add(mesh(nose, HELP_M.skin));
+  head.add(mesh(new THREE.SphereGeometry(.035, 8, 6).scale(1, .8, 1).translate(0, .025, .07), HELP_M.skin));
+  const cap = new THREE.SphereGeometry(.1, 16, 8, 0, Math.PI*2, 0, Math.PI*.42); cap.scale(1.04, .62, 1.12); cap.translate(0, .14, .0); head.add(mesh(cap, HELP_M.cap));
+  const brim = new THREE.CylinderGeometry(.075, .085, .012, 14, 1, false, -Math.PI*.45, Math.PI*.9); brim.scale(1, 1, 1.25); brim.translate(0, .135, .06); head.add(mesh(brim, HELP_M.cap));
+  head.rotation.x = .55;
+  // braccia snodate alla spalla e al gomito, maniche larghe, mani nude
+  const arms = [-1,1].map(s=>{ const sh = new THREE.Group(); sh.position.set(s*.17, .92, -.08); body.add(sh);
+    sh.add(L([[0,0,0],[s*.02,-.13,.05],[s*.03,-.25,.1]], .055, .046, HELP_M.coat));
+    const el = new THREE.Group(); el.position.set(s*.03, -.25, .1); sh.add(el);
+    el.add(L([[0,0,0],[-s*.03,-.03,.12],[-s*.07,-.05,.23]], .045, .04, HELP_M.coat));
+    const hand = new THREE.SphereGeometry(.035, 8, 6); hand.scale(.8, .7, 1.2); hand.translate(-s*.075, -.055, .27); el.add(mesh(hand, HELP_M.skin));
+    sh.rotation.x = -.35; el.rotation.x = -.5; return { sh, el, s }; });
+  // secchio e fune
+  const b = mesh(new THREE.CylinderGeometry(.11,.085,.2,12,1,true), M.rust, 0, .55, .38); root.add(b);
+  b.add(mesh(new THREE.TorusGeometry(.1, .006, 4, 14, Math.PI), M.metal, 0, .1, 0));
+  const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3)); const rope = new THREE.Line(rg, HELP_M.rope); rope.frustumCulled = false; root.add(rope);
+  return { root, body, head, arms, b, rope };
+}
+const helperFigs = [[-1.2,.95,-1],[1.25,.9,1],[-1.25,-.3,-1]].map(([x,z,side], i)=>{ const g = new THREE.Group(); g.position.set(x, .36, z); g.rotation.y = side*Math.PI/2;
+  const h = helperBody(); h.root.position.z = -.22; g.add(h.root);
+  g.userData = { side, b:h.b, t:0, f:h.body, h, ph:i*2.1 + rand(0,1) }; g.visible = false; raft.add(g); return g; });
+const _hw = new THREE.Vector3(), _hb = new THREE.Vector3();
+function helperPose(g, dt){ const u = g.userData, h = u.h, ph = u.ph;
+  // k: 0 a riposo, 1 con il secchio giù in acqua; fra un lancio e l'altro tira piano la fune, mano dopo mano
+  const k = u.t > 0 ? Math.sin(Math.PI*(1 - u.t/1.4)) : 0, idle = 1 - k, pull = Math.sin(T*1.7 + ph);
+  h.body.rotation.x = k*.32 + Math.sin(T*.9 + ph)*.015; h.body.position.y = Math.sin(T*1.1 + ph)*.004;
+  h.head.rotation.x = .55 - k*.15 + Math.sin(T*.4 + ph)*.04; h.head.rotation.y = idle*Math.sin(T*.23 + ph)*.3;
+  h.arms.forEach(a=>{ const alt = a.s > 0 ? pull : -pull; a.sh.rotation.x = -.35 - k*.95 + idle*alt*.12; a.el.rotation.x = -.5 + k*.4 - idle*alt*.18; a.sh.rotation.z = a.s*k*.12; });
+  h.b.position.set(Math.sin(T*.8 + ph)*.01*idle, .55 - k*k*1.05 + idle*Math.max(0, pull)*.02, .38 + k*.95);
+  h.b.rotation.x = k*.4;
+  // la fune va dalle mani al manico del secchio
+  h.arms[0].el.updateWorldMatrix(true, false); _hw.set(.075, -.055, .27); h.arms[0].el.localToWorld(_hw); h.root.worldToLocal(_hw);
+  h.arms[1].el.updateWorldMatrix(true, false); _hb.set(-.075, -.055, .27); h.arms[1].el.localToWorld(_hb); h.root.worldToLocal(_hb); _hw.add(_hb).multiplyScalar(.5);
+  const ra = h.rope.geometry.attributes.position; ra.setXYZ(0, _hw.x, _hw.y, _hw.z); ra.setXYZ(1, h.b.position.x, h.b.position.y + .2, h.b.position.z); ra.needsUpdate = true; }
 function layoutHelpers(){ const k = HELPERS[S.helper||0].k; helperFigs.forEach((g,i)=> g.visible = i < k); if (typeof stoolsLayout === 'function') try { stoolsLayout(); } catch(e){} }
 let helperT = 2;
 function helpersUpdate(dt){
   const h = HELPERS[S.helper||0]; if (!h.k || ending) return;
-  helperFigs.forEach(g=>{ if (!g.visible) return; const u = g.userData; if (u.t > 0){ u.t = Math.max(0, u.t - dt); const k = Math.sin(Math.PI*(1 - u.t/1.4)); g.rotation.z = -u.side*k*.35; u.b.position.y = .55 - k*.5; } else { g.rotation.z = 0; u.f.rotation.y = Math.sin(T*.3 + u.side)*.15; } });
+  helperFigs.forEach(g=>{ if (!g.visible) return; const u = g.userData; if (u.t > 0) u.t = Math.max(0, u.t - dt); if (!R2.yank || R2.yank.g !== g) g.rotation.z = 0; helperPose(g, dt); });
   helperT -= dt; if (helperT > 0) return; helperT = h.iv * rand(.85, 1.15);
   if (!S.contract && S.tank >= tankCap()) return;
   const who = helperFigs.filter(g=>g.visible), g = pick(who); g.userData.t = 1.4;
@@ -2102,7 +2247,7 @@ function eventsUpdate(dt){
     if (d.step >= 4 && look){ scare(); loseLuc(12, `la figura con la lanterna`); dgObj.visible = false; X_.dg = null; }
     else if (d.t > 70 && !inView(dgObj, 1.5)){ dgObj.visible = false; X_.dg = null; } }
   // nebbia con le figure
-  if (X_.fog > 0){ X_.fog -= dt; fogFigs.forEach((f,i)=>{ f.userData.a += dt*.12; const r = 7 + Math.sin(T*.5+i)*1.5; f.position.set(raftPos.x + Math.cos(f.userData.a)*r, waterY - .9 - smooth(7, 1.5, X_.fog)*9 - smooth(16, 18, X_.fog)*6, raftPos.z + Math.sin(f.userData.a)*r); f.lookAt(camera.position.x, f.position.y, camera.position.z); }); if (X_.fog <= 0) fogFigs.forEach(f=>f.visible = false); }
+  if (X_.fog > 0){ X_.fog -= dt; fogFigs.forEach((f,i)=>{ f.userData.a += dt*.12; const r = 7 + Math.sin(T*.5+i)*1.5; f.position.set(raftPos.x + Math.cos(f.userData.a)*r, waterY - 1.2 + Math.sin(T*.7 + i*1.9)*.06 - smooth(7, 1.5, X_.fog)*9 - smooth(16, 18, X_.fog)*6, raftPos.z + Math.sin(f.userData.a)*r); f.lookAt(camera.position.x, f.position.y, camera.position.z); }); if (X_.fog <= 0) fogFigs.forEach(f=>f.visible = false); }
   if (X_.green > 0) X_.green -= dt;
   if (X_.torchKill > 0) X_.torchKill -= dt;
   if (X_.carL > 0){ X_.carL -= dt; carLightMat.emissiveIntensity = (Math.random() < .1 ? 0 : 6) * Math.min(1, X_.carL); } else carLightMat.emissiveIntensity = 0;
@@ -2281,11 +2426,14 @@ function writeName(word){ const X = nameTex.getContext('2d'); X.clearRect(0,0,51
   for (let i=0;i<5;i++){ X.globalAlpha = .25; X.fillText(word, 256 + rand(-4,4), 64 + rand(-4,4)); } X.globalAlpha = 1; for (let i=0;i<40;i++){ X.fillRect(rand(40,470), rand(70,124), 2, rand(6,30)); } nameMat.map.needsUpdate = true; }
 // la visuale viene attirata, con dolcezza, verso ciò che succede (se non stai trascinando)
 let attn = null;
-function attend(pos, k=.6, dur=1.6){ attn = { p:pos.clone ? pos.clone() : new THREE.Vector3(pos.x,pos.y,pos.z), k, t:dur }; }
-function attnUpdate(dt){ if (!attn || drag) { if (attn) attn.t -= dt; if (attn && attn.t <= 0) attn = null; return; } attn.t -= dt; if (attn.t <= 0){ attn = null; return; }
+function attend(pos, k=.6, dur=1.6){ attn = { p:pos.clone ? pos.clone() : new THREE.Vector3(pos.x,pos.y,pos.z), k, t:dur, age:0, dur, t0:performance.now() }; }
+// se il giocatore muove lo sguardo, la regia lascia la presa e non torna a tirare: la scena l'ha già indicata
+function attnUpdate(dt){ if (!attn) return; if (lookT > attn.t0 + 250){ attn = null; return; } if (drag) return;
+  attn.t -= dt; attn.age += dt; if (attn.t <= 0){ attn = null; return; }
+  const ease = smooth(0, .7, attn.age)*smooth(0, .5, attn.t);
   const dx = attn.p.x - camera.position.x, dz = attn.p.z - camera.position.z, dy = attn.p.y - camera.position.y;
   const ty = Math.atan2(-dx, -dz), tp = clamp(Math.atan2(dy, Math.hypot(dx,dz)), -1.2, .4);
-  let d = ty - yawT; d = Math.atan2(Math.sin(d), Math.cos(d)); yawT += d*Math.min(1, dt*attn.k); pitchT += (tp - pitchT)*Math.min(1, dt*attn.k*.7); }
+  let d = ty - yawT; d = Math.atan2(Math.sin(d), Math.cos(d)); yawT += d*Math.min(1, dt*attn.k*ease); pitchT += (tp - pitchT)*Math.min(1, dt*attn.k*.7*ease); }
 /* ---------- le cose enormi ---------- */
 // un tentacolo alto quanto il campanile
 const titan = (()=>{ const pts = []; for (let k=0;k<=12;k++){ const t = k/12; pts.push(new THREE.Vector3(Math.sin(t*2.4)*7*t, t*72, Math.cos(t*1.8)*3.5*t)); }
@@ -2587,7 +2735,8 @@ function updateCine(dt){
     
   } else if (t < 42){ // giù, nella voragine
     const k = ease((t-29)/12.6);
-    camera.position.set(lerp(-14,5,k), lerp(-50,-116,k), lerp(26,9,k)); camLookV.set(0, lerp(-90,-136,k), 0);
+    // scende nel pozzo aperto della voragine, sempre in aria: le pareti scorrono di fianco, mai attraverso la camera
+    camera.position.set(lerp(-6,4,k), lerp(-40,-112,k), lerp(14,8.6,k)); camLookV.set(0, lerp(-90,-136,k), 0);
     wy = VY + 5; old = .4; eyesK = smooth(30.5, 38, t);
     lidOpen = smooth(36, 41, t)*.5; glow = .25 + smooth(34, 41, t)*2.4;
     tentacles.visible = true; tentS = .35 + .2*k;
@@ -2624,7 +2773,8 @@ function updateCine(dt){
   terrainU.uEyes.value = eyesK;
   eyeU.uGlow.value = glow*(.85+.15*Math.sin(T*1.1)); eyeU.uTime.value = T; eyeU.uDilate.value = .2 + smooth(39,41.4,t)*1.2;
   lidU.rotation.x = -lidOpen*1.15; lidD.rotation.x = Math.PI + lidOpen*1.15; eye.lookAt(camera.position);
-  tentacles.scale.setScalar(Math.max(.01, tentS)); tentU.uTime.value = T; tentacles.rotation.y += dt*.03;
+  tentacles.scale.setScalar(Math.max(.01, tentS)); tentU.uTime.value = T; tentDeepU.uTime.value = T;
+  { const sc = Math.max(.01, tentS); tentDeepU.uAvoid.value.set(camera.position.x/sc, camera.position.z/sc, 5/sc, -1e4); }
   knot.rotation.x += dt*.13; knot.rotation.y += dt*.07;
   bucket.visible = false; rope.visible = false; spray.visible = false;
   walkers.count = 0; walkerEyes.count = 0; shoreEyes.count = 0;
@@ -3056,12 +3206,13 @@ const dunkFigs = [0,1,2,3,4,5].map(()=>{ const f = mesh(FIG, ghoulMat); f.add(me
 function evDunk(){ makeWave(raftPos.x + rand(-6,6), raftPos.z - 14, 2.4); X_.dunk = { t:0 }; X_.big = 14; holdBucket = false;
   dunkFigs.forEach((f,i)=>{ const a = i/6*Math.PI*2 + rand(-.3,.3), r = rand(4, 8), x = raftPos.x + Math.cos(a)*r, z = raftPos.z + Math.sin(a)*r; f.position.set(x, Math.max(H(x,z), waterY - 9), z); f.rotation.set(-.5, Math.atan2(raftPos.x - x, raftPos.z - z), 0); f.visible = true; }); }
 function dunkUpdate(dt){ const e = X_.dunk; if (!e){ R2.dunk = Math.max(0, R2.dunk - dt); return; } e.t += dt;
-  R2.dunk = smooth(1.6, 2.1, e.t)*(1 - smooth(5.2, 6, e.t)); R2.dunkR = Math.sin(Math.min(1, e.t/2)*Math.PI)*.35*(1 - smooth(5,6,e.t));
+  // giù di colpo ma non a scatto, su più piano, come quando l'acqua ti rilascia; il rollio segue la caduta
+  R2.dunk = smooth(1.55, 2.35, e.t)*(1 - smooth(5.0, 6.3, e.t)); R2.dunkR = Math.sin(Math.min(1, e.t/2.3)*Math.PI)*.24*(1 - smooth(5,6.3,e.t));
   if (e.t > 1.9 && !e.in){ e.in = 1; splashSfx(1, 60); splashFX(camera.position.x, waterY, camera.position.z, 1.2, 1); pitchT = -.15; }
   if (e.in && R2.dunk > .5 && Math.random() < dt*30) emitDrop(camera.position.x + rand(-1,1), camera.position.y - rand(0,1.5), camera.position.z + rand(-1.5,0), 0, rand(.8,2), 0, .6, rand(.8,1.6));
   if (e.t > 5.6 && !e.out){ e.out = 1; breathSfx(true, 1.2, .5); postMat.uniforms.uWet.value = 1; dunkFigs.forEach(f=>f.visible = false); loseLuc(8, `sei finito sott'acqua`);
     setTimeout(()=>toast(`Sei finito sotto, per tre secondi. Laggiù, sul fondo, erano in piedi. Tutti. Guardavano in su.`, 'warn'), 800); }
-  if (e.t > 6.5) X_.dunk = null; }
+  if (e.t > 6.6) X_.dunk = null; }
 
 const NEWEV = { abyss:evAbyss, horizon:evHorizon, pupil:evPupil, darkness:evDarkness, dinner:evDinner, priest:evPriest, heads:evHeads, whaleback:evWhale, dunk:evDunk };
 function regiaUpdate(dt){
@@ -3455,15 +3606,15 @@ function update(dt){
   { // la zattera segue l'acqua senza scatti: in altezza va con l'acqua, in avanti scivola piano, a velocità limitata
     const tg = raftTarget(waterY), want = clamp((tg.z - raftPos.z)*.6, -.38, .38);
     raftVel.z += (want - raftVel.z)*Math.min(1, dt*1.2); raftPos.z += raftVel.z*dt; raftPos.x = 0;
-    raftPos.y = Math.max(waterY, raftPos.z <= RAFT_MIN + .05 ? H(0, raftPos.z) + .12 : -1e9); }
+    raftPos.y = Math.max(waterY, raftPos.z <= RAFT_MIN + .05 ? raftGround(raftPos.z) : -1e9); }
   const floating = raftPos.y <= waterY + .05;
-  wavesUpdate(dt); foamUpdate(dt); clumpsUpdate(dt); raft.position.copy(raftPos); raft.position.y -= (1 - (S.hull ?? 100)/100)*.28; raft.position.x += raftOff.x; raft.position.z += raftOff.y; if (floating){ raft.position.y += Math.sin(T*1.1)*.04 + breathOff + tideK + raftHeave + raftJolt*Math.sin(T*24)*.12*raftJolt; raft.rotation.set(Math.sin(T*.6)*.012 - raftTilt.x + raftJolt*Math.sin(T*9)*.05, raftOff.x*.06, Math.sin(T*.8)*.016 + raftTilt.y); } else raft.rotation.set(-.08,0,.03);
+  wavesUpdate(dt); foamUpdate(dt); clumpsUpdate(dt); raft.position.copy(raftPos); raft.position.y -= (1 - (S.hull ?? 100)/100)*.28; raft.position.x += raftOff.x; raft.position.z += raftOff.y; if (floating){ raft.position.y += Math.sin(T*1.1)*.04 + breathOff + tideK + raftHeave + raftJolt*Math.sin(T*24)*.12*raftJolt; raft.rotation.set(Math.sin(T*.6)*.012 - raftTilt.x + raftJolt*Math.sin(T*9)*.05, raftOff.x*.06, Math.sin(T*.8)*.016 + raftTilt.y); } else raft.rotation.set(raftGroundTilt(raftPos.z),0,.03);
   raft.updateMatrixWorld();
   lamp.position.set(raft.position.x-1.36, raft.position.y+1.98, raft.position.z-1.3); waterU.uLampPos.value.copy(lamp.position);
   if (raft.userData.lantern) raft.userData.lantern.rotation.z = Math.sin(T*.9)*.025;
   { const a = lifeGeo.attributes.position; const end = lifeEnd.set(raft.position.x+1.05, raft.position.y+1.2, raft.position.z+1.6); const len = DOCK_HOOK.distanceTo(end);
     for (let i=0;i<30;i++){ const t = i/29; tmpV.lerpVectors(DOCK_HOOK, end, t); tmpV.y -= Math.sin(t*Math.PI)*Math.min(len*.03, 3); a.setXYZ(i, tmpV.x, tmpV.y, tmpV.z); } a.needsUpdate = true; }
-  if (ending !== 'wake'){ CAM_BASE.set(raft.position.x, raft.position.y + 1.95 - R2.dunk*3.1, raft.position.z - .3 - R2.dunk*.8); }
+  if (ending !== 'wake'){ const cx = raft.position.x, cz = raft.position.z - .3 - R2.dunk*.8; CAM_BASE.set(cx, Math.max(raft.position.y + 1.95 - R2.dunk*3.1, R2.dunk > 0 ? H(cx, cz) + .7 : -1e9), cz); }
   rebuildPipes(false);
 
   // cielo e luci
@@ -3487,7 +3638,7 @@ function update(dt){
   if (X_.green > 0){ lamp.color.setRGB(.35,1,.4); M.lampGlass.emissive.setRGB(.3,1,.4); li *= 1.6; } else { lamp.color.copy(LAMP_COL); M.lampGlass.emissive.setHex(0xffaa55); }
   lamp.intensity = Math.max(0, li); M.lampGlass.emissiveIntensity = li*.8;
   const fi = TORCHES[S.torch].i * (S.torchOn && blackT<=0 && X_.torchKill<=0 ? 1 : 0) * (phase>=3 && Math.random()<.01 ? .1 : 1);
-  flash.intensity = fi*.3; waterU.uFlashI.value = fi; waterU.uLampI.value = lamp.intensity;
+  flash.intensity = fi > 0 ? 45*Math.pow(fi/150, .75) : 0; // le torce migliori arrivano più lontano senza bruciare di bianco ciò che è vicino waterU.uFlashI.value = fi; waterU.uLampI.value = lamp.intensity;
   camera.getWorldPosition(waterU.uFlashPos.value); camera.getWorldDirection(waterU.uFlashDir.value);
   waterU.uTime.value = T; waterU.uCalm.value = R2.still > 0 ? 0 : 1 + phase*.4;
   // finestre del paese
@@ -3501,7 +3652,7 @@ function update(dt){
   lidU.rotation.x = -lidOpen*1.15; lidD.rotation.x = Math.PI + lidOpen*1.15;
   eye.lookAt(camera.position);
   let ts = 0; if (phase>=3) ts = .3 + clamp((S.d-65)/63,0,1)*.45; if (ending==='wake') ts = lerp(.75, 1.55, smooth(0,4,endT)); if (ending==='fill') ts = Math.max(.01, .75 - endT*.1);
-  tentacles.visible = ts > .02; tentacles.scale.lerp(tmpV.set(ts||.01, ts||.01, ts||.01), dt*.5); tentU.uTime.value = T; tentacles.rotation.y += dt*.02;
+  tentacles.visible = ts > .02; tentacles.scale.lerp(tmpV.set(ts||.01, ts||.01, ts||.01), dt*.5); tentU.uTime.value = T; tentDeepU.uTime.value = T; tentAvoidUpdate();
   knot.rotation.x += dt*.13; knot.rotation.y += dt*.07;
   pumpObjs.forEach(p=>{ if (p) p.traverse(o=>{ if (o.userData.pulse){ const s = 1 + Math.sin(T*3.2)*.06; o.scale.set(s, s*.85, s*1.05); } }); });
   if (bellMesh) bellMesh.rotation.z = Math.sin(T*.7)*.05;
@@ -3630,7 +3781,7 @@ function frame(now){
   fxUpdate(dt);
   renderFrame();
 }
-if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, mists, water, scene, consequence, hullDamage, helperLost, dragMachine, get DRo(){ return DR.o; }, farCall, evGaze, R2get: ()=>R2, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
+if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, H, raftTarget, FIG, ghoulMat, helperFigs, get waterY(){ return waterY; }, tentacles, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, mists, water, scene, consequence, hullDamage, helperLost, dragMachine, get DRo(){ return DR.o; }, farCall, evGaze, R2get: ()=>R2, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
 /* =====================================================================
    IMPOSTAZIONI E TASTIERA
    ===================================================================== */
@@ -3657,7 +3808,7 @@ $('setBtn').onclick = openSettings; $('setTitleBtn').onclick = openSettings;
 
 const KEYS = {};
 function keyLook(dt){ const x = (KEYS.ArrowLeft||KEYS.KeyA ? 1 : 0) - (KEYS.ArrowRight||KEYS.KeyD ? 1 : 0), y = (KEYS.ArrowUp||KEYS.KeyW ? 1 : 0) - (KEYS.ArrowDown||KEYS.KeyS ? 1 : 0);
-  if (!x && !y) return; yawT += x*dt*1.7*SET.sens; pitchT = clamp(pitchT + y*dt*1.2*SET.sens*(SET.inv ? -1 : 1), -1.45, .45); }
+  if (!x && !y) return; lookT = performance.now(); yawT += x*dt*1.7*SET.sens; pitchT = clamp(pitchT + y*dt*1.2*SET.sens*(SET.inv ? -1 : 1), -1.45, .45); }
 const visible = id => !$(id).classList.contains('hidden');
 addEventListener('keydown', e=>{
   if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) && e.code !== 'Escape') return;
