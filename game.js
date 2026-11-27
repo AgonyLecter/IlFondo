@@ -86,7 +86,7 @@ function glitchStr(s){ return s.replace(/[0-9]/g, ()=> Math.random()<.5 ? String
 const SAVE_KEY = 'ilfondo_v1';
 function freshState(cycle=1){
   return { d:0, money:0, tank:0, total:0, luc:100, time:70, bucket:0, pull:0, tankLv:0, contract:0,
-    pumps:PUMPS.map(()=>0), torch:0, lumino:0, filter:0, noria:0, crane:0, flood:0, floodOn:true, hull:100, sonar:0, charm:0, net:0, helper:0, van:0, order:null, orderN:0, veins:0, story:[], found:[], revealed:[], relics:[], evc:{}, evRecent:[], cycle, ended:false, torchOn:true };
+    k:{ answer:0, knock:0, left:0, count:0, flesh:0, off:{}, when:{} }, ruleQ:[], countN:0, pumps:PUMPS.map(()=>0), torch:0, lumino:0, filter:0, noria:0, crane:0, flood:0, floodOn:true, hull:100, sonar:0, charm:0, net:0, helper:0, van:0, order:null, orderN:0, veins:0, story:[], found:[], revealed:[], relics:[], evc:{}, evRecent:[], cycle, ended:false, torchOn:true };
 }
 let S = freshState();
 function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
@@ -1400,6 +1400,7 @@ const STORY = [
   {d:6, f:()=> { S.sonar = 1; call(`DITTA SESTI`, `Signor Ferri, le abbiamo montato un ecoscandaglio sulla zattera. Guardi lo schermo verde. Se vede qualcosa che risale dal fondo, spenga la torcia. Spenga i fari. Tutto. E aspetti al buio che sia passato.`); }},
   {d:.6, f:()=> startDrift('hat')},
   {d:9, f:()=> startEv('grip')},
+  {d:15, f:()=> S.ruleQ.push('ladder')}, {d:22, f:()=> S.ruleQ.push('count')}, {d:38, f:()=> S.ruleQ.push('name')}, {d:52, f:()=> S.ruleQ.push('count')}, {d:84, f:()=> S.ruleQ.push('count')},
   {d:26, f:()=> setTimeout(()=>{ if (running && !ending && gazeOK()) startEv('gaze'); }, 4000)}
 ];
 
@@ -1452,10 +1453,11 @@ function speak(c){ callSt.phase = 'speak'; $('call').classList.remove('ringing')
 function hangUp(){ const c = callSt && callSt.c; play('click', {vol:.45, rev:.05}); if (c && c.radio) staticSfx(.25); $('call').classList.add('hidden'); callSt = null; setTimeout(nextCall, 2600); }
 $('callBtn').onclick = ()=>{ if (!callSt) return; if (callSt.phase === 'ring') answer(callSt.c, false); else if (callSt.phase === 'speak'){ callSt.end && callSt.end(); } else if (callSt.phase === 'done' || callSt.phase === 'tune') hangUp(); };
 let promptCb = null;
-function promptAsk(text, a, b, cb){ promptCb = cb; $('promptA').textContent = a; $('promptB').textContent = b; $('promptText').textContent = ''; $('prompt').classList.add('waiting');
+function promptAsk(text, a, b, cb, c){ promptCb = cb; $('promptA').textContent = a; $('promptB').textContent = b; $('promptC').textContent = c || ''; $('promptC').classList.toggle('hidden', !c); $('promptText').textContent = ''; $('prompt').classList.add('waiting');
   setTimeout(()=>{ heartSfx(.5); $('prompt').classList.remove('hidden'); typeText($('promptText'), text, ()=>{ setTimeout(()=>$('prompt').classList.remove('waiting'), 350); }, {speed:26, delay:250}); }, 700); }
 $('promptA').onclick = ()=>{ $('prompt').classList.add('hidden'); promptCb && promptCb(true); };
 $('promptB').onclick = ()=>{ $('prompt').classList.add('hidden'); promptCb && promptCb(false); };
+$('promptC').onclick = ()=>{ $('prompt').classList.add('hidden'); promptCb && promptCb('c'); };
 document.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=>{ $(b.dataset.close).classList.add('hidden');
   if (b.dataset.close === 'shop' && machineShow){ const m = machineShow; machineShow = null; const p = new THREE.Vector3(); m.o.getWorldPosition(p); p.y += m.y || 1; setTimeout(()=>{ attend(p, .9, 2.4); creakSfx(); setTimeout(()=>{ clankSfx(); toast(`Montata: ${m.t}. Lavora da sola.`); }, 700); }, 200); } });
 
@@ -1498,7 +1500,7 @@ function updateShop(){
   $('shopList').querySelectorAll('[data-buy]').forEach(b=>{ const i = items.find(x=>x.id===b.dataset.buy); if (!i) return; const dis = S.money < i.c, t = '€ ' + (g ? glitchStr(fmt(i.c)) : fmt(i.c)); if (b.disabled !== dis) b.disabled = dis; if (b.textContent !== t) b.textContent = t;
     const nm = b.parentElement.querySelector('.nm'), n = g && Math.random()<.5 ? pick(GLITCH_NAMES) : i.n; if (nm.textContent !== n) nm.textContent = n; });
 }
-$('shopList').addEventListener('click', e=>{ const b = e.target.closest('[data-buy]'); if (!b) return; const i = shopItems().find(x=>x.id===b.dataset.buy); if (!i || S.money < i.c) return; S.money -= i.c; i.buy(); coinSfx(); buildShop(); });
+$('shopList').addEventListener('click', e=>{ const b = e.target.closest('[data-buy]'); if (!b) return; const i = shopItems().find(x=>x.id===b.dataset.buy); if (!i || S.money < i.c) return; S.money -= i.c; i.buy(); if (i.org) rule('flesh'); coinSfx(); buildShop(); });
 $('shopBtn').onclick = ()=>{ $('diary').classList.add('hidden'); buildShop(); $('shop').classList.remove('hidden'); };
 let diaryTab = 'lore';
 function renderDiary(){
@@ -1521,7 +1523,8 @@ function renderDiary(){
       <div class="dentry" style="color:#9fc28f">▲ La restituiscono: la luce del giorno · stare vicino alla lanterna accesa · RESPIRA (sotto la lucidità, ogni 35 secondi) · i lumini votivi e i fari dell'officina · non rispondere, non bussare · ricacciare giù le cose illuminandole con la torcia.</div>
       <div class="dentry" style="opacity:.7">Adesso: ${LUCWHY.net >= 0 ? '▲ ' + (LUCWHY.up.join(' · ') || 'stabile') : '▼ ' + (LUCWHY.dn.join(' · ') || '')}</div>`;
   } else {
-    L.innerHTML = `<div class="dentry">I. Non scendere mai dalla zattera dopo il tramonto.</div><div class="dentry">II. Se dall'acqua qualcuno ti chiama per nome, non rispondere.</div><div class="dentry">III. Non contare l'acqua.</div>`
+    const bk = broke(), st = (b, k)=> b ? ` <span style="color:#c98a7a">— infranta${S.k.when[k] ? ` (giorno ${S.k.when[k]})` : ''}</span>` : ` <span style="color:#8fa79a;opacity:.7">— rispettata</span>`;
+    L.innerHTML = `<div class="dentry">I. Non scendere mai dalla zattera dopo il tramonto.${st(bk.I,'left')}</div><div class="dentry">II. Se dall'acqua qualcuno ti chiama per nome, non rispondere.${st(bk.II, S.k.when.answer ? 'answer' : 'knock')}</div><div class="dentry">III. Non contare l'acqua.${st(bk.III,'count')}</div>`
       + (S.found.includes('ledge') ? `<div class="dentry" style="color:#c98a7a">IV. Fermati prima del fondo.</div>` : '')
       + (phase>=3 ? `<div class="dentry" style="color:#8fb27a">${zalgo('V. Non guardarLo mentre dorme.',2)}</div>` : '');
   }
@@ -1778,7 +1781,7 @@ const EV_DEF = {
   titan:[5,()=>underRaft()>=3,150,3,1.4], levx:[18,()=>!LEV.on,110,3,1.2], mouth:[35,null,120,2,1.1], blood:[35,null,160,2,1], breath:[35,null,150,2,1], dock:[14,n=>n,170,3,1.2],
   bump:[1,null,60,4,1.3], tentRaft:[3,null,110,3,1.3], surfEye:[5,null,120,3,1.2], hands:[10,null,150,2,1.2], rowboat:[3,null,200,2,1.1], selfCorpse:[25,null,400,1,1.3],
   rain:[15,null,220,2,1], starsOut:[30,n=>n,240,1,1.2], swarm:[18,null,160,2,1.1], silence:[3,null,200,2,1], neck:[1.5,null,140,3,1.1], tide:[4,null,150,2,1],
-  scrawl:[5,null,160,3,1], bucketThing:[8,null,120,3,1], bellNear:[22,null,200,2,1.1], reflection:[10,null,180,2,1.2],
+  scrawl:[5,null,160,3,1], count:[20,()=>S.d<118,260,2,1.2], bucketThing:[8,null,120,3,1], bellNear:[22,null,200,2,1.1], reflection:[10,null,180,2,1.2],
   figure:[12,n=>(n||phase>=3)&&!wf.on,60,99,.6], flicker:[12,n=>n,60,99,.5], name:[35,null,160,3,1], ladder:[12,n=>n,220,2,1], scare:[65,()=>S.luc<30,110,99,.8],
   endless:[8,()=>underRaft()>=5 && !X_.endlessNext,200,2,1.4], vanish:[6,n=>n && HELPERS[S.helper||0].k>0,300,1,1.1], abyss:[12,()=>underRaft()>=12 && !LEV.on,160,2,1.4], horizon:[3,n=>n||phase>=2,220,1,1.5], gaze:[24,()=>gazeOK(),200,2,1.7], moon:[4,n=>n,240,1,1.4], reach:[8,null,260,1,1.5], grip:[2,()=>!X_.gripNext,100,3,1.4], pupil:[20,()=>underRaft()>=15 && !X_.deepEye,200,1,1.2], darkness:[2,n=>n||phase>=2,170,2,1.3],
   dinner:[8,null,230,1,1.5], priest:[5,null,260,1,1.5], heads:[3,null,150,2,1.3], whaleback:[18,()=>whaleOK(),220,1,1.3], dunk:[6,()=>underRaft()>=6,260,1,1.1],
@@ -1800,6 +1803,21 @@ function directorPick(night){
   EV.cool[e] = now + EV_DEF[e][2]; S.evc[e] = (S.evc[e]||0) + 1; S.evAll = S.evAll || {}; S.evAll[e] = (S.evAll[e]||0) + 1; S.evRecent.push(e); while (S.evRecent.length > 7) S.evRecent.shift();
   return e;
 }
+function evName(){ S.k.off.name = 1;
+    whisperSfx(3.5,.3); sub(`...Tobia... sono qui sotto... Tobia, rispondi...`, 4);
+    setTimeout(()=> promptAsk(`Dall'acqua, sotto il pontile, qualcuno ti chiama per nome. Ha la voce di tua madre.`, `RISPONDI`, `TACI`, yes=>{
+      if (yes){ rule('answer'); scare(); loseLuc(25, `hai risposto`); setTimeout(()=>sub(`...ti abbiamo sentito...`, 3), 1500); }
+      else { gainLuc(4, `non hai risposto`); setTimeout(()=>{ whisperSfx(1.5,.15); sub(`...la prossima volta...`, 3); }, 2500); }
+    }), 2600);
+  }
+function evLadder(){ S.k.off.ladder = 1;
+    { let zz = raftPos.z + 2.5, xx = raftPos.x + rand(-2.5,2.5); for (let k=0;k<40 && H(xx, zz) < waterY + .05; k++) zz += .5; envelope.position.set(xx, H(xx, zz) + .02, zz); envelope.rotation.y = rand(0,6.3); envelope.visible = true; setTimeout(()=>{ envelope.visible = false; }, 26000); attend(envelope.position, .7, 1.8); }
+    promptAsk(`Nel fango, a pochi metri dalla zattera, c'è una busta della Ditta Sesti. Di notte non si scende dalla zattera.`, `SCENDI A PRENDERLA`, `RESTA SULLA ZATTERA`, yes=>{
+      envelope.visible = false; if (!yes) return; rule('left');
+      if (Math.random()<.55){ const bonus = Math.max(50, S.money*.25); S.money += bonus; loseLuc(15, `sei sceso dalla zattera`); toast(`Nella busta: € ${fmt(bonus)} e un biglietto. "Lo sapevamo che sarebbe sceso."`, 'find'); whisperSfx(2,.25); }
+      else { scare(); loseLuc(30, `qualcosa ti ha afferrato`); toast(`Qualcosa ti ha afferrato la caviglia. Sei risalito. Non ricordi come.`, 'warn'); }
+    });
+  }
 function runEvent(){
   const night = dayF < .5;
   if (X_.forceHand && !X_.hand){ X_.forceHand = false; startEv('hand'); return; }
@@ -1816,21 +1834,8 @@ function runEvent(){
   if (e==='flicker'){ lampOverride = 2.5; creakSfx(); if (phase>=2 && Math.random()<.6){ blackT = 2.2; setTimeout(()=>{ paleFigure.position.set(.3, water.position.y - .25, raftPos.z - 2.6); paleFigure.rotation.y = 0; paleFigure.visible = true; paleT = 1.4; loseLuc(6, `era sulla zattera`); heartSfx(.7); }, 2200); } }
   if (e==='bell'){ bellSfx(1.6); loseLuc(2, `la campana`); for (let k=0;k<4;k++) setTimeout(()=>{ const p = spotAhead(8, 16, 1, .5); if (p) ripple(p.x, p.z, 1.6); }, k*700); sub(`(una campana, sott'acqua. Davanti a te l'acqua trema a cerchi)`, 3.5); }
   if (e==='whisper'){ whisperSfx(2.8,.25); sub(zalgo(pick(WHISPERS), S.luc < 40 ? 3 : 0), 3); loseLuc(1.5, `i sussurri`); }
-  if (e==='name'){
-    whisperSfx(3.5,.3); sub(`...Tobia... sono qui sotto... Tobia, rispondi...`, 4);
-    setTimeout(()=> promptAsk(`Dall'acqua, sotto il pontile, qualcuno ti chiama per nome. Ha la voce di tua madre.`, `RISPONDI`, `TACI`, yes=>{
-      if (yes){ scare(); loseLuc(25, `hai risposto`); setTimeout(()=>sub(`...ti abbiamo sentito...`, 3), 1500); }
-      else { gainLuc(4, `non hai risposto`); setTimeout(()=>{ whisperSfx(1.5,.15); sub(`...la prossima volta...`, 3); }, 2500); }
-    }), 2600);
-  }
-  if (e==='ladder'){
-    { let zz = raftPos.z + 2.5, xx = raftPos.x + rand(-2.5,2.5); for (let k=0;k<40 && H(xx, zz) < waterY + .05; k++) zz += .5; envelope.position.set(xx, H(xx, zz) + .02, zz); envelope.rotation.y = rand(0,6.3); envelope.visible = true; setTimeout(()=>{ envelope.visible = false; }, 26000); attend(envelope.position, .7, 1.8); }
-    promptAsk(`Nel fango, a pochi metri dalla zattera, c'è una busta della Ditta Sesti. Di notte non si scende dalla zattera.`, `SCENDI A PRENDERLA`, `RESTA SULLA ZATTERA`, yes=>{
-      envelope.visible = false; if (!yes) return;
-      if (Math.random()<.55){ const bonus = Math.max(50, S.money*.25); S.money += bonus; loseLuc(15, `sei sceso dalla zattera`); toast(`Nella busta: € ${fmt(bonus)} e un biglietto. "Lo sapevamo che sarebbe sceso."`, 'find'); whisperSfx(2,.25); }
-      else { scare(); loseLuc(30, `qualcosa ti ha afferrato`); toast(`Qualcosa ti ha afferrato la caviglia. Sei risalito. Non ricordi come.`, 'warn'); }
-    });
-  }
+  if (e==='name') evName();
+  if (e==='ladder') evLadder();
   if (e==='radio'){ staticSfx(1.5); toast(pick(RADIO_LINES)); }
   if (e==='glitch'){ glitchT = 1.6; play('glitch', {vol:.25, rev:.1}); }
   if (e==='scare'){ scare(); loseLuc(10, `l'hai visto`); }
@@ -2010,7 +2015,7 @@ function startEv(name){
     setTimeout(()=>{ if (!running) return; paleFigure.position.set(rand(-.6,.6), waterY - .25, raftPos.z - 2.4); paleFigure.rotation.y = 0; paleFigure.visible = true; paleT = .9; heartSfx(.8); loseLuc(6, `era davanti a te`); }, 4500); }
   if (name==='knock'){ const pan = rand(-.4,.4), kv = KNOCKS[(S.evc.knock||1) % KNOCKS.length]; kv.p.forEach(d=> setTimeout(()=>{ knockSfx(kv.v, pan); knockFX(kv.v); shakeAmt = Math.max(shakeAmt,.25*kv.v); }, d*1000));
     if (kv.ask){ setTimeout(()=> promptAsk(kv.t, `BUSSA ANCHE TU`, `NON FARE NIENTE`, yes=>{
-      if (yes){ [0,.4,.8,1.2].forEach(d=> setTimeout(()=>{ knockSfx(1, pan); knockFX(1.3); shakeAmt = .5; }, 900 + d*1000)); setTimeout(()=>{ whisperSfx(2,.3); sub(`...grazie... ora possiamo salire...`, 3.5); loseLuc(8, `hai bussato`); EV.next = 6; X_.forceHand = true; }, 6000); }
+      if (yes){ rule('knock'); [0,.4,.8,1.2].forEach(d=> setTimeout(()=>{ knockSfx(1, pan); knockFX(1.3); shakeAmt = .5; }, 900 + d*1000)); setTimeout(()=>{ whisperSfx(2,.3); sub(`...grazie... ora possiamo salire...`, 3.5); loseLuc(8, `hai bussato`); EV.next = 6; X_.forceHand = true; }, 6000); }
       else { gainLuc(2, `non hai bussato`); setTimeout(()=>knockSfx(.4, pan), 5000); }
     }), 2200); } else setTimeout(()=>sub(kv.t, 4.5), 1800); }
   if (name==='lost'){ $('fade').style.transition = 'opacity .15s'; $('fade').style.opacity = 1; holdBucket = false; staticSfx(.6);
@@ -2439,24 +2444,50 @@ function startFinale(){
   titan.visible = creature.visible = deepEye.visible = false; X_.titan = X_.deepEye = null;
   [handObj, headObj, behindFig, mouthObj, dgObj, ...fogFigs, ...dockFigs, ...floaters].forEach(o=>o.visible = false); X_.dock = null; dockLight.intensity = 0; fishMesh.count = 0; hideRegia(); X_.dg = X_.hand = X_.behind = X_.mouth = X_.left = null; $('poi').innerHTML = ''; for (const k in poiEls) delete poiEls[k];
   ['shop','diary','call','prompt','card'].forEach(id=>$(id).classList.add('hidden'));
+  // nessuna telefonata può arrivare sopra la scelta finale
+  callQ.length = 0; if (callSt && callSt.tm) clearTimeout(callSt.tm); callSt = null; inCall = true; S.ruleQ = [];
   $('bottom').classList.add('hidden'); $('sideBtns').classList.add('hidden');
   groanSfx(.9, 8); setTimeout(()=>heartSfx(.8), 2000);
   yawT = Math.round(yaw/(Math.PI*2))*Math.PI*2; pitchT = -.5;
 }
 function showEndChoice(){
-  promptAsk(`Il lago è vuoto.\n\nSotto l'ultimo velo d'acqua c'è un occhio più grande del paese. Ti guarda da prima che esistesse la valle. Respira quando tu respiri.\n\nIl Compratore ha lasciato una leva in fondo al pontile: l'ultima chiusa. Oppure puoi spendere tutto quello che hai guadagnato per ridargli l'acqua.`,
-    `APRI L'ULTIMA CHIUSA`, `RIEMPI IL LAGO`, yes=>{ if (yes){ ending = 'wake'; endT = 0; camWakeStart.copy(CAM_BASE); stingerSfx(); groanSfx(1,7); } else { ending = 'fill'; endT = 0; S.money = 0; bellSfx(); } });
+  const k = S.k, bk = broke(), lines = [];
+  if (bk.III) lines.push(`Hai contato l'acqua. Lui conosce il numero.`);
+  if (bk.II) lines.push(`Hai risposto. Sotto il pontile qualcuno ti aspetta.`);
+  if (bk.I) lines.push(`Sei sceso dalla zattera, di notte. Il fango ricorda i tuoi piedi.`);
+  if (bk.flesh) lines.push(`Le macchine di carne hanno bevuto per te. Ti hanno assaggiato.`);
+  if (!lines.length) lines.push(`Non hai infranto nessuna regola. Ti torna in mente una ninna nanna.`);
+  const secret = perfect() && S.cycle > 1;
+  promptAsk(`Il lago è vuoto.\n\nSotto l'ultimo velo d'acqua c'è un occhio più grande del paese. Ti guarda da prima che esistesse la valle. Respira quando tu respiri.\n\n${lines.join('\n')}\n\nIl Compratore ha lasciato una leva in fondo al pontile: l'ultima chiusa. Oppure puoi spendere tutto quello che hai guadagnato per ridargli l'acqua.`,
+    `APRI L'ULTIMA CHIUSA`, `RIEMPI IL LAGO`, ch=>{
+      if (ch === 'c'){ ending = 'sing'; endT = 0; S.endKind = 'sing'; musicBoxSfx(.3); setTimeout(()=>musicBoxSfx(.22), 5200); setTimeout(()=>musicBoxSfx(.14), 10400); return; }
+      if (ch){ ending = 'wake'; endT = 0; camWakeStart.copy(CAM_BASE); stingerSfx(); groanSfx(1,7);
+        S.endKind = (k.count >= 2 || k.flesh >= 2 || k.count + k.left + k.answer + k.knock + k.flesh >= 5) ? 'squad' : 'wake'; }
+      else { ending = 'fill'; endT = 0; S.money = 0; bellSfx(); S.endKind = bk.II ? 'pontile' : 'fill'; }
+    }, secret ? `CANTA LA NINNA NANNA` : null);
 }
+const ENDINGS = {
+  wake:{ t:`IL RISVEGLIO`, x:`Sei caduto per centoventotto metri e non hai sentito l'impatto.\n\nNàrrena si è svegliata. Le campane suonano in tutta la valle, e poi in tutte le valli. Ora è Lui che sogna il mondo, e il mondo non se ne accorge.\n\nDomani mattina, la Ditta Sesti assumerà un nuovo operaio.\nAvrà la tua faccia.` },
+  fill:{ t:`IL GUARDIANO`, x:`L'acqua è tornata in una notte, come nel 1953.\n\nLe campane tacciono. In paese la gente ha ricominciato a dormire. Nessuno ricorda il lago vuoto.\n\nTu sei rimasto sul pontile. Qualcuno deve guardare l'acqua.\nOgni notte ti chiamano per nome.\nNon rispondi. Quasi mai.` },
+  squad:{ t:`LA PRIMA SQUADRA`, x:`Non sei caduto. Sei sceso, un gradino alla volta, come ti avevano insegnato.\n\nIn fondo, le statue si sono spostate per farti posto. Ti inginocchi con loro. La pietra sale dalle ginocchia. Non fa male: è fresca, come l'acqua che hai contato.\n\nQuando Lui aprirà gli occhi, la prima cosa che vedrà sarà la sua squadra.\nCi sarai anche tu. In prima fila.` },
+  pontile:{ t:`SOTTO IL PONTILE`, x:`L'acqua è tornata in una notte, come nel 1953. Ma tu avevi risposto.\n\nTi hanno preso per mano sotto le assi del pontile, dove l'acqua è sempre buia e sempre calma. Non è freddo. C'è tua madre. Ci sono tutti.\n\nDomani la Ditta Sesti manderà un altro operaio. Di notte lo chiamerai per nome, con la tua voce, e gli dirai di non arrivare in fondo.\nNon ti ascolterà. Tu non l'hai fatto.` },
+  sing:{ t:`LA NINNA NANNA`, x:`La conosci. L'hai sempre conosciuta: te la cantava tua madre, e a lei la sua, fino al 1953 e prima ancora.\n\nCanti piano, con la voce che trema. Il grande occhio si vela. La palpebra scende, lenta come una marea.\n\nLui dorme. Il lago resta vuoto. All'alba, dal fango di Nàrrena, la gente del paese si alza, si scrolla l'acqua dai vestiti della domenica e torna a casa a piedi, senza dire una parola.\n\nLa Ditta Sesti ha chiuso. Nessuno ricorda chi fossero i Sesti.\nQualcuno, ogni sera, deve cantare. Adesso tocca a te.` }
+};
+const END_KEY = 'ilfondo_endings';
+const endsSeen = ()=>{ try { return JSON.parse(localStorage.getItem(END_KEY)) || []; } catch(e){ return []; } };
 function showCredits(kind){
   const scr = $('screen');
-  scr.innerHTML = `<h1 style="font-size:min(14vw,80px)">${kind==='wake'?'IL RISVEGLIO':'IL GUARDIANO'}</h1>
-  <div id="endText">${kind==='wake'
-    ? `Sei caduto per centoventotto metri e non hai sentito l'impatto.\n\nNàrrena si è svegliata. Le campane suonano in tutta la valle, e poi in tutte le valli. Ora è Lui che sogna il mondo, e il mondo non se ne accorge.\n\nDomani mattina, la Ditta Sesti assumerà un nuovo operaio.\nAvrà la tua faccia.`
-    : `L'acqua è tornata in una notte, come nel 1953.\n\nLe campane tacciono. In paese la gente ha ricominciato a dormire. Nessuno ricorda il lago vuoto.\n\nTu sei rimasto sul pontile. Qualcuno deve guardare l'acqua.\nOgni notte ti chiamano per nome.\nNon rispondi. Quasi mai.`}</div>
+  kind = S.endKind || kind; const E = ENDINGS[kind] || ENDINGS.wake;
+  const seen = endsSeen(); if (!seen.includes(kind)) seen.push(kind); try { localStorage.setItem(END_KEY, JSON.stringify(seen)); } catch(e){}
+  const hint = (kind === 'wake' || kind === 'fill') && perfect() && S.cycle === 1 ? `\n\n(Ti è rimasta in testa una ninna nanna. Non ricordi le parole. Non ancora.)` : '';
+  scr.innerHTML = `<h1 style="font-size:min(14vw,80px)">${E.t}</h1>
+  <div id="endText">${E.x}${hint}</div>
+  <div class="ends">FINALI SCOPERTI · ${seen.length} / ${Object.keys(ENDINGS).length}${seen.length < Object.keys(ENDINGS).length ? ' · le regole che hai infranto, e quelle che hai rispettato, cambiano la fine' : ''}</div>
   <div class="btns"><button class="btn" id="againBtn">RICOMINCIA · CICLO ${S.cycle+1}</button></div>
   <div class="by">IL FONDO · GIOCO BY AGONYAPP</div>`;
   scr.style.display = 'flex'; scr.style.opacity = 0; scr.style.transition = 'opacity 3s'; requestAnimationFrame(()=> scr.style.opacity = 1);
   S.ended = true; save();
+  $('call').classList.add('hidden');
   $('againBtn').onclick = ()=>{ const c = S.cycle + 1; S = freshState(c); save(); location.reload(); };
 }
 
@@ -2650,6 +2681,7 @@ function goFullLandscape(){
 document.addEventListener('pointerdown', ()=>{ initAudio(); goFullLandscape(); }, true);
 const saved = load();
 if (saved && !saved.ended && saved.d > 0) $('contBtn').classList.remove('hidden');
+{ const n = endsSeen().length; if (n){ const el = document.createElement('div'); el.className = 'note'; el.textContent = `FINALI SCOPERTI · ${n} / ${Object.keys(ENDINGS).length}`; $('titleBtns').after(el); } }
 if (saved && saved.ended) S = freshState(saved.cycle+1);
 function startGame(fresh){
   initAudio();
@@ -2693,6 +2725,49 @@ function addMurk(mat){
   };
   mat.customProgramCacheKey = ()=> 'murk|' + key;
   mat.needsUpdate = true;
+}
+
+
+/* =====================================================================
+   LE TRE REGOLE: ogni infrazione resta scritta, e il fondo la ricorda
+   I. non scendere dalla zattera di notte · II. non rispondere a chi chiama · III. non contare l'acqua
+   ===================================================================== */
+function rule(kind){ S.k[kind] = (S.k[kind]||0) + 1; if (!S.k.when[kind]) S.k.when[kind] = Math.floor(S.time/240) + 1; }
+const broke = ()=>{ const k = S.k; return { I: k.left > 0, II: k.answer + k.knock > 0, III: k.count > 0, flesh: k.flesh > 0 }; };
+const perfect = ()=>{ const b = broke(); return !b.I && !b.II && !b.III && !b.flesh; };
+// III. Non contare l'acqua: il gioco ti mostra i numeri di continuo; il fondo ti chiede di contarli davvero
+const COUNTS = [
+  { d:0, t:()=>`Squilla il telefono del capanno. È il Compratore.\n\n«Signor Ferri, mi dica quanti litri ha tirato su finora. Esatti. Le pago un premio per ogni litro contato.»`,
+    a:`CONTALI`, b:`«NON LI HO CONTATI»`,
+    yes:()=>{ const v = Math.max(250, S.money*.35); S.money += v; coinSfx(); toast(`Hai contato: ${fmt(S.total)} litri. Il Compratore ha pagato € ${fmt(v)}. Ha ripetuto il numero due volte, piano, come per impararlo.`, 'warn'); setTimeout(()=>{ whisperSfx(1.6,.18); sub(`(sotto la zattera, qualcuno ripete il numero)`, 3.5); }, 4000); },
+    no:()=>{ gainLuc(3, `non hai contato`); toast(`«Bravo. Il signor Sesti sarà contento di lei.» Riattacca prima che tu possa chiedere perché.`); } },
+  { d:40, night:true, t:()=>`Sott'acqua, vicinissimo, qualcuno conta sottovoce.\n\n«...${fmt(Math.max(1,S.total*.97))}... ${fmt(Math.max(2,S.total*.97+1))}...»\n\nSbaglia. Sono di più. Ti viene da correggerlo.`,
+    a:`CORREGGILO`, b:`TAPPATI LE ORECCHIE`,
+    yes:()=>{ loseLuc(10, `hai contato`); whisperSfx(2.5,.3); sub(`...grazie... ora sappiamo quanto manca...`, 4); setTimeout(()=>{ groanSfx(.4,4); shakeAmt = .4; }, 3000); },
+    no:()=>{ gainLuc(4, `non hai contato`); setTimeout(()=>sub(`(la voce continua a contare. Sempre più lontana. Sempre più in basso.)`, 4), 1500); } },
+  { d:75, t:()=>`Sulle assi, scritto con l'acqua, c'è un numero lunghissimo. Sono i litri che hai tirato su: tutti, fino all'ultimo.\n\nManca solo l'ultima cifra.`,
+    a:`SCRIVILA`, b:`CANCELLA IL NUMERO`,
+    yes:()=>{ const v = Math.max(1000, S.money*.4); S.money += v; writeName(String(Math.floor(S.total) % 10)); X_.name = 20; loseLuc(8, `hai finito il conto`); toast(`Appena scrivi l'ultima cifra, la zattera smette di scricchiolare. Del tutto. Sul pontile qualcuno ha lasciato € ${fmt(v)}.`, 'warn'); },
+    no:()=>{ gainLuc(3, `non hai contato`); toast(`Strofini il numero con la manica finché le assi tornano scure. Le cifre restano sulla stoffa.`); } }
+];
+// ogni volta una tentazione nuova, se ce n'è una disponibile adesso; poi tornano, più insistenti
+function evCount(){ const opts = COUNTS.map((c,i)=>i).filter(i=> S.d >= COUNTS[i].d && (!COUNTS[i].night || dayF < .5)); if (!opts.length) return;
+  S.countUsed = S.countUsed || []; const fresh = opts.filter(i=> !S.countUsed.includes(i)); const i = fresh.length ? fresh[fresh.length-1] : pick(opts); S.countUsed.push(i); const c = COUNTS[i];
+  S.countN++; S.k.off.count = 1; play('click', {vol:.4, rev:.1});
+  promptAsk(c.t(), c.a, c.b, yes=>{ if (yes){ rule('count'); c.yes(); } else c.no(); }); }
+// ogni regola viene messa alla prova almeno una volta, anche se il regista non la sceglie
+function ruleUpdate(dt){
+  if (!running || ending || CINE.on) return;
+  if (S.ruleQ.length && !uiBusy() && !inCall && X_.big <= 0 && tensionT <= 0 && PACE.calm <= 0 && !X_.grip){
+    const ready = r => r === 'ladder' ? dayF < .5 : r === 'count' ? !(dayF >= .5 && S.d < 75 && COUNTS.every((c,i)=> (S.countUsed||[]).includes(i) || S.d < c.d || !c.night)) : true;
+    const qi = S.ruleQ.findIndex(ready); if (qi < 0) return;
+    const r = S.ruleQ.splice(qi, 1)[0];
+    if (r === 'ladder' && !S.k.off.ladder) evLadder(); else if (r === 'name' && !S.k.off.name) evName(); else if (r === 'count') evCount();
+    PACE.calm = 20;
+  }
+  // chi ha contato continua a sentire il conto: i numeri dell'HUD sbagliano, di notte qualcuno li ripete
+  if (S.k.count > 0 && dayF < .5){ if (Math.random() < dt*.012*S.k.count) glitchT = Math.max(glitchT, .5);
+    if (S.k.count > 1 && !uiBusy() && subT <= 0 && Math.random() < dt/150) sub(`(sotto, qualcuno conta: ...${fmt(S.total)}... ${fmt(S.total+1)}... ${fmt(S.total+2)}...)`, 4); }
 }
 
 /* ---------- segnalini: dove sono le cose riaffiorate ---------- */
@@ -3085,7 +3160,7 @@ function gripUpdate(dt){ const g = X_.grip; if (!g) return; g.t += dt; g.p -= dt
 
 function regia3Update(dt){ if (!uiBusy() && S.d >= 6 && !ending){ R2.callT -= dt*PACE.call; if (R2.callT <= 0 && X_.big <= 0 && tensionT <= 0){ R2.callT = rand(60, 110)/(1 + phase*.15); farCall(clamp(1 - S.d/MAXD, .25, .95)); } }
   tremUpdate(dt); gazeUpdate(dt); moonUpdate(dt); reachUpdate(dt); }
-Object.assign(NEWEV, { gaze:evGaze, moon:evMoon, reach:evReach, grip:()=>{ X_.gripNext = true; }, call:()=>farCall(.5) });
+Object.assign(NEWEV, { count:evCount, gaze:evGaze, moon:evMoon, reach:evReach, grip:()=>{ X_.gripNext = true; }, call:()=>farCall(.5) });
 
 /* =====================================================================
    MACCHINE: lavorano da sole, e si vedono lavorare
@@ -3251,7 +3326,7 @@ Object.assign(NEWEV, { passage:()=>{ if (!X_.pass) startPassage(); }, endless:()
    V · Il risveglio (90 m e oltre)
    ===================================================================== */
 const actOf = d => d < 6 ? 0 : d < 20 ? 1 : d < 45 ? 2 : d < 90 ? 3 : 4;
-const EV_ACT = { knock:0, tug:0, prints:0, bump:0, lightning:0,
+const EV_ACT = { count:1, knock:0, tug:0, prints:0, bump:0, lightning:0,
   music:1, silent:1, fish:1, behind:1, hand:1, torch:1, left:1, bodies:1, fog:1, car:1, rowboat:1, silence:1, neck:1, tide:1, scrawl:1, bellNear:4, figure:1, flicker:1, ladder:1, priest:1, grip:1, passage:1, call:1,
   sublim:2, green:2, dg:2, lost:2, titan:2, mouth:2, dock:2, tentRaft:2, hands:2, selfCorpse:2, bucketThing:2, reflection:2, name:2, eyes:2, darkness:2, dinner:2, heads:4, gaze:2, endless:2, vanish:2,
   levx:3, blood:3, breath:4, surfEye:3, rain:3, starsOut:3, swarm:3, scare:3, leviathan:3, chant:3, abyss:3, horizon:4, pupil:4, whaleback:3, dunk:4, moon:3, reach:4 };
@@ -3352,7 +3427,7 @@ function update(dt){
     else { const cap = lucCap(); if (S.luc > cap) S.luc = Math.max(cap, S.luc - (.35 + Math.max(0, drain - regen))*dt); else S.luc = Math.min(cap, Math.max(0, S.luc + (regen - drain)*dt)); }
     if (S.luc >= lucCap() - .5 && lucCap() < 99 && LUCWHY.net > 0){ LUCWHY.dn = ['il fondo non ti lascia tornare lucido']; LUCWHY.net = 0; }
     // eventi
-    paceUpdate(dt); cashUpdate(dt);
+    paceUpdate(dt); cashUpdate(dt); ruleUpdate(dt);
     if (!uiBusy()) EV.next -= dt*PACE.ev;
     if (EV.next <= 0 && !inCall && !uiBusy()){ EV.next = rand(16,28)/(1+phase*.2)*(S.d < 6 ? 2 : S.d < 14 ? 1.5 : 1); runEvent(); }
     // storia
@@ -3369,6 +3444,7 @@ function update(dt){
     if (ending==='wake'){ targetY = -137; lidOpen = 1; shakeAmt = Math.max(shakeAmt, .5);
       const k = Math.min(1, endT/5); CAM_BASE.lerpVectors(camWakeStart, new THREE.Vector3(0,-128,3), k*k);
       pitchT = -1.35; postMat.uniforms.uDark.value = smooth(4.5,6.5,endT); if (endT > 7 && !S.ended) showCredits('wake'); }
+    if (ending==='sing'){ targetY = -MAXD - 9; lidOpen = Math.max(0, 1 - endT/8); postMat.uniforms.uDark.value = smooth(12,16,endT); if (endT > 16.5 && !S.ended) showCredits('sing'); }
     if (ending==='fill'){ targetY = lerp(-MAXD-9, 0, smooth(0,12,endT)); lidOpen = Math.max(0, 1-endT/5); postMat.uniforms.uDark.value = smooth(10,14,endT); if (endT > 14.5 && !S.ended) showCredits('fill'); }
   }
   { // l'acqua scende come una massa: accelera e frena in modo continuo (niente scatti a ogni secchiata)
@@ -3590,7 +3666,7 @@ addEventListener('keydown', e=>{
   if (c === 'Escape'){ e.preventDefault(); const open = ['settings','shop','diary'].find(visible); if (open) $(open).classList.add('hidden'); else if (visible('card')) $('cardClose').click(); else openSettings(); return; }
   // finestre: telefono, scelte, lettere
   if (visible('call')){ if ((c === 'Enter' || c === 'Space') && !e.repeat){ e.preventDefault(); $('callBtn').click(); } return; }
-  if (visible('prompt')){ if (!$('prompt').classList.contains('waiting') && !e.repeat){ if (c === 'Digit1' || c === 'Numpad1') $('promptA').click(); if (c === 'Digit2' || c === 'Numpad2') $('promptB').click(); } return; }
+  if (visible('prompt')){ if (!$('prompt').classList.contains('waiting') && !e.repeat){ if (c === 'Digit1' || c === 'Numpad1') $('promptA').click(); if (c === 'Digit2' || c === 'Numpad2') $('promptB').click(); if ((c === 'Digit3' || c === 'Numpad3') && visible('promptC')) $('promptC').click(); } return; }
   if (visible('card')){ if ((c === 'Enter' || c === 'Space') && !e.repeat){ e.preventDefault(); $('cardClose').click(); } return; }
   if (!running || ending) return;
   if (c === 'KeyO' || c === 'KeyJ'){ if (e.repeat) return; const id = c === 'KeyO' ? 'shop' : 'diary'; if (visible(id)) $(id).classList.add('hidden'); else $(c === 'KeyO' ? 'shopBtn' : 'diaryBtn').click(); return; }
@@ -3604,6 +3680,41 @@ addEventListener('keydown', e=>{
 });
 addEventListener('keyup', e=>{ KEYS[e.code] = false; if (e.code === 'Space') holdBucket = false; });
 addEventListener('blur', ()=>{ for (const k in KEYS) KEYS[k] = false; holdBucket = false; });
+
+/* =====================================================================
+   AGGIORNAMENTI IN TEMPO REALE
+   Ogni minuto (e quando torni sulla scheda) il gioco guarda version.json. Se online c'è una versione nuova:
+   salva, aspetta un momento tranquillo (niente scene grandi, telefonate, scelte, filmato o finale) e si ricarica.
+   Al ritorno basta un tocco per riprendere la stessa partita (il tocco serve anche a riaccendere l'audio).
+   ===================================================================== */
+const VER = window.__VER || '';
+const UPD = { pending:false, busy:false, since:0 };
+function updCheck(){ if (!VER || UPD.busy || UPD.pending) return; UPD.busy = true;
+  fetch('version.json?t=' + Date.now(), { cache:'no-store' }).then(r=> r.json()).then(j=>{ if (j && j.v && j.v !== VER){ UPD.pending = true; UPD.since = performance.now(); } }).catch(()=>{}).finally(()=>{ UPD.busy = false; }); }
+setInterval(updCheck, 60000);
+document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) updCheck(); });
+function updApply(){
+  if (!UPD.pending || UPD.going) return;
+  const waited = (performance.now() - UPD.since)/1000;
+  if (CINE.on || ending) return;
+  if (running){
+    const calm = !uiBusy() && !inCall && X_.big <= 0 && tensionT <= 0 && !X_.grip && !blackout;
+    if (!calm && !(waited > 300 && !uiBusy() && !inCall)) return;
+    save(); try { sessionStorage.setItem('ilfondo_resume', '1'); } catch(e){}
+  }
+  UPD.going = true; const f = $('fade'); f.style.transition = 'opacity .8s'; f.style.opacity = 1;
+  setTimeout(()=> location.reload(), 900);
+}
+setInterval(updApply, 1000);
+{ let resume = false; try { resume = sessionStorage.getItem('ilfondo_resume') === '1'; sessionStorage.removeItem('ilfondo_resume'); } catch(e){}
+  if (resume && saved && !saved.ended && saved.d > 0){
+    const ov = document.createElement('div'); ov.id = 'updOv';
+    ov.innerHTML = `<h2>IL FONDO È CAMBIATO</h2><p>È uscito un aggiornamento mentre giocavi.<br>La tua partita è salva, esattamente dove l'hai lasciata.</p><button class="btn">TOCCA PER CONTINUARE</button>`;
+    document.body.appendChild(ov);
+    const go = ()=>{ ov.remove(); startGame(false); };
+    ov.addEventListener('click', go); addEventListener('keydown', function k(e){ if (!document.body.contains(ov)) return removeEventListener('keydown', k); if (e.code === 'Enter' || e.code === 'Space'){ e.preventDefault(); go(); } });
+  } }
+if (location.search.includes('debug')) Object.assign(window, { __UPD:UPD, __updCheck:updCheck });
 
 // riscaldamento: ogni shader del gioco viene compilato adesso, dietro il caricamento, e non nel momento in cui l'evento ti salta addosso
 // e ogni geometria e texture viene caricata sulla GPU adesso: niente culling durante il riscaldamento, così anche ciò che sta alle spalle

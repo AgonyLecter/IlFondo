@@ -6,8 +6,23 @@
 <title>Il Fondo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Special+Elite&family=Homemade+Apple&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<style>html,body{background:#000;color:#cfd3c8}</style>
+<script>
+/* Aggiornamenti immediati: version.json dice quale versione è online. Ogni file del gioco viene chiesto con ?v=<versione>,
+   così nessun browser e nessuna cache tiene una versione vecchia. Quando pubblichi un aggiornamento, cambia "v" in version.json. */
+(function(){
+  function go(v){
+    window.__VER = v; var q = v ? '?v=' + encodeURIComponent(v) : '';
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'style.css' + q; document.head.appendChild(l);
+    var im = document.createElement('script'); im.type = 'importmap';
+    im.textContent = JSON.stringify({ imports:{ 'three':'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js', 'three/addons/':'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/', './audio.js':'./audio.js' + q } });
+    document.head.appendChild(im);
+    function boot(){ var s = document.createElement('script'); s.type = 'module'; s.src = 'game.js' + q; document.body.appendChild(s); }
+    if (document.body) boot(); else document.addEventListener('DOMContentLoaded', boot);
+  }
+  fetch('version.json?t=' + Date.now(), { cache:'no-store' }).then(function(r){ return r.json(); }).then(function(j){ go(j.v || ''); }).catch(function(){ go(''); });
+})();
+</script>
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -85,7 +100,7 @@
 
 <div id="card" class="modal hidden"><div class="paper"><h3 id="cardTitle"></h3><div id="cardText"></div><div id="cardDiary" class="diary"></div><button id="cardClose">CHIUDI</button></div></div>
 <div id="call" class="modal hidden"><div class="box"><div id="callWho"></div><div id="callState">IN ARRIVO</div><div id="callText"></div><button class="btn" id="callBtn">RIATTACCA</button></div></div>
-<div id="prompt" class="modal hidden"><div class="box"><div id="promptText"></div><div class="row"><button class="btn" id="promptA"></button><button class="btn" id="promptB"></button></div></div></div>
+<div id="prompt" class="modal hidden"><div class="box"><div id="promptText"></div><div class="row"><button class="btn" id="promptA"></button><button class="btn" id="promptB"></button><button class="btn hidden" id="promptC"></button></div></div></div>
 
 <div id="screen">
   <svg class="eyeSig" viewBox="0 0 100 60" aria-hidden="true"><path d="M4 30 Q50 -6 96 30 Q50 66 4 30Z" fill="none" stroke="#cbbf8a" stroke-width="2"/><g class="lidl"><circle cx="50" cy="30" r="15" fill="#3a3010" stroke="#cbbf8a" stroke-width="1.5"/><ellipse cx="50" cy="30" rx="2.6" ry="13" fill="#000"/></g><path d="M50 2 V-8 M22 8 L16 0 M78 8 L84 0" stroke="#cbbf8a" stroke-width="1.5"/></svg>
@@ -109,6 +124,5 @@
 <div id="rotate"><div class="ph"></div>RUOTA IL TELEFONO<br><span style="opacity:.5;font-size:11px">IL FONDO SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO</span></div>
 <div id="loading">CARICAMENTO</div>
 
-<script type="module" src="game.js"></script>
 </body>
 </html>
