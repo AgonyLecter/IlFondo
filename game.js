@@ -125,7 +125,7 @@ scene.add(camera);
 
 const HDR_OK = renderer.capabilities.isWebGL2 && (renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float'));
 const RT_TYPE = HDR_OK ? THREE.HalfFloatType : THREE.UnsignedByteType;
-const rt = new THREE.WebGLRenderTarget(innerWidth*DPR*qScale, innerHeight*DPR*qScale, { type: RT_TYPE, samples: renderer.capabilities.isWebGL2 ? (MOBILE ? 0 : 2) : 0 });
+const rt = new THREE.WebGLRenderTarget(innerWidth*DPR*qScale, innerHeight*DPR*qScale, { type: RT_TYPE, samples: renderer.capabilities.isWebGL2 && !MOBILE ? 2 : 0 });
 // bloom a un quarto di risoluzione
 const bloomA = new THREE.WebGLRenderTarget(4,4,{type:RT_TYPE}), bloomB = new THREE.WebGLRenderTarget(4,4,{type:RT_TYPE});
 const FS_VS = `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }`;
@@ -227,15 +227,36 @@ function applySize(){
   if (typeof moteU !== 'undefined') moteU.uPx.value = innerHeight*PR; if (typeof dropU !== 'undefined') dropU.uPx.value = innerHeight*PR;
 }
 addEventListener('resize', applySize);
-// qualità adattiva: se i fotogrammi rallentano scende la risoluzione interna, quando torna fluido risale
-const Q = { t:0, acc:0, n:0, cool:0 };
+// qualità adattiva: se i fotogrammi rallentano scende la qualità interna, quando torna fluido risale.
+// - prima di toccare la risoluzione toglie l'antialiasing del buffer HDR (si nota meno di un'immagine più sfocata)
+// - ogni cambio rialloca i buffer (= uno scatto): servono più finestre lente di fila per scendere e più finestre fluide per risalire
+// - se dopo un calo non va più veloce, il collo di bottiglia non è la GPU (schermo a 30 Hz, risparmio energetico): la grafica torna com'era
+// - non risale subito al livello da cui è appena scesa, così non oscilla
+const MSAA = renderer.capabilities.isWebGL2 && !MOBILE ? 2 : 0;
+const Q = { t:0, acc:0, n:0, cool:0, bad:0, good:0, prev:null, hold:0, ceil:9, ceilT:0 };
+function setQ(scale, samples){
+  if (samples !== rt.samples){ rt.samples = samples; rt.dispose(); }
+  if (Math.abs(scale - qScale) > .001){ qScale = scale; applySize(); }
+  Q.cool = 1;
+}
 function adaptQuality(raw){
   if (raw <= 0 || raw > 1.2 || document.hidden) return;
   Q.acc += raw; Q.n++; Q.t += raw; if (Q.t < 1.5) return;
-  const avg = Q.acc/Q.n; Q.t = Q.acc = Q.n = 0; if (Q.cool > 0){ Q.cool--; return; }
-  let ns = qScale;
-  if (avg > 1/40) ns = Math.max(.5, qScale - (avg > 1/20 ? .2 : avg > 1/28 ? .12 : .06)); else if (avg < 1/56) ns = Math.min(1, qScale + .05);
-  if (Math.abs(ns - qScale) > .01){ qScale = ns; applySize(); Q.cool = 1; }
+  const avg = Q.acc/Q.n, win = Q.t; Q.t = Q.acc = Q.n = 0;
+  if (Q.hold > 0) Q.hold -= win; if (Q.ceilT > 0 && (Q.ceilT -= win) <= 0) Q.ceil = 9;
+  if (Q.cool > 0){ Q.cool--; return; }
+  if (Q.prev){ const p = Q.prev; Q.prev = null;
+    if (avg > p.avg*.93){ setQ(p.q, p.s); Q.ceil = 9; Q.hold = 60; return; } }
+  if (avg > 1/40){ Q.good = 0; if (Q.hold > 0) return;
+    const sev = avg > 1/20; if (++Q.bad < (sev ? 1 : 2)) return; Q.bad = 0;
+    const from = { q:qScale, s:rt.samples, avg };
+    if (rt.samples && !sev) setQ(qScale, 0);
+    else { const ns = Math.max(.5, qScale - (sev ? .2 : avg > 1/28 ? .12 : .06)); if (ns > qScale - .01 && !rt.samples) return; setQ(ns, sev ? 0 : rt.samples); }
+    Q.prev = from; Q.ceil = from.q + (from.s ? .001 : 0); Q.ceilT = 30;
+  } else if (avg < 1/56){ Q.bad = 0; if (++Q.good < 3) return; Q.good = 0;
+    if (qScale < 1){ const ns = Math.min(1, qScale + .05); if (ns + (rt.samples ? .001 : 0) >= Q.ceil - .0005) return; setQ(ns, rt.samples); }
+    else if (MSAA && !rt.samples && Q.ceil > 1.5) setQ(1, MSAA);
+  } else { Q.bad = 0; Q.good = 0; }
 }
 
 /* ---------- luci ---------- */
@@ -1462,8 +1483,8 @@ function buildShop(){
 }
 function updateShop(){
   const items = shopItems(); const g = glitchT > 0;
-  $('shopList').querySelectorAll('[data-buy]').forEach(b=>{ const i = items.find(x=>x.id===b.dataset.buy); if (!i) return; b.disabled = S.money < i.c; b.textContent = '€ ' + (g ? glitchStr(fmt(i.c)) : fmt(i.c));
-    const nm = b.parentElement.querySelector('.nm'); nm.textContent = g && Math.random()<.5 ? pick(GLITCH_NAMES) : i.n; });
+  $('shopList').querySelectorAll('[data-buy]').forEach(b=>{ const i = items.find(x=>x.id===b.dataset.buy); if (!i) return; const dis = S.money < i.c, t = '€ ' + (g ? glitchStr(fmt(i.c)) : fmt(i.c)); if (b.disabled !== dis) b.disabled = dis; if (b.textContent !== t) b.textContent = t;
+    const nm = b.parentElement.querySelector('.nm'), n = g && Math.random()<.5 ? pick(GLITCH_NAMES) : i.n; if (nm.textContent !== n) nm.textContent = n; });
 }
 $('shopList').addEventListener('click', e=>{ const b = e.target.closest('[data-buy]'); if (!b) return; const i = shopItems().find(x=>x.id===b.dataset.buy); if (!i || S.money < i.c) return; S.money -= i.c; i.buy(); coinSfx(); buildShop(); });
 $('shopBtn').onclick = ()=>{ $('diary').classList.add('hidden'); buildShop(); $('shop').classList.remove('hidden'); };
@@ -3457,29 +3478,32 @@ function update(dt){
   if (hudT <= 0 && running){ hudT = .1; if ((hudN = (hudN+1)%10) === 0) buildPlumbMarks();
     const g = glitchT > 0;
     const dTxt = '−' + S.d.toFixed(1).replace('.',',') + ' m';
-    $('depth').textContent = g ? glitchStr(dTxt) : dTxt;
-    $('money').textContent = '€ ' + (g ? glitchStr(fmt(S.money)) : fmt(S.money));
+    txt('depth', g ? glitchStr(dTxt) : dTxt);
+    txt('money', '€ ' + (g ? glitchStr(fmt(S.money)) : fmt(S.money)));
     const cap = tankCap();
-    $('tankBar').firstElementChild.style.width = (S.contract ? 0 : clamp(S.tank/cap,0,1)*100) + '%';
-    if (S.contract) $('tankTxt').textContent = `RITIRO AUTOMATICO ${Math.round(CONTRACTS[S.contract].p*100)}%`;
-    else if (S.tank >= cap){ $('tankTxt').innerHTML = `<span id="tankWarn">CISTERNA PIENA · VENDI</span>`; }
-    else $('tankTxt').textContent = `CISTERNA ${fmt(S.tank)} / ${fmt(cap)} L`;
-    $('lucBar').firstElementChild.style.width = S.luc + '%';
-    $('lucBar').firstElementChild.style.background = S.luc < 30 ? '#c0584a' : '#b9c7a8';
-    $('lucTxt').textContent = `LUCIDITÀ ${Math.round(S.luc)}%`;
-    { const up = LUCWHY.net > .002, w = up ? LUCWHY.up : LUCWHY.dn; $('lucWhy').textContent = (up ? '▲ ' : LUCWHY.net < -.002 ? '▼ ' : '■ ') + (w.length ? w.join(' · ') : (up ? 'stai recuperando' : 'stabile')); $('lucWhy').className = 'mini ' + (up ? 'up' : 'dn');
-      const bb = $('breathBtn'); bb.disabled = breathCd > 0 || breathT > 0 || S.luc > 96; bb.textContent = breathT > 0 ? 'RESPIRI…' : breathCd > 0 ? `RESPIRA · ${Math.ceil(breathCd)}s` : 'RESPIRA'; bb.classList.toggle('hint', !bb.disabled && S.luc < 60); }
-    { const left = Math.max(0, MAXD - S.d); $('belowTxt').textContent = downT > .3 ? `SOTTO DI TE: ${Math.round(left)} m D'ACQUA NERA` : `ACQUA SOTTO: ${Math.round(left)} m`; $('belowTxt').classList.toggle('dn', downT > .3); }
-    $('rateTxt').textContent = `${fmt(pumpRate() + noriaRate())} L/s · ${priceNow().toLocaleString('it-IT',{maximumFractionDigits:2})} €/L`;
-    $('timeTxt').textContent = (dayF>=.5 ? 'GIORNO ' : 'NOTTE ') + (Math.floor(S.time/240)+1);
-    { const o = S.order, el = $('orderTxt'); if (o){ const m = Math.max(0, Math.ceil(o.left)); el.textContent = `COMMESSA ${fmt(Math.min(o.got,o.need))} / ${fmt(o.need)} L · ${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`; el.classList.toggle('dn', o.left < 30); } else el.textContent = ''; }
-    if (!X_.grip && !X_.endless) $('bucketSub').textContent = fmt(BUCKETS[S.bucket].s*10) + ' L';
-    $('sellBtn').style.opacity = S.contract ? .5 : 1;
+    sty('tankBar', 'width', (S.contract ? 0 : clamp(S.tank/cap,0,1)*100).toFixed(1) + '%');
+    if (S.contract) txt('tankTxt', `RITIRO AUTOMATICO ${Math.round(CONTRACTS[S.contract].p*100)}%`);
+    else if (S.tank >= cap){ { const e = $('tankTxt'); if (!e.firstElementChild){ e.innerHTML = `<span id="tankWarn">CISTERNA PIENA · VENDI</span>`; } } }
+    else txt('tankTxt', `CISTERNA ${fmt(S.tank)} / ${fmt(cap)} L`);
+    sty('lucBar', 'width', S.luc.toFixed(1) + '%');
+    sty('lucBar', 'background', S.luc < 30 ? '#c0584a' : '#b9c7a8');
+    txt('lucTxt', `LUCIDITÀ ${Math.round(S.luc)}%`);
+    { const up = LUCWHY.net > .002, w = up ? LUCWHY.up : LUCWHY.dn; txt('lucWhy', (up ? '▲ ' : LUCWHY.net < -.002 ? '▼ ' : '■ ') + (w.length ? w.join(' · ') : (up ? 'stai recuperando' : 'stabile'))); { const e = $('lucWhy'), c = 'mini ' + (up ? 'up' : 'dn'); if (e.className !== c) e.className = c; }
+      const bb = $('breathBtn'), dis = breathCd > 0 || breathT > 0 || S.luc > 96; if (bb.disabled !== dis) bb.disabled = dis; txt('breathBtn', breathT > 0 ? 'RESPIRI…' : breathCd > 0 ? `RESPIRA · ${Math.ceil(breathCd)}s` : 'RESPIRA'); bb.classList.toggle('hint', !bb.disabled && S.luc < 60); }
+    { const left = Math.max(0, MAXD - S.d); txt('belowTxt', downT > .3 ? `SOTTO DI TE: ${Math.round(left)} m D'ACQUA NERA` : `ACQUA SOTTO: ${Math.round(left)} m`); $('belowTxt').classList.toggle('dn', downT > .3); }
+    txt('rateTxt', `${fmt(pumpRate() + noriaRate())} L/s · ${priceNow().toLocaleString('it-IT',{maximumFractionDigits:2})} €/L`);
+    txt('timeTxt', (dayF>=.5 ? 'GIORNO ' : 'NOTTE ') + (Math.floor(S.time/240)+1));
+    { const o = S.order, el = $('orderTxt'); if (o){ const m = Math.max(0, Math.ceil(o.left)); txt('orderTxt', `COMMESSA ${fmt(Math.min(o.got,o.need))} / ${fmt(o.need)} L · ${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`); el.classList.toggle('dn', o.left < 30); } else txt('orderTxt', ''); }
+    if (!X_.grip && !X_.endless) txt('bucketSub', fmt(BUCKETS[S.bucket].s*10) + ' L');
+    { const o = S.contract ? '0.5' : '1', e = $('sellBtn'); if (e.style.opacity !== o) e.style.opacity = o; }
     if (!$('shop').classList.contains('hidden')) updateShop();
   }
   saveT -= dt; if (saveT <= 0 && !ending){ saveT = 4; save(); }
 }
 
+// l'HUD scrive nel DOM solo ciò che è cambiato: riscrivere lo stesso testo dieci volte al secondo costringe comunque il browser a rifare il layout
+function txt(id, v){ const e = $(id); if (e.textContent !== v) e.textContent = v; }
+function sty(id, k, v){ const e = $(id).firstElementChild; if (e['_' + k] !== v){ e['_' + k] = v; e.style[k] = v; } }
 function frame(now){
   requestAnimationFrame(frame);
   if (window.__PAUSE) return;
@@ -3497,11 +3521,15 @@ function frame(now){
 }
 if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, mists, water, scene, consequence, hullDamage, helperLost, dragMachine, get DRo(){ return DR.o; }, farCall, evGaze, R2get: ()=>R2, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
 // riscaldamento: ogni shader del gioco viene compilato adesso, dietro il caricamento, e non nel momento in cui l'evento ti salta addosso
-function warmUp(){ const hidden = [], counts = [];
-  scene.traverse(o=>{ if (!o.visible){ hidden.push(o); o.visible = true; } if (o.isInstancedMesh && o.count === 0){ counts.push(o); o.count = 1; } });
+// e ogni geometria e texture viene caricata sulla GPU adesso: niente culling durante il riscaldamento, così anche ciò che sta alle spalle
+// o fuori campo (la bocca, le mani, gli occhi sull'acqua...) non fa scattare il primo fotogramma in cui compare
+function warmUp(){ const hidden = [], counts = [], culled = [], texs = new Set();
+  const addTex = v=>{ if (v && v.isTexture) texs.add(v); };
+  scene.traverse(o=>{ if (!o.visible){ hidden.push(o); o.visible = true; } if (o.isInstancedMesh && o.count === 0){ counts.push(o); o.count = 1; } if (o.frustumCulled){ culled.push(o); o.frustumCulled = false; }
+    if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m=>{ for (const k in m) addTex(m[k]); if (m.uniforms) for (const k in m.uniforms){ const v = m.uniforms[k] && m.uniforms[k].value; Array.isArray(v) ? v.forEach(addTex) : addTex(v); } }); });
   const fl = flash.intensity, sh = renderer.shadowMap.needsUpdate; flash.intensity = 1;
-  try { renderer.compile(scene, camera); renderer.shadowMap.needsUpdate = true; renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null); } catch(e){ console.warn(e); }
-  hidden.forEach(o=> o.visible = false); counts.forEach(o=> o.count = 0); flash.intensity = fl; renderer.shadowMap.needsUpdate = sh; }
+  try { texs.forEach(t=> renderer.initTexture(t)); renderer.compile(scene, camera); renderer.shadowMap.needsUpdate = true; renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null); renderFrame(); } catch(e){ console.warn(e); }
+  hidden.forEach(o=> o.visible = false); counts.forEach(o=> o.count = 0); culled.forEach(o=> o.frustumCulled = true); flash.intensity = fl; renderer.shadowMap.needsUpdate = sh; }
 warmUp();
 $('loading').remove();
 requestAnimationFrame(frame);
