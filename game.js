@@ -14,7 +14,8 @@ const pick = arr => arr[Math.floor(Math.random()*arr.length)];
    ECONOMIA
    ===================================================================== */
 const MAXD = 128;
-const LPM = d => 250 * Math.pow(1.08, d);
+// oltre i 95 m ogni metro costa meno in proporzione: l'ultima discesa deve precipitare, non trascinarsi
+const LPM = d => 250 * Math.pow(1.08, Math.min(d, 95)) * Math.pow(1.05, Math.max(0, d - 95));
 const PRICE = d => 0.02 * Math.pow(1.03, d);
 const priceNow = () => PRICE(S.d) * FILTERS[S.filter||0].m;
 const CATASTO = 150000;
@@ -1407,7 +1408,10 @@ function typeText(el, text, done, o={}){ const speed = o.speed || 34; let i = 0,
     if (o.onSentence && /[.?!]/.test(ch) && text[i] === ' ') setTimeout(o.onSentence, d*.6);
     tm = setTimeout(step, d); };
   o.onSentence && o.onSentence(); tm = setTimeout(step, o.delay || 0); return end; }
-function toast(msg, cls=''){ const el = document.createElement('div'); el.className = 'toast '+cls; $('toasts').appendChild(el); typeText(el, msg, null, {speed:16}); while ($('toasts').children.length>3) $('toasts').firstChild.remove(); setTimeout(()=>{ el.style.transition='opacity 1s'; el.style.opacity=0; setTimeout(()=>el.remove(),1000); }, 5200 + msg.length*24); }
+// i messaggi di soldi ('money') non scacciano mai quelli che raccontano: se la colonna è piena se ne vanno prima loro, o non entrano
+function toast(msg, cls=''){ const box = $('toasts'), money = cls === 'money';
+  if (box.children.length >= 3){ const m = box.querySelector('.toast.money'); if (m) m.remove(); else if (money) return; }
+  const el = document.createElement('div'); el.className = 'toast '+cls; box.appendChild(el); typeText(el, msg, null, {speed:16}); while (box.children.length>3) box.firstChild.remove(); setTimeout(()=>{ el.style.transition='opacity 1s'; el.style.opacity=0; setTimeout(()=>el.remove(),1000); }, 5200 + msg.length*24); }
 /* ---------- lucidità: ogni perdita e ogni recupero ha un motivo, e lo vedi ---------- */
 let lucPopN = 0;
 function lucPop(txt, good){ const el = document.createElement('div'); el.className = 'lp ' + (good ? 'up' : 'dn'); el.textContent = txt; $('lucPop').appendChild(el);
@@ -1415,7 +1419,9 @@ function lucPop(txt, good){ const el = document.createElement('div'); el.classNa
 // calibrata: le perdite pesano la metà, e meno ancora quando sei già al limite
 function loseLuc(x, why='', raw=false){ if (!(x > 0)) return; if (!raw) x *= CHARMS[S.charm||0].k * .62 * (.45 + .55*S.luc/100) * (phase < 1 ? .7 : 1); S.luc = Math.max(0, S.luc - x); if (x >= 1) lucPop(`−${Math.round(x)} · ${why}`, false);
   if (!S.tipLuc && S.luc < 85){ S.tipLuc = 1; setTimeout(()=>toast(`La tua LUCIDITÀ è scesa. Le cose che vedi e senti la consumano. Tocca RESPIRA o guarda il DIARIO › MENTE per capire come recuperarla.`, 'lore'), 1500); } }
-function gainLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.min(100, S.luc + x); if (x >= 1) lucPop(`+${Math.round(x)} · ${why}`, true); }
+// più scendi, meno puoi tornare lucido: amuleti e lumini rallentano la caduta ma il fondo pesa comunque (100% fino a 8 m, 38% a 128 m)
+const lucCap = ()=> 100 - 62*Math.pow(clamp((S.d - 8)/120, 0, 1), 1.1);
+function gainLuc(x, why=''){ if (!(x > 0)) return; S.luc = Math.min(Math.max(S.luc, lucCap()), S.luc + x); if (x >= 1) lucPop(`+${Math.round(x)} · ${why}`, true); }
 let subT = 0; const LUCWHY = { dn:[], up:[], net:0 }; let breathT = 0, breathCd = 0;
 function sub(text, dur=3, cls=''){ const s = $('subs'); s.className = cls; s.textContent = text; s.style.opacity = 1; subT = Math.max(dur, 1.8 + text.length*.055); }
 const callQ = []; let inCall = false, callTimer = null;
@@ -1526,7 +1532,7 @@ $('breathBtn').addEventListener('pointerdown', e=>{ e.stopPropagation(); if (bre
   const before = S.luc; setTimeout(()=>{ $('breathOv').classList.add('hidden'); lucPop(`+${Math.round(S.luc - before)} · hai respirato`, true); }, 6000); });
 $('floodBtn').onclick = ()=>{ S.floodOn = S.floodOn === false; $('floodBtn').classList.toggle('off', S.floodOn === false); play('click', {vol:.55, rev:.05}); clankSfx(); };
 $('torchBtn').onclick = ()=>{ S.torchOn = !S.torchOn; $('torchBtn').classList.toggle('off', !S.torchOn); play('click', {vol:.5, rev:.05}); };
-$('sellBtn').onclick = ()=>{ if (S.tank < 1) return; const v = S.tank * priceNow(); S.money += v; S.tank = 0; coinSfx(); toast(`Venduti al Compratore: € ${fmt(v)}`); };
+$('sellBtn').onclick = ()=>{ if (S.tank < 1) return; const v = S.tank * priceNow(); S.money += v; S.tank = 0; coinSfx(); toast(`Venduti al Compratore: € ${fmt(v)}`, 'money'); };
 let holdBucket = false;
 $('bucketBtn').addEventListener('pointerdown', e=>{ e.preventDefault(); initAudio(); if (gripTap()) return; holdBucket = true; throwBucket(); });
 ['pointerup','pointerleave','pointercancel'].forEach(ev=> $('bucketBtn').addEventListener(ev, ()=> holdBucket = false));
@@ -1670,9 +1676,13 @@ function finishBucket(){
   if (BUCKETS[S.bucket].org) loseLuc(.3, `il secchio che respira`);
   const ch = B.relic ? 1 : (.05 + phase*.022) * NETS[S.net||0].f * (B.vein ? 3 : 1); B.vein = false; B.relic = false;
   if (phase >= 0 && Math.random() < ch && S.d > 2){ const unseen = FINDS.map((f,i)=>i).filter(i=>!S.relics.includes(i)); let pool = unseen.filter(i=>FINDS[i][0]<=phase && FINDS[i][0]>=phase-1); if (!pool.length) pool = unseen.filter(i=>FINDS[i][0]<=phase+1); if (pool.length){ const fi = pick(pool); showFind(fi); loseLuc(2+phase, `ciò che era nel secchio`); if (phase>=2) whisperSfx(1.5,.15); }
-    const val = Math.round(35*Math.pow(3, phase)*(1 + (S.net||0)*.35)); S.money += val; setTimeout(()=>{ coinSfx(); toast(pool.length ? `Il Compratore vuole anche questo: +€ ${fmt(val)}` : `Cianfrusaglie dal fondo. Il Compratore le prende tutte: +€ ${fmt(val)}`); }, pool.length ? 1800 : 0); }
+    const val = Math.round(35*Math.pow(3, phase)*(1 + (S.net||0)*.35)); S.money += val; if (pool.length) setTimeout(()=>{ coinSfx(); toast(`Il Compratore vuole anche questo: +€ ${fmt(val)}`, 'money'); }, 1800); else cash(val, `cianfrusaglie dal fondo`); }
   if (holdBucket) setTimeout(throwBucket, 30);
 }
+// incassi minori: niente messaggio a ogni secchio, al massimo un riepilogo discreto ogni mezzo minuto
+const CASH = { v:0, why:new Set(), t:0 };
+function cash(v, why){ CASH.v += v; CASH.why.add(why); if (CASH.t <= 0) CASH.t = 30; }
+function cashUpdate(dt){ if (CASH.t <= 0 || (CASH.t -= dt) > 0) return; if (CASH.v >= 1){ coinSfx(); toast(`+€ ${fmt(CASH.v)} · ${[...CASH.why].join(', ')}`, 'money'); } CASH.v = 0; CASH.why.clear(); }
 function addLiters(L){ L *= hullK();
   const space = S.contract ? Infinity : Math.max(0, tankCap() - S.tank);
   const take = Math.min(L, space);
@@ -1707,7 +1717,7 @@ const veinObj = mesh(new THREE.CircleGeometry(1.9, 24).rotateX(-Math.PI/2), vein
 const VEIN = { on:false, t:0, life:0, next:35, trap:false, x:0, z:0 };
 function startVein(){ for (let k=0;k<30;k++){ const a = rand(-.75,.75), r = rand(5, 13), x = raftPos.x + Math.sin(a)*r, z = raftPos.z - 2 - Math.cos(a)*r; if (!wetSpot(x, z, 1.5)) continue;
     Object.assign(VEIN, { on:true, t:0, life:rand(18,26), x, z, trap: dayF < .5 && phase >= 1 && Math.random() < .25 }); veinObj.position.set(x, waterY + .03, z); veinObj.visible = true; bubbleSfx();
-    if (!S.veins){ toast(`Bolle sul lago, e una luce sotto: una vena d'acqua antica. Guardala e cala il secchio lì dentro: vale molto di più.`, 'lore'); } return true; } return false; }
+    if (!S.veins && (S.veinTip = (S.veinTip||0) + 1) <= 3){ toast(`Bolle sul lago, e una luce sotto: una vena d'acqua antica. Guardala e cala il secchio lì dentro: vale molto di più.`, 'lore'); } return true; } return false; }
 function veinUpdate(dt){
   if (!VEIN.on){ VEIN.next -= dt; if (VEIN.next <= 0 && running && !ending && S.d > .5){ VEIN.next = rand(30, 55); startVein(); } return; }
   VEIN.t += dt; const a = smooth(0, 2, VEIN.t) * smooth(VEIN.life, VEIN.life - 3, VEIN.t);
@@ -1757,8 +1767,8 @@ const RADIO_LINES = [`(radio, da sola) ...previsioni: nebbia densa sul lago. Neb
 // nome: [profondità minima, condizione, attesa minima (s), massimo per partita, peso]
 const EV_DEF = {
   knock:[.8,null,80,5,1], prints:[1,null,130,4,1], music:[1,null,140,2,1], silent:[2,null,260,2,.8], tug:[1,null,70,3,.8], fish:[2,null,170,2,1],
-  behind:[2,null,95,3,1.2], hand:[3,null,85,3,1.2], torch:[3,n=>n,110,3,1], sublim:[4,null,70,6,.6], green:[5,n=>n,120,2,.8], left:[4,null,240,1,1],
-  bodies:[6,null,170,2,1], dg:[8,n=>n,220,2,1.2], fog:[6,null,180,2,1], lost:[12,()=>S.luc<65,320,1,1], car:[12,n=>n&&S.revealed.includes('car'),200,1,1],
+  behind:[10,null,95,3,1.2], hand:[8,null,85,3,1.2], torch:[3,n=>n,110,3,1], sublim:[4,null,70,6,.6], green:[5,n=>n,120,2,.8], left:[4,null,240,1,1],
+  bodies:[12,null,170,2,1], dg:[8,n=>n,220,2,1.2], fog:[6,null,180,2,1], lost:[12,()=>S.luc<65,320,1,1], car:[12,n=>n&&S.revealed.includes('car'),200,1,1],
   titan:[5,()=>underRaft()>=3,150,3,1.4], levx:[18,()=>!LEV.on,110,3,1.2], mouth:[35,null,120,2,1.1], blood:[35,null,160,2,1], breath:[35,null,150,2,1], dock:[14,n=>n,170,3,1.2],
   bump:[1,null,60,4,1.3], tentRaft:[3,null,110,3,1.3], surfEye:[5,null,120,3,1.2], hands:[10,null,150,2,1.2], rowboat:[3,null,200,2,1.1], selfCorpse:[25,null,400,1,1.3],
   rain:[15,null,220,2,1], starsOut:[30,n=>n,240,1,1.2], swarm:[18,null,160,2,1.1], silence:[3,null,200,2,1], neck:[1.5,null,140,3,1.1], tide:[4,null,150,2,1],
@@ -2973,8 +2983,8 @@ function dunkUpdate(dt){ const e = X_.dunk; if (!e){ R2.dunk = Math.max(0, R2.du
 
 const NEWEV = { abyss:evAbyss, horizon:evHorizon, pupil:evPupil, darkness:evDarkness, dinner:evDinner, priest:evPriest, heads:evHeads, whaleback:evWhale, dunk:evDunk };
 function regiaUpdate(dt){
-  if (!uiBusy() && !VIG.cur) VIG.next -= dt;
-  if (VIG.next <= 0 && (X_.big <= 0 || VIG.next < -7) && tensionT <= 0 && !uiBusy()){ VIG.next = [rand(11,17), rand(7,12), rand(5,10), rand(5,9), rand(4,8)][actOf(S.d)]; startVignette(); }
+  if (!uiBusy() && !VIG.cur) VIG.next -= dt*PACE.vig;
+  if (VIG.next <= 0 && (X_.big <= 0 || VIG.next < -7) && tensionT <= 0 && !uiBusy()){ VIG.next = [rand(12,18), rand(9,14), rand(8,13), rand(7,12), rand(6,11)][actOf(S.d)]; startVignette(); }
   vignetteUpdate(dt); driftUpdate(dt); abyssUpdate(dt); giantUpdate(dt); pupilUpdate(dt); darkUpdate(dt); dinnerUpdate(dt); priestUpdate(dt); headsUpdate(dt); whaleUpdate(dt); dunkUpdate(dt);
   if (R2.still > 0){ R2.still -= dt; waterU.uCalm.value = 0; if (R2.still <= 0){ splashFX(raftPos.x + rand(-1,1), waterY, raftPos.z - 2.2, .5, .4); ripple(raftPos.x, raftPos.z - 2.2, 1.5); } } }
 // i colpi sotto la zattera si vedono: il legno sobbalza, l'acqua schizza tra le assi
@@ -2986,7 +2996,7 @@ function hideRegia(){ X_.pass = null; X_.endless = null; R2.drag = null; R2.yank
    REGIA 3: la voce di Lui, lo sguardo del Guardiano, la luna, la mano, la presa
    ===================================================================== */
 // il richiamo dal fondo: arriva da lontano, e il lago intero vibra come la pelle di un tamburo
-R2.callT = 40; R2.trem = 0; R2.zoom = 0; R2.gazeEyes = 0;
+R2.callT = 95; R2.trem = 0; R2.zoom = 0; R2.gazeEyes = 0;
 function farCall(far=.8){ think('call', 7); const pan = rand(-.7,.7); creatureSfx({ kind:'call', far, vol:.9, pan }); R2.trem = 8; R2.tremK = 1 - far*.5;
   setTimeout(()=>{ shakeAmt = Math.max(shakeAmt, .22*R2.tremK); creakSfx(); }, 1800);
   if (!S.tipCall){ S.tipCall = 1; setTimeout(()=>toast(`Dal fondo è salito un suono. Non era un animale. Il lago ha vibrato tutto insieme, come la pelle di un tamburo.`, 'cosmic'), 3500); }
@@ -3066,7 +3076,7 @@ function gripUpdate(dt){ const g = X_.grip; if (!g) return; g.t += dt; g.p -= dt
     else { B.lost = true; stingerSfx(); loseLuc(6, `ti ha preso il secchio`); shakeAmt = .8; toast(`La corda ti scorre tra le mani. Quando il secchio torna su è vuoto, piegato, con l'impronta di una mano tutto intorno.`, 'warn'); } };
   if (g.p >= 1) end(true); else if (g.p <= 0 || g.t > 7) end(false); }
 
-function regia3Update(dt){ if (!uiBusy() && S.d >= 6 && !ending){ R2.callT -= dt; if (R2.callT <= 0 && X_.big <= 0 && tensionT <= 0){ R2.callT = rand(45, 85)/(1 + phase*.15); farCall(clamp(1 - S.d/MAXD, .25, .95)); } }
+function regia3Update(dt){ if (!uiBusy() && S.d >= 6 && !ending){ R2.callT -= dt*PACE.call; if (R2.callT <= 0 && X_.big <= 0 && tensionT <= 0){ R2.callT = rand(60, 110)/(1 + phase*.15); farCall(clamp(1 - S.d/MAXD, .25, .95)); } }
   tremUpdate(dt); gazeUpdate(dt); moonUpdate(dt); reachUpdate(dt); }
 Object.assign(NEWEV, { gaze:evGaze, moon:evMoon, reach:evReach, grip:()=>{ X_.gripNext = true; }, call:()=>farCall(.5) });
 
@@ -3235,9 +3245,9 @@ Object.assign(NEWEV, { passage:()=>{ if (!X_.pass) startPassage(); }, endless:()
    ===================================================================== */
 const actOf = d => d < 6 ? 0 : d < 20 ? 1 : d < 45 ? 2 : d < 90 ? 3 : 4;
 const EV_ACT = { knock:0, tug:0, prints:0, bump:0, lightning:0,
-  music:1, silent:1, fish:1, behind:1, hand:1, torch:1, left:1, bodies:1, fog:1, car:1, rowboat:1, silence:1, neck:1, tide:1, scrawl:1, bellNear:1, figure:1, flicker:1, ladder:1, priest:1, grip:1, passage:1, call:1,
-  sublim:2, green:2, dg:2, lost:2, titan:2, mouth:2, dock:2, tentRaft:2, hands:2, selfCorpse:2, bucketThing:2, reflection:2, name:2, eyes:2, darkness:2, dinner:2, heads:2, gaze:2, endless:2, vanish:2,
-  levx:3, blood:3, breath:3, surfEye:3, rain:3, starsOut:3, swarm:3, scare:3, leviathan:3, chant:3, abyss:3, horizon:3, pupil:3, whaleback:3, dunk:3, moon:3, reach:3 };
+  music:1, silent:1, fish:1, behind:1, hand:1, torch:1, left:1, bodies:1, fog:1, car:1, rowboat:1, silence:1, neck:1, tide:1, scrawl:1, bellNear:4, figure:1, flicker:1, ladder:1, priest:1, grip:1, passage:1, call:1,
+  sublim:2, green:2, dg:2, lost:2, titan:2, mouth:2, dock:2, tentRaft:2, hands:2, selfCorpse:2, bucketThing:2, reflection:2, name:2, eyes:2, darkness:2, dinner:2, heads:4, gaze:2, endless:2, vanish:2,
+  levx:3, blood:3, breath:4, surfEye:3, rain:3, starsOut:3, swarm:3, scare:3, leviathan:3, chant:3, abyss:3, horizon:4, pupil:4, whaleback:3, dunk:4, moon:3, reach:4 };
 const VIG_ACT = { drift:0, bubbles:0, lurch:0, jump:0, shoreLight:1, hair:1, face:2, ridge:3 };
 const DRIFT_BY_ACT = [['hat','chair','frame'], ['hat','chair','frame','cradle','doll','candle'], ['cradle','doll','candle','frame','coffin','chair'], ['coffin','cradle','doll','candle'], ['coffin','doll','candle']];
 // i pensieri di Tobia: una volta sola, quando qualcosa accade per la prima volta
@@ -3294,6 +3304,22 @@ const cDay = { top:new THREE.Color(.062,.07,.072), hor:new THREE.Color(.052,.06,
 const cNight = { top:new THREE.Color(.0025,.0035,.006), hor:new THREE.Color(.006,.008,.009) };
 const tmpC = new THREE.Color(), tmpV = new THREE.Vector3(), fwd = new THREE.Vector3(), lifeEnd = new THREE.Vector3(), ropeTop = new THREE.Vector3();
 
+// RITMO. La paura vive di contrasto: tregua, attesa, colpo, silenzio.
+// PACE.ev / PACE.vig / PACE.call moltiplicano la velocità con cui scorrono i timer del regista.
+// - giorno: tregua (il lavoro, piccole stranezze); tramonto: si prepara; notte: i colpi; alba: si respira
+// - finita una scena grande, 14-26 s in cui non succede niente e anche il fondo sonoro si abbassa
+const PACE = { ev:1, vig:1, call:1, calm:0, wasBig:false, amb:1 };
+function paceUpdate(dt){
+  const c = S.time % 240, part = c < 90 ? 'day' : c < 110 ? 'dusk' : c < 220 ? 'night' : 'dawn';
+  const K = { day:[.6,.7,.35], dusk:[.9,.9,1.2], night:[1.5,1.25,1.15], dawn:[.45,.55,.25] }[part];
+  const big = X_.big > 0 || tensionT > 0 || CINE.on;
+  if (PACE.wasBig && !big) PACE.calm = rand(14, 26);
+  PACE.wasBig = big;
+  if (PACE.calm > 0) PACE.calm -= dt;
+  const hush = PACE.calm > 0 ? 0 : 1;
+  PACE.ev = K[0]*hush; PACE.vig = K[1]*(PACE.calm > 0 ? .15 : 1); PACE.call = K[2]*hush;
+  PACE.amb += ((PACE.calm > 0 ? .55 : 1) - PACE.amb)*Math.min(1, dt*.5);
+}
 function update(dt){
   T += dt;
   if (!ending) S.time += dt;
@@ -3306,7 +3332,7 @@ function update(dt){
     const pr = pumpRate();
     if (pr + noriaRate() > 0) addLiters((pr + noriaRate())*dt);
     if (S.contract && S.tank > 0){ S.money += S.tank * priceNow() * CONTRACTS[S.contract].p; S.tank = 0; }
-    else if (S.van && S.tank >= tankCap()){ const v = S.tank * priceNow() * VANS[S.van].p; S.money += v; S.tank = 0; coinSfx(); toast(`Il furgone del Compratore ha svuotato la cisterna: € ${fmt(v)}`); }
+    else if (S.van && S.tank >= tankCap()){ const v = S.tank * priceNow() * VANS[S.van].p; S.money += v; S.tank = 0; cash(v, `il furgone ha svuotato la cisterna`); }
     // lucidità
     const night = dayF < .5;
     const nearLamp = lamp.intensity > 2;
@@ -3316,10 +3342,12 @@ function update(dt){
     LUCWHY.up = [dayF>.5 && 'luce del giorno', night && S.flood && S.floodOn !== false && 'i fari', S.lumino && 'lumini votivi', nearLamp && 'la lanterna', breathT>0 && 'respiri'].filter(Boolean);
     LUCWHY.net = regen - drain;
     if (S.luc <= .01 && !blackout) doBlackout();
-    else S.luc = clamp(S.luc + (regen - drain)*dt, 0, 100);
+    else { const cap = lucCap(); if (S.luc > cap) S.luc = Math.max(cap, S.luc - (.35 + Math.max(0, drain - regen))*dt); else S.luc = Math.min(cap, Math.max(0, S.luc + (regen - drain)*dt)); }
+    if (S.luc >= lucCap() - .5 && lucCap() < 99 && LUCWHY.net > 0){ LUCWHY.dn = ['il fondo non ti lascia tornare lucido']; LUCWHY.net = 0; }
     // eventi
-    if (!uiBusy()) EV.next -= dt;
-    if (EV.next <= 0 && !inCall && !uiBusy()){ EV.next = rand(16,28)/(1+phase*.2); runEvent(); }
+    paceUpdate(dt); cashUpdate(dt);
+    if (!uiBusy()) EV.next -= dt*PACE.ev;
+    if (EV.next <= 0 && !inCall && !uiBusy()){ EV.next = rand(16,28)/(1+phase*.2)*(S.d < 6 ? 2 : S.d < 14 ? 1.5 : 1); runEvent(); }
     // storia
     STORY.forEach((s,i)=>{ if (S.d >= s.d && !S.story.includes(i)){ S.story.push(i); s.f(); } });
     // lore riaffiorata
@@ -3461,13 +3489,13 @@ function update(dt){
   // audio
   if (AU.ctx){
     const t = AU.ctx.currentTime, depthK = clamp(S.d/MAXD,0,1);
-    AU.droneG.gain.setTargetAtTime(.05 + depthK*.22 + insane*.1, t, 1.5);
+    AU.droneG.gain.setTargetAtTime((.05 + depthK*.22 + insane*.1)*PACE.amb, t, 1.5);
     AU.droneF.frequency.setTargetAtTime(120 + depthK*260 + insane*200, t, 2);
     AU.subG.gain.setTargetAtTime((phase>=3 ? .15 + depthK*.25 : depthK*.08) + subBoost, t, 1);
     AU.lapG.gain.setTargetAtTime(Math.max(.01, .06 - depthK*.05), t, 1);
     AU.windG.gain.setTargetAtTime(.04 + (1-dayF)*.04, t, 2);
     AU.pumpG.gain.setTargetAtTime(Math.min(.12, pumpRate()>0 ? .03 + Math.log10(1+pumpRate())*.015 : 0), t, .5);
-    AU.choirG.gain.setTargetAtTime(Math.max(0, phase>=2 ? (depthK-.28)*.32 : 0) + (choirBoost>0 ? .3 : 0) + (ending ? .35 : 0), t, 1.5);
+    AU.choirG.gain.setTargetAtTime(Math.max(0, phase>=2 ? (depthK-.28)*.32 : 0)*PACE.amb + (choirBoost>0 ? .3 : 0) + (ending ? .35 : 0), t, 1.5);
     AU.master.gain.setTargetAtTime(.9, t, .5);
     duck(!$('call').classList.contains('hidden') || !$('prompt').classList.contains('hidden') || !$('card').classList.contains('hidden'));
     if (AU.shepG){ AU.shepG.gain.setTargetAtTime(Math.max(0, depthK - .08)*.16 + (downT > .5 ? .06 : 0), t, 2); AU.deepG.gain.setTargetAtTime(depthK*.55 + (phase>=3 ? .15 : 0), t, 2); }
@@ -3489,7 +3517,7 @@ function update(dt){
     sty('lucBar', 'background', S.luc < 30 ? '#c0584a' : '#b9c7a8');
     txt('lucTxt', `LUCIDITÀ ${Math.round(S.luc)}%`);
     { const up = LUCWHY.net > .002, w = up ? LUCWHY.up : LUCWHY.dn; txt('lucWhy', (up ? '▲ ' : LUCWHY.net < -.002 ? '▼ ' : '■ ') + (w.length ? w.join(' · ') : (up ? 'stai recuperando' : 'stabile'))); { const e = $('lucWhy'), c = 'mini ' + (up ? 'up' : 'dn'); if (e.className !== c) e.className = c; }
-      const bb = $('breathBtn'), dis = breathCd > 0 || breathT > 0 || S.luc > 96; if (bb.disabled !== dis) bb.disabled = dis; txt('breathBtn', breathT > 0 ? 'RESPIRI…' : breathCd > 0 ? `RESPIRA · ${Math.ceil(breathCd)}s` : 'RESPIRA'); bb.classList.toggle('hint', !bb.disabled && S.luc < 60); }
+      const bb = $('breathBtn'), dis = breathCd > 0 || breathT > 0 || S.luc > lucCap() - 4; if (bb.disabled !== dis) bb.disabled = dis; txt('breathBtn', breathT > 0 ? 'RESPIRI…' : breathCd > 0 ? `RESPIRA · ${Math.ceil(breathCd)}s` : 'RESPIRA'); bb.classList.toggle('hint', !bb.disabled && S.luc < Math.min(60, lucCap() - 15)); }
     { const left = Math.max(0, MAXD - S.d); txt('belowTxt', downT > .3 ? `SOTTO DI TE: ${Math.round(left)} m D'ACQUA NERA` : `ACQUA SOTTO: ${Math.round(left)} m`); $('belowTxt').classList.toggle('dn', downT > .3); }
     txt('rateTxt', `${fmt(pumpRate() + noriaRate())} L/s · ${priceNow().toLocaleString('it-IT',{maximumFractionDigits:2})} €/L`);
     txt('timeTxt', (dayF>=.5 ? 'GIORNO ' : 'NOTTE ') + (Math.floor(S.time/240)+1));
