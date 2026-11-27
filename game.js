@@ -104,6 +104,11 @@ function zalgo(s, k=3){ if (k <= 0) return s; return [...s].map(ch=> ch===' ' ||
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' });
 const MOBILE = matchMedia('(pointer:coarse)').matches;
+// impostazioni del giocatore (volume, visuale, luminosità, qualità, effetti forti): salvate a parte dalla partita
+const SET_KEY = 'ilfondo_set';
+const SET = Object.assign({ vol:1, sens:1, bright:1, q:'auto', inv:false, calm:false }, (()=>{ try { return JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch(e){ return {}; } })());
+const saveSet = ()=>{ try { localStorage.setItem(SET_KEY, JSON.stringify(SET)); } catch(e){} };
+const shk = ()=> SET.calm ? .3 : 1;
 const DPR = Math.min(window.devicePixelRatio||1, MOBILE ? 1.25 : 1.5);
 let qScale = MOBILE ? .85 : 1;
 renderer.setPixelRatio(DPR*qScale);
@@ -141,11 +146,11 @@ const blurMat = new THREE.ShaderMaterial({ uniforms:{ tDiffuse:{value:null}, uDi
     c+=(texture2D(tDiffuse,vUv+uDir*3.231).rgb+texture2D(tDiffuse,vUv-uDir*3.231).rgb)*.07;
     gl_FragColor=vec4(c,1.); }` });
 const postMat = new THREE.ShaderMaterial({
-  uniforms:{ tDiffuse:{value:rt.texture}, tBloom:{value:bloomA.texture}, uBloomK:{value:.9}, uTime:{value:0}, uInsane:{value:0}, uFlash:{value:0}, uExposure:{value:1.4}, uRes:{value:new THREE.Vector2(innerWidth,innerHeight)}, uDark:{value:0},
+  uniforms:{ tDiffuse:{value:rt.texture}, tBloom:{value:bloomA.texture}, uBloomK:{value:.9}, uBright:{value:SET.bright}, uFlashK:{value:SET.calm ? .25 : 1}, uTime:{value:0}, uInsane:{value:0}, uFlash:{value:0}, uExposure:{value:1.4}, uRes:{value:new THREE.Vector2(innerWidth,innerHeight)}, uDark:{value:0},
     uOld:{value:0}, uUnder:{value:0}, uTent:{value:0}, uSick:{value:0}, uPulse:{value:0}, uWet:{value:0} },
   vertexShader:FS_VS,
   fragmentShader:`
-  uniform sampler2D tDiffuse,tBloom; uniform float uTime,uInsane,uFlash,uExposure,uDark,uBloomK,uOld,uUnder,uTent,uSick,uPulse,uWet; uniform vec2 uRes; varying vec2 vUv;
+  uniform sampler2D tDiffuse,tBloom; uniform float uBright,uFlashK; uniform float uTime,uInsane,uFlash,uExposure,uDark,uBloomK,uOld,uUnder,uTent,uSick,uPulse,uWet; uniform vec2 uRes; varying vec2 vUv;
   vec3 aces(vec3 x){ return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.); }
   float hh(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
   void main(){
@@ -165,7 +170,7 @@ const postMat = new THREE.ShaderMaterial({
     vec3 col; col.r=texture2D(tDiffuse,uv+cc*ca).r; col.g=texture2D(tDiffuse,uv).g; col.b=texture2D(tDiffuse,uv-cc*ca).b;
     vec3 bl=texture2D(tBloom,uv).rgb;
     col+=bl*uBloomK;
-    col*=uExposure; col=aces(col); col*=1.-wetM*uWet*.35;
+    col*=uExposure*uBright; col=aces(col); col*=1.-wetM*uWet*.35;
     float l=dot(col,vec3(.299,.587,.114));
     col=mix(vec3(l),col,.6);
     col*=mix(vec3(.80,.98,.96), vec3(1.06,1.0,.86), smoothstep(.02,.45,l));
@@ -182,7 +187,7 @@ const postMat = new THREE.ShaderMaterial({
       col=mix(col,sep,uOld);
     }
     float v=smoothstep(1.05,.2,length(cc*vec2(1.,1.2)));
-    col*=mix(.1,1.,v)*(1.-uPulse*.22*(1.-v*.6));
+    col*=mix(.1,1.,v)*(1.-uPulse*uFlashK*.22*(1.-v*.6));
     col=mix(col,col*vec3(1.15,.7,.68),uInsane*.35*(1.-v));
     col=mix(col, vec3(dot(col,vec3(.3,.59,.11))), uInsane*.45);
     if(uTent>0.){
@@ -195,7 +200,7 @@ const postMat = new THREE.ShaderMaterial({
     float g=hh(floor(vUv*uRes)+fract(uTime)*91.);
     col+=(g-.5)*(.05+uInsane*.07+uOld*.06);
     col=mix(col,vec3(0.),uDark);
-    col+=uFlash;
+    col+=uFlash*uFlashK;
     gl_FragColor=vec4(col,1.);
   }`, depthTest:false, depthWrite:false });
 const postScene = new THREE.Scene();
@@ -241,6 +246,7 @@ function setQ(scale, samples){
   Q.cool = 1;
 }
 function adaptQuality(raw){
+  if (SET.q !== 'auto') return;
   if (raw <= 0 || raw > 1.2 || document.hidden) return;
   Q.acc += raw; Q.n++; Q.t += raw; if (Q.t < 1.5) return;
   const avg = Q.acc/Q.n, win = Q.t; Q.t = Q.acc = Q.n = 0;
@@ -1326,7 +1332,7 @@ let yaw = 0, pitch = -.18, yawT = 0, pitchT = -.18, shakeAmt = 0;
 let drag = null;
 canvas.addEventListener('pointerdown', e=>{ drag = {x:e.clientX, y:e.clientY, sx:e.clientX, sy:e.clientY, t:performance.now()}; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e=>{ if (!drag) return; const dx = e.clientX-drag.x, dy = e.clientY-drag.y; drag.x = e.clientX; drag.y = e.clientY;
-  yawT = yawT - dx*.0055; pitchT = clamp(pitchT - dy*.0055, -1.45, .45); });
+  yawT = yawT - dx*.0055*SET.sens; pitchT = clamp(pitchT - dy*.0055*SET.sens*(SET.inv ? -1 : 1), -1.45, .45); });
 canvas.addEventListener('pointerup', e=>{ if (!drag) return; const moved = Math.hypot(e.clientX-drag.sx, e.clientY-drag.sy); const dt = performance.now()-drag.t; drag = null;
   if (moved < 9 && dt < 400) tapWorld(e.clientX, e.clientY); });
 const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2();
@@ -2409,7 +2415,7 @@ function drawFace(){
   X.fillStyle = 'rgba(110,0,0,.22)'; X.fillRect(0,0,w,h);
 }
 function scare(){ drawFace(); scv.classList.remove('hidden'); scv.classList.add('shake'); stingerSfx(); shakeAmt = 1.2; postMat.uniforms.uFlash.value = .25;
-  setTimeout(()=>{ scv.style.filter = 'invert(1)'; }, 90); setTimeout(()=>{ scv.style.filter = ''; drawFace(); }, 150);
+  if (!SET.calm) setTimeout(()=>{ scv.style.filter = 'invert(1)'; }, 90); setTimeout(()=>{ scv.style.filter = ''; drawFace(); }, 150);
   setTimeout(()=>{ scv.classList.add('hidden'); scv.classList.remove('shake'); scv.style.filter = ''; }, 620); }
 
 /* ---------- blackout a lucidità zero ---------- */
@@ -2510,6 +2516,7 @@ function playCine(done){
 }
 function endCine(){
   if (!CINE.on) return;
+  try { localStorage.setItem('ilfondo_cine', '1'); } catch(e){}
   CINE.on = false; $('cine').classList.add('hidden'); capOff(); cMid(null);
   const P = postMat.uniforms; P.uOld.value = 0; P.uUnder.value = 0; P.uDark.value = 0; P.uInsane.value = 0;
   lamp.color.copy(LAMP_COL); lamp.distance = 30; terrainU.uEyes.value = 0; waterU.uShadow.value.w = 0; skyU.uLight.value = 0;
@@ -2572,7 +2579,7 @@ function updateCine(dt){
   }
   // camera
   shakeAmt = Math.max(0, shakeAmt - dt*1.2);
-  camera.position.x += (Math.random()-.5)*shakeAmt*.12; camera.position.y += (Math.random()-.5)*shakeAmt*.12;
+  camera.position.x += (Math.random()-.5)*shakeAmt*shk()*.12; camera.position.y += (Math.random()-.5)*shakeAmt*shk()*.12;
   camera.up.set(0,1,0); camera.lookAt(camLookV); camera.updateMatrixWorld();
   // mondo
   waterY = wy; water.position.y = wy; terrainU.uWater.value = wy;
@@ -2649,14 +2656,14 @@ function startGame(fresh){
   goFullLandscape();
   if (!fresh && saved) S = saved; else if (fresh){ const c = S.cycle || (saved? saved.cycle : 1); S = freshState(c); }
   $('screen').style.display = 'none';
-  if (fresh){ playCine(()=> showLetter()); } else begin();
+  if (fresh){ let seen = false; try { seen = !!localStorage.getItem('ilfondo_cine'); } catch(e){} if (seen) showLetter(); else playCine(()=> showLetter()); } else begin();
 }
 function showLetter(){
   $('cardTitle').textContent = `Ditta Sesti & Figli — Acque`;
   $('cardText').textContent = `Gentile signor Ferri,\n\nLa ringraziamo per aver accettato l'incarico.\n\nIl lavoro è semplice: svuotare il lago di Nàrrena. Lavorerà da una zattera legata al pontile: quando l'acqua scende, la zattera scende con lei. Ogni litro Le sarà pagato, e l'acqua del fondo vale più di quella di superficie.\n\nLa preghiamo di osservare tre regole:\n\nI. Non scenda mai dalla zattera dopo il tramonto.\nII. Se dall'acqua qualcuno La chiama per nome, non risponda.\nIII. Non conti l'acqua.\n\nCon gratitudine,\nA. Sesti`;
   $('cardDiary').classList.add('hidden'); $('cardClose').textContent = 'FIRMA';
   $('card').classList.remove('hidden');
-  $('cardClose').onclick = ()=>{ $('card').classList.add('hidden'); $('cardClose').textContent = 'CHIUDI'; $('cardClose').onclick = ()=> $('card').classList.add('hidden'); begin(); setTimeout(()=>toast(`Tieni premuto SECCHIO per calarlo nel lago. Trascina per guardarti intorno: anche dietro di te.`), 1200); };
+  $('cardClose').onclick = ()=>{ $('card').classList.add('hidden'); $('cardClose').textContent = 'CHIUDI'; $('cardClose').onclick = ()=> $('card').classList.add('hidden'); begin(); setTimeout(()=>toast(MOBILE ? `Tieni premuto SECCHIO per calarlo nel lago. Trascina per guardarti intorno: anche dietro di te.` : `Tieni premuto SECCHIO (o SPAZIO) per calarlo nel lago. Trascina col mouse o usa W A S D per guardarti intorno: anche dietro di te. ESC: impostazioni e comandi.`), 1200); };
 }
 function begin(){
   running = true; if (S.d < .5){ EV.next = 55; VIG.next = 22; } buildPlumbMarks(); ['hud','bottom','sideBtns'].forEach(id=>$(id).classList.remove('hidden'));
@@ -3454,7 +3461,7 @@ function update(dt){
   const insane = clamp((60 - S.luc)/60, 0, 1);
   shakeAmt = Math.max(0, shakeAmt - dt*1.2);
   camera.position.copy(CAM_BASE); camera.position.y += Math.sin(T*1.3)*.018;
-  camera.position.x += (Math.random()-.5)*shakeAmt*.12; camera.position.y += (Math.random()-.5)*shakeAmt*.12;
+  camera.position.x += (Math.random()-.5)*shakeAmt*shk()*.12; camera.position.y += (Math.random()-.5)*shakeAmt*shk()*.12;
   camera.rotation.order = 'YXZ'; camera.rotation.y = yaw; camera.rotation.x = pitch + Math.sin(T*.9)*.006 + raft.rotation.x*.8*Math.cos(yaw) - raft.rotation.z*.8*Math.sin(yaw); camera.rotation.z = R2.dunkR + Math.sin(T*.5)*insane*.05 + raft.rotation.z*.8*Math.cos(yaw) + raft.rotation.x*.8*Math.sin(yaw);
   camera.updateMatrixWorld();
   postMat.uniforms.uInsane.value = Math.max(insane*insane, ending==='wake'?.8:0); postMat.uniforms.uTime.value = T;
@@ -3537,7 +3544,7 @@ function frame(now){
   if (window.__PAUSE) return;
   const raw = (now-last)/1000, dt = Math.min(.05, raw); last = now; adaptQuality(raw);
   if (CINE.on) updateCine(dt);
-  else if (running) update(dt);
+  else if (running){ keyLook(dt); update(dt); }
   else { T += dt; yaw = Math.sin(T*.05)*.35; pitch = -.16; camera.position.copy(CAM_BASE); camera.rotation.order='YXZ'; camera.rotation.set(pitch, yaw, 0); camera.updateMatrixWorld();
     envNight(); lightUpdate(dt); skyU.uLight.value = lightK; hemi.intensity += lightK*2.2; skyU.uTime.value = T; waterU.uTime.value = T;
     if (Math.random() < dt/14) lightning(false);
@@ -3548,6 +3555,56 @@ function frame(now){
   renderFrame();
 }
 if (location.search.includes('debug')) window.__IF = { CINE, CINE_EV, get S(){ return S; }, set S(v){ S = v; }, seek(t){ CINE.t = t; CINE.evI = 0; while (CINE.evI < CINE_EV.length && CINE_EV[CINE.evI][0] < t - 2.5) CINE.evI++; }, lightning, startLeviathan, startShoreEyes, scare, drawFace, startEv, showFind, X_, headObj, get raftPos(){return raftPos;}, camera, look(y,p){ yawT = yaw = y; pitchT = pitch = p; }, loreObjs, THREE, runEvent, EV, openLore, makeWave, raft, directorPick, FINDS, renderer, renderFrame, AU, get qScale(){return qScale;}, Q, get hidden(){return document.hidden;}, update:(dt)=>update(dt), startVein, VEIN, layoutHelpers, ordersUpdate, B, aimTarget, begin, startTitan, titan, mists, water, scene, consequence, hullDamage, helperLost, dragMachine, get DRo(){ return DR.o; }, farCall, evGaze, R2get: ()=>R2, layoutMachines, NEWEV, startVignette, VIG_DEF, VIG, startDrift, R2, bigSplash, bigWaveH, get raftHeave(){return raftHeave;}, colossus, creature, LEV, rowboat, floaters, dockFigs, get running(){return running;}, set running(v){running=v;}, set yawT(v){yawT=yaw=v;}, set pitchT(v){pitchT=pitch=v;} };
+/* =====================================================================
+   IMPOSTAZIONI E TASTIERA
+   ===================================================================== */
+if (MOBILE) document.body.classList.add('touch');
+const QSET = { high:[1, MSAA], mid:[.8, 0], low:[.6, 0] };
+function applySet(){
+  postMat.uniforms.uBright.value = SET.bright; postMat.uniforms.uFlashK.value = SET.calm ? .25 : 1;
+  if (AU.vol) AU.vol.gain.setTargetAtTime(SET.vol, AU.ctx.currentTime, .05);
+  if (SET.q !== 'auto'){ const [q, m] = QSET[SET.q]; setQ(q, m); Q.prev = null; }
+  $('setVolV').textContent = Math.round(SET.vol*100) + '%'; $('setSensV').textContent = Math.round(SET.sens*100) + '%'; $('setBrightV').textContent = Math.round(SET.bright*100) + '%';
+}
+{ const bind = (id, get, set, ev='input')=>{ const el = $(id); get(el); el.addEventListener(ev, ()=>{ set(el); applySet(); saveSet(); }); };
+  bind('setVol', el=> el.value = Math.round(SET.vol*100), el=> SET.vol = el.value/100);
+  bind('setSens', el=> el.value = Math.round(SET.sens*100), el=> SET.sens = el.value/100);
+  bind('setBright', el=> el.value = Math.round(SET.bright*100), el=> SET.bright = el.value/100);
+  bind('setQ', el=> el.value = SET.q, el=>{ SET.q = el.value; if (SET.q === 'auto'){ Q.hold = 0; Q.ceil = 9; } }, 'change');
+  bind('setInv', el=> el.checked = SET.inv, el=> SET.inv = el.checked, 'change');
+  bind('setCalm', el=> el.checked = SET.calm, el=> SET.calm = el.checked, 'change');
+  applySet(); }
+// il volume si applica anche quando l'audio parte dopo (al primo tocco)
+document.addEventListener('pointerdown', ()=> setTimeout(applySet, 50));
+const openSettings = ()=>{ ['shop','diary'].forEach(id=>$(id).classList.add('hidden')); $('settings').classList.remove('hidden'); };
+$('setBtn').onclick = openSettings; $('setTitleBtn').onclick = openSettings;
+
+const KEYS = {};
+function keyLook(dt){ const x = (KEYS.ArrowLeft||KEYS.KeyA ? 1 : 0) - (KEYS.ArrowRight||KEYS.KeyD ? 1 : 0), y = (KEYS.ArrowUp||KEYS.KeyW ? 1 : 0) - (KEYS.ArrowDown||KEYS.KeyS ? 1 : 0);
+  if (!x && !y) return; yawT += x*dt*1.7*SET.sens; pitchT = clamp(pitchT + y*dt*1.2*SET.sens*(SET.inv ? -1 : 1), -1.45, .45); }
+const visible = id => !$(id).classList.contains('hidden');
+addEventListener('keydown', e=>{
+  if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) && e.code !== 'Escape') return;
+  const c = e.code; KEYS[c] = true; initAudio(); applySet();
+  if (CINE.on){ if (c === 'Escape' || c === 'Enter') endCine(); return; }
+  if (c === 'Escape'){ e.preventDefault(); const open = ['settings','shop','diary'].find(visible); if (open) $(open).classList.add('hidden'); else if (visible('card')) $('cardClose').click(); else openSettings(); return; }
+  // finestre: telefono, scelte, lettere
+  if (visible('call')){ if ((c === 'Enter' || c === 'Space') && !e.repeat){ e.preventDefault(); $('callBtn').click(); } return; }
+  if (visible('prompt')){ if (!$('prompt').classList.contains('waiting') && !e.repeat){ if (c === 'Digit1' || c === 'Numpad1') $('promptA').click(); if (c === 'Digit2' || c === 'Numpad2') $('promptB').click(); } return; }
+  if (visible('card')){ if ((c === 'Enter' || c === 'Space') && !e.repeat){ e.preventDefault(); $('cardClose').click(); } return; }
+  if (!running || ending) return;
+  if (c === 'KeyO' || c === 'KeyJ'){ if (e.repeat) return; const id = c === 'KeyO' ? 'shop' : 'diary'; if (visible(id)) $(id).classList.add('hidden'); else $(c === 'KeyO' ? 'shopBtn' : 'diaryBtn').click(); return; }
+  if (['settings','shop','diary'].some(visible)) return;
+  if (c === 'Space'){ e.preventDefault(); if (e.repeat) return; if (gripTap()) return; holdBucket = true; throwBucket(); return; }
+  if (e.repeat) return;
+  if (c === 'KeyT') $('torchBtn').click();
+  else if (c === 'KeyF' && visible('floodBtn')) $('floodBtn').click();
+  else if (c === 'KeyR') $('breathBtn').dispatchEvent(new PointerEvent('pointerdown', { bubbles:true }));
+  else if (c === 'KeyV') $('sellBtn').click();
+});
+addEventListener('keyup', e=>{ KEYS[e.code] = false; if (e.code === 'Space') holdBucket = false; });
+addEventListener('blur', ()=>{ for (const k in KEYS) KEYS[k] = false; holdBucket = false; });
+
 // riscaldamento: ogni shader del gioco viene compilato adesso, dietro il caricamento, e non nel momento in cui l'evento ti salta addosso
 // e ogni geometria e texture viene caricata sulla GPU adesso: niente culling durante il riscaldamento, così anche ciò che sta alle spalle
 // o fuori campo (la bocca, le mani, gli occhi sull'acqua...) non fa scattare il primo fotogramma in cui compare

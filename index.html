@@ -43,6 +43,7 @@
   <button class="sbtn" id="torchBtn"><svg viewBox="0 0 24 24"><path d="M7 3h10l-2 6v12H9V9z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 12v3" stroke="currentColor" stroke-width="1.6"/></svg><span>TORCIA</span></button>
   <button class="sbtn hidden" id="floodBtn"><svg viewBox="0 0 24 24"><path d="M4 9h7v6H4z M11 10l8-4v12l-8-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>FARI</span></button>
   <button class="sbtn" id="diaryBtn"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 17a3 3 0 0 1 3-3h11" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>DIARIO</span><i id="diaryDot" class="hidden"></i></button>
+  <button class="sbtn" id="setBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.6"/></svg><span>OPZIONI</span></button>
 </div>
 <div id="toasts"></div>
 <div id="subs"></div>
@@ -58,6 +59,21 @@
   <h2>OFFICINA</h2>
   <div class="sub">Attrezzi, macchine, contratti. Tutto ha un prezzo.</div>
   <div id="shopList"></div>
+</div>
+<div id="settings" class="panel hidden">
+  <button class="close" data-close="settings">✕</button>
+  <h2>IMPOSTAZIONI</h2>
+  <div class="sub">Si salvano su questo dispositivo.</div>
+  <label class="set"><span>Volume</span><input type="range" id="setVol" min="0" max="100" step="1"><b id="setVolV"></b></label>
+  <label class="set"><span>Sensibilità della visuale</span><input type="range" id="setSens" min="30" max="250" step="5"><b id="setSensV"></b></label>
+  <label class="set"><span>Luminosità</span><input type="range" id="setBright" min="70" max="150" step="5"><b id="setBrightV"></b></label>
+  <label class="set"><span>Qualità grafica</span><select id="setQ"><option value="auto">Automatica</option><option value="high">Alta</option><option value="mid">Media</option><option value="low">Bassa</option></select></label>
+  <label class="set chk"><input type="checkbox" id="setInv"><span>Inverti l'asse verticale</span></label>
+  <label class="set chk"><input type="checkbox" id="setCalm"><span>Attenua gli effetti forti (lampi, tremolio, schermo che pulsa)</span></label>
+  <div class="keys" id="setKeys"><h3>COMANDI DA TASTIERA</h3>
+    <p><kbd>SPAZIO</kbd> secchio (tieni premuto) · <kbd>W A S D</kbd> o <kbd>frecce</kbd> guardati intorno · trascina col mouse</p>
+    <p><kbd>T</kbd> torcia · <kbd>F</kbd> fari · <kbd>R</kbd> respira · <kbd>V</kbd> vendi · <kbd>O</kbd> officina · <kbd>J</kbd> diario</p>
+    <p><kbd>INVIO</kbd> rispondi / chiudi · <kbd>1</kbd> <kbd>2</kbd> scegli · <kbd>ESC</kbd> chiudi o apri le impostazioni</p></div>
 </div>
 <div id="diary" class="panel hidden">
   <button class="close" data-close="diary">✕</button>
@@ -79,8 +95,10 @@
     <button class="btn" id="newBtn">INIZIA IL TURNO</button>
     <button class="btn hidden" id="contBtn">CONTINUA</button>
     <button class="btn" id="proBtn" style="opacity:.7">PROLOGO · 1953</button>
+    <button class="btn" id="setTitleBtn" style="opacity:.7">IMPOSTAZIONI</button>
   </div>
   <div class="note">CUFFIE · BUIO · VOLUME ALTO · SCHERMO INTERO</div>
+  <div class="warn">⚠ Il gioco contiene luci lampeggianti, immagini improvvise e suoni forti. Puoi attenuarli in IMPOSTAZIONI.</div>
   <div class="by">GIOCO BY AGONYAPP</div>
 </div>
 <div id="fade"></div>
