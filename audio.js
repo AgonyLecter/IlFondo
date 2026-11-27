@@ -327,7 +327,7 @@ export function initAudio(){
   if (AU.ctx){ AU.ctx.resume(); return; }
   try {
     const ctx = new (window.AudioContext||window.webkitAudioContext)(); AU.ctx = ctx;
-    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.attack.value = .01; comp.release.value = .25; comp.connect(ctx.destination);
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.attack.value = .01; comp.release.value = .25; AU.vol = ctx.createGain(); AU.vol.gain.value = 1; comp.connect(AU.vol); AU.vol.connect(ctx.destination);
     AU.underF = ctx.createBiquadFilter(); AU.underF.type = 'lowpass'; AU.underF.frequency.value = 20000; AU.underF.Q.value = .5; AU.underF.connect(comp);
     AU.master = ctx.createGain(); AU.master.gain.value = .9; AU.master.connect(AU.underF);
     AU.dry = ctx.createGain(); AU.dry.gain.value = 1; AU.dry.connect(AU.master);
